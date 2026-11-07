@@ -114,7 +114,7 @@ def test_tools_return_setup_checklist_instead_of_connection_error(monkeypatch):
             return r, setup
     r, setup = asyncio.run(go())
     text = r.content[0].text
-    assert r.is_error and "Resolve nicht erreichbar" in text and "❌ Resolve läuft" in text and "öffnen" in text
+    assert r.is_error and "Resolve nicht erreichbar" in text and "❌" in text and "Einrichtung:" in text
     assert "Traceback" not in text
     assert setup.structured_content["ready"] is False
     assert any(c["id"] == "running" and c["ok"] is False for c in setup.structured_content["checks"])
