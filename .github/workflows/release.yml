@@ -1,5 +1,5 @@
-# Builds the .mcpb bundle and attaches it to a GitHub release (the repository is private, so is the release).
-# Trigger: push a tag "v<version>" that matches pyproject.toml, e.g.  git tag v0.8.0 && git push origin v0.8.0
+# Tag "v<version>" (must match pyproject.toml) → public check, tests → .mcpb, wheel and sdist on the GitHub release.
+# PyPI: repository variable PYPI_PUBLISH=testpypi or pypi, trusted publishing (no token), see docs/RELEASE.md.
 name: release
 
 on:
@@ -25,13 +25,30 @@ jobs:
           echo "VERSION=$V" >> "$GITHUB_ENV"
           if [ "${GITHUB_REF_TYPE}" = "tag" ] && [ "${GITHUB_REF_NAME}" != "v$V" ]; then
             echo "Tag ${GITHUB_REF_NAME} passt nicht zu pyproject.toml ($V)"; exit 1; fi
+      - name: Prüfskript (Pflicht)
+        run: uv run --frozen python tools/check_public.py --all
+      - name: Plugin passt zur Version
+        run: |
+          uv run --frozen python tools/build_plugin.py
+          git diff --exit-code plugin/ || { echo "plugin/ ist nicht aktuell: tools/build_plugin.py laufen lassen"; exit 1; }
       - name: ffmpeg für die Tests (das Bundle bringt sein eigenes mit)
         run: brew install ffmpeg
       - name: Tests (ohne Resolve, ohne Gladia-Key; Chromium-Tests werden übersprungen)
         run: uv run --frozen pytest -q
       - name: Bundle bauen
         run: uv run --frozen python packaging/build_mcpb.py
-      - name: Release mit .mcpb
+      - name: Python-Paket bauen
+        run: uv build
+      - name: Paket startet über uvx
+        run: |
+          uv run --frozen python tools/smoke_uvx.py "dist/schnippo-${VERSION}-py3-none-any.whl"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: python-package
+          path: |
+            dist/*.whl
+            dist/*.tar.gz
+      - name: Release mit .mcpb und Python-Paket
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -46,4 +63,20 @@ jobs:
           TAG="${GITHUB_REF_NAME}"
           if [ "${GITHUB_REF_TYPE}" != "tag" ]; then TAG="v${VERSION}"; fi
           gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" --title "Schnippo $VERSION" --notes "$NOTES"
-          gh release upload "$TAG" "dist/schnippo-${VERSION}.mcpb" --clobber
+          gh release upload "$TAG" "dist/schnippo-${VERSION}.mcpb" "dist/schnippo-${VERSION}-py3-none-any.whl" "dist/schnippo-${VERSION}.tar.gz" --clobber
+
+  pypi:
+    needs: bundle
+    if: vars.PYPI_PUBLISH == 'testpypi' || vars.PYPI_PUBLISH == 'pypi'
+    runs-on: ubuntu-latest
+    environment: ${{ vars.PYPI_PUBLISH }}
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: python-package
+          path: dist
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: ${{ vars.PYPI_PUBLISH == 'testpypi' && 'https://test.pypi.org/legacy/' || 'https://upload.pypi.org/legacy/' }}

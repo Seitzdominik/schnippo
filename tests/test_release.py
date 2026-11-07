@@ -100,3 +100,14 @@ def test_manifest_has_author_homepage_privacy():
     t = (Path(__file__).parents[1] / "packaging" / "manifest.template.json").read_text(encoding="utf-8")
     m = json.loads(t)
     assert m["author"]["name"] == "__AUTHOR__" and m["homepage"] == "__HOMEPAGE__" and "__PRIVACY_URL__" in m["privacy_policies"]
+
+
+def test_version_is_the_same_everywhere():
+    import tomllib
+    from pathlib import Path
+
+    import schnippo
+    root = Path(__file__).parents[1]
+    v = tomllib.loads((root / "pyproject.toml").read_text(encoding="utf-8"))["project"]["version"]
+    assert schnippo.__version__ == v
+    assert json.loads((root / "plugin/.claude-plugin/plugin.json").read_text(encoding="utf-8"))["version"] == v
