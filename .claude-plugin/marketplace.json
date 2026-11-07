@@ -1,0 +1,15 @@
+{
+  "name": "schnippo",
+  "description": "KI-Rohschnitt für DaVinci Resolve",
+  "owner": {
+    "name": "Seitz Dominik Visuals",
+    "url": "https://sdv.design"
+  },
+  "plugins": [
+    {
+      "name": "schnippo",
+      "source": "./plugin",
+      "description": "KI-Rohschnitt für DaVinci Resolve"
+    }
+  ]
+}
