@@ -2,6 +2,20 @@
 
 Format: neueste zuerst. Versionen vor 0.11.0 hießen intern „Resolve Cut“ und waren nicht öffentlich.
 
+## 0.11.0 Beta – Schnippo (Phase 11, 2026-11-07)
+
+Erste öffentliche Version, neuer Name, neues Repository mit frischer Historie.
+
+- **Umbenennung:** Aus „Resolve Cut“ wird Schnippo: Paket, Server, Bin `Schnippo/`, Export-Ordner `schnippo-export/`, `~/.config/schnippo`, Cache. Alte Ordner und Einstellungen werden einmalig übernommen, `resolve-cut-export/` wird weiter gelesen. Marken-Angaben stehen zentral in `branding.py`.
+- **Update-Hinweis:** `check_setup` und einmal am Tag der erste Tool-Aufruf fragen GitHub Releases. Kein Selbst-Update, abschaltbar.
+- **Einstellungen:** Tippfehler in Format, Sound-Effekten und Sprache meldet `check_setup` mit den gültigen Werten.
+- **Keys:** `store_api_key` speichert Keys über ein Eingabefenster im macOS-Schlüsselbund.
+- **Plugin:** `plugin/` mit Skills für das Anthropic-Verzeichnis, alle Tools mit Titel und `readOnlyHint` bzw. `destructiveHint`.
+- **PyPI:** `uvx schnippo` startet den Server, Config-Snippets für Claude Code, Cursor, Codex und VS Code in der README.
+- **Format:** Eine Angabe im Brief hat Vorrang vor der Erkennung.
+- **Öffentlich:** Datenschutzerklärung, vollständige Lizenzhinweise, Prüfskript `tools/check_public.py` vor jedem Commit und Release.
+- Glossar: Eine verhörte Adresse zieht das nächste Wort nicht mehr mit.
+
 ## 0.10.1 – Onboarding (Phase 10b, 2026-11-06)
 
 - **Onboarding im Chat:** `onboarding(step, answers)`, Prompts „Onboarding“ und „Hilfe“. Erster Start wird angeboten, „Später“ erinnert höchstens einmal, „Ich kenne mich aus“ springt zu Prüfung und Spickzettel. Spätere Versionen können Neues kurz vorstellen.

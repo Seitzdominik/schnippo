@@ -1,0 +1,39 @@
+name: Fehler melden
+description: Etwas funktioniert nicht wie erwartet.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Bitte hänge kein echtes Material, keine Transkripte mit Namen und keine Keys an.
+  - type: textarea
+    id: was
+    attributes:
+      label: Was ist passiert?
+      description: Was hast du gesagt, was hast du erwartet, was kam stattdessen?
+    validations:
+      required: true
+  - type: textarea
+    id: setup
+    attributes:
+      label: Ausgabe von check_setup
+      description: Sag im Chat „Prüfe mein Setup“ und füge das Ergebnis hier ein.
+      render: text
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Schnippo-Version
+      placeholder: 0.11.0
+    validations:
+      required: true
+  - type: input
+    id: resolve
+    attributes:
+      label: Resolve-Version und macOS
+      placeholder: Resolve Studio 21.1.2, macOS 26
+  - type: dropdown
+    id: absturz
+    attributes:
+      label: Ist Resolve abgestürzt?
+      options: ["Nein", "Ja"]

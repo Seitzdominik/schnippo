@@ -1,0 +1,15 @@
+name: Wunsch
+description: Eine Idee für Schnippo.
+labels: [wunsch]
+body:
+  - type: textarea
+    id: wunsch
+    attributes:
+      label: Was möchtest du erreichen?
+      description: Beschreibe die Aufgabe, nicht nur die Lösung.
+    validations:
+      required: true
+  - type: textarea
+    id: heute
+    attributes:
+      label: Wie machst du das heute?

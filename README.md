@@ -1,236 +1,177 @@
-# schnippo (Arbeitstitel „Schnippo“ – Anzeigename zentral in `src/schnippo/branding.py`)
+# Schnippo
 
-Lokaler MCP-Server, mit dem ein KI-Assistent (z. B. Claude) aus einem Ordner mit Takes einen **Rohschnitt in
-DaVinci Resolve Studio** baut: Takes einlesen → Transkript mit Wort-Zeitstempeln → Versprecher, Neuanfänge, Füllwörter
-und Pausen erkennen → der Assistent wählt die besten Versuche → der Server baut eine **nicht-destruktive Timeline aus den
-Original-Clips** (kein Re-Render, kein Qualitätsverlust).
+**KI-Rohschnitt für DaVinci Resolve.** Beta.
 
-Grundprinzip: Der Server misst (deterministisch), der Assistent entscheidet redaktionell. Der Assistent referenziert
-Material nur über IDs (Wörter `c01:w0120`, Segmente `c01:s012`), nie über selbst erfundene Timecodes.
+<!-- Bild oder GIF mit freigegebenem Material folgt: docs/bilder/schnippo.gif -->
 
-Erkenntnisse und API-Eigenheiten: [docs/ENTWICKLUNG.md](docs/ENTWICKLUNG.md)
+## Was ist Schnippo?
+
+Schnippo baut per Chat aus deinen Takes einen Rohschnitt in DaVinci Resolve Studio: Du sagst Claude, welchen Ordner es schneiden soll, und bekommst eine fertige Timeline aus deinen Originalclips. Schnippo misst Sprache, Pausen, Versprecher und Ton, Claude trifft die redaktionellen Entscheidungen, und du behältst in Resolve das letzte Wort. Auf Wunsch kommen B-Roll, Zooms, Grafiken, Sound-Effekte und Reels aus dem langen Video dazu, alles nicht-destruktiv.
 
 ## Voraussetzungen
 
-- **DaVinci Resolve Studio 21.1 oder neuer** (die kostenlose Version unterstützt externes Scripting nicht),
-  Preferences → System → General → External scripting = **Local**
-- macOS (getestet auf Apple Silicon), [uv](https://docs.astral.sh/uv/), ffmpeg: `brew install ffmpeg uv`
-- **Eigener Gladia-API-Key** (Bring Your Own Key) für die Transkription – Kosten trägt der Nutzer
-  (Stand 2026-11: ca. € 0,16 pro Stunde Audio mit `solaria-3`)
+- Mac mit Apple Silicon (Windows folgt)
+- DaVinci Resolve Studio 21.1 oder neuer, unter Preferences → System → General „External scripting using“ auf **Local** (die kostenlose Version kann kein externes Scripting)
+- Claude Desktop
+- Eigener [Gladia-Key](https://www.gladia.io) für die Transkription
 
-## Datenschutz – bitte lesen
+**Kosten:** Schnippo ist kostenlos. Gladia rechnet direkt mit dir ab, grob 0,61 USD je Stunde Audio. Vor jeder Transkription nennt Schnippo die Schätzung. Dazu kommt dein Claude-Abo.
 
-- **Audio** (16-kHz-Mono-WAV ohne Metadaten) wird zur Transkription an **Gladia** hochgeladen.
-- **Transkripte, Schnittkontext und – bei Bedarf – Einzelbilder/Kontaktabzüge** aus deinem Material gehen an das
-  **KI-Modell, mit dem der MCP-Server verbunden ist** (z. B. Claude). Nutze den Server nur mit Material, das du dafür
-  freigeben darfst.
-- Originaldateien werden nie verändert. Analyse-Dateien (WAV, Frames, Transkripte) liegen lokal im Cache
-  (`~/Library/Caches/schnippo`).
+## Installation in 4 Schritten
 
-## Setup
+1. **Download:** Lade die neueste `schnippo-<version>.mcpb` von der [Releases-Seite](https://github.com/Seitzdominik/schnippo/releases).
+2. **Doppelklick:** Die Datei öffnet sich in Claude Desktop. Bestätige die Installation.
+3. **Key:** Trage deinen Gladia-Key in den Einstellungen der Erweiterung ein.
+4. **Claude vollständig neu starten:** Beende Claude über die Menüleiste (Claude → Beenden). Das Fenster zu schließen reicht nicht.
+
+Neue Versionen installierst du genauso. Schnippo weist dich darauf hin und aktualisiert sich nie selbst.
+
+## Erster Schnitt
+
+Starte einen neuen Chat und schreibe **„Richte mich ein“**. Das Onboarding prüft Resolve und den Key, fragt deine Vorlieben ab und legt auf Wunsch einen Projektordner an:
+
+```text
+2026-11-07_Mein_Film/
+├── A-Roll/      Takes mit Sprache
+├── B-Roll/      Bildmaterial ohne Sprache
+├── Bilder/      Standbilder, Logos
+├── Skript/      Skript, falls vorhanden
+├── brief.md     Worum es geht, Format, Länge, Zielgruppe
+└── glossar.txt  Namen in richtiger Schreibweise
+```
+
+Spickzettel für den Chat:
+
+| Du schreibst | Schnippo macht |
+|---|---|
+| „Schneide Mein_Film“ | Rough Cut als neue Timeline, danach Rückfragen zu Grenzfällen |
+| „Weiter“ | Nächster Durchgang: Fine Cut, B-Roll, Polish |
+| „Mach aus dem Video 3 Reels“ | Hochformat-Reels aus den stärksten Stellen |
+| „Füge dezente Sound-Effekte hinzu“ | Eigene Spur mit Effekten |
+| „Hilfe“ | Überblick über alles Weitere |
+
+Jeder Durchgang bekommt eine eigene Timeline. Schnippo überschreibt nichts und verändert deine Originaldateien nie. Alle Tools stehen in der [Referenz](docs/REFERENZ.md).
+
+## Aufnahme-Tipps
+
+- **Für Reels in 4K filmen:** Dann bleibt beim Zuschnitt von 16:9 auf 9:16 genug Auflösung.
+- **Versprecher:** Kurz stoppen, deutlich „nochmal“ sagen oder einmal klatschen und den ganzen Satz neu beginnen.
+- **Bild:** Vor dem Sprechen 1 Sekunde ruhig in die Kamera schauen. Alle Takes mit derselben Framerate. B-Roll gern mit doppelter Rate, dann ist Zeitlupe möglich.
+- **Ton:** Ruhiger Raum, 2–3 Sekunden Raumton am Anfang. Im Interview ein Mikro pro Person auf eigenem Kanal.
+- **Namen:** Schreibweisen in die `glossar.txt`, dann stimmen sie schon im Transkript.
+
+Mehr dazu in der [Referenz](docs/REFERENZ.md#so-nimmst-du-für-schnippo-auf), eigene Sound-Effekte aufnehmen: [docs/AUFNAHMEN.md](docs/AUFNAHMEN.md).
+
+## Bekannte Grenzen
+
+- **Nur Mac.** Windows folgt.
+- **Karten in Claude Desktop:** Claude Desktop zeigt die interaktiven Karten lokaler Erweiterungen derzeit nicht an. Schnippo fragt deshalb als Text im Chat.
+- **Gemischte Framerates in der A-Roll:** Die Timeline übernimmt die Rate des Hauptmaterials, Takes mit anderer Rate sind nicht erprobt. B-Roll darf abweichen.
+- **Lange Videos und kleine Claude-Abos:** Ein Interview mit gut 10 Minuten Sprache braucht etwa 9.200 Token für den ganzen Text, die Übersicht etwa 620. Hochgerechnet sind das bei einer Stunde Sprache rund 50.000 Token je Durchgang, dazu kommen Kontaktabzüge. Schnippo liest lange Takes deshalb seitenweise. Bei kleinen Abos kann die Nutzungsgrenze trotzdem mitten im Schnitt erreicht werden. Die Token sind gemessen, wie schnell ein bestimmtes Abo an seine Grenze kommt, ist nicht gemessen.
+- **Noch nicht mit echtem Material erprobt:** Dreh nach Skript, Rohmaterial über 30 Minuten, sehr leise Aufnahmen. Hochformat-Quellen sind nur mit einem einzelnen Clip erprobt.
+- **Seltener Resolve-Absturz:** Beim Einfügen von Grafiken ist Resolve 21.1.2 in Tests mehrfach abgestürzt. Die Ursache ist nicht geklärt. Die Reihenfolge beim Bau wurde angepasst, seitdem trat der Fehler in Tests nicht mehr auf. Speichere dein Projekt vor dem Bau.
+- **Andere KI-Modelle:** Die Schnittqualität hängt vom Modell ab. Erprobt ist Schnippo nur mit Claude, das Modell braucht Bildverständnis.
+
+## Andere Programme
+
+Für Claude Desktop ist die `.mcpb` der einfachste Weg. Andere MCP-fähige Programme starten Schnippo über [uv](https://docs.astral.sh/uv/) mit `uvx schnippo`. Du brauchst nur den Startbefehl und deinen `GLADIA_API_KEY`.
+
+**Claude Code**
+
+```bash
+claude mcp add schnippo -e GLADIA_API_KEY=dein-key -- uvx schnippo
+```
+
+**Cursor** (`~/.cursor/mcp.json`)
+
+```json
+{"mcpServers": {"schnippo": {"command": "uvx", "args": ["schnippo"], "env": {"GLADIA_API_KEY": "dein-key"}}}}
+```
+
+**OpenAI Codex** (`~/.codex/config.toml`)
+
+```toml
+[mcp_servers.schnippo]
+command = "uvx"
+args = ["schnippo"]
+env = { GLADIA_API_KEY = "dein-key" }
+```
+
+**VS Code mit Copilot** (`.vscode/mcp.json`)
+
+```json
+{
+  "inputs": [{"type": "promptString", "id": "gladia", "description": "Gladia-Key", "password": true}],
+  "servers": {"schnippo": {"type": "stdio", "command": "uvx", "args": ["schnippo"], "env": {"GLADIA_API_KEY": "${input:gladia}"}}}
+}
+```
+
+Den Key kannst du stattdessen im macOS-Schlüsselbund ablegen: Sag im Chat „Speichere meinen Gladia-Key“, dann öffnet sich ein Eingabefenster und der Key läuft nicht durch den Chat. Plugin für Claude: [plugin/](plugin/).
+
+## FAQ
+
+**Verändert Schnippo meine Dateien?** Nein. Timelines verweisen auf deine Originalclips, nichts wird neu gerendert oder gelöscht.
+
+**Geht das mit der kostenlosen Resolve-Version?** Nein, sie unterstützt kein externes Scripting.
+
+**Bleibt mein Key beim Update erhalten?** Ja, Claude Desktop speichert Key und Einstellungen pro Erweiterung, und die Kennung bleibt von Version zu Version gleich. Von der internen Vorversion „Resolve Cut“ musst du den Key einmal neu eintragen.
+
+**Ich kannte Resolve Cut. Was passiert mit meinen Daten?** Schnippo übernimmt beim ersten Start Einstellungen, Glossare und Cache aus den alten Ordnern. Alte `resolve-cut-export/`-Ordner liest es weiter.
+
+**Wie schalte ich den Update-Hinweis ab?** In den Einstellungen der Erweiterung, oder mit `SCHNIPPO_UPDATE_CHECK=0`.
+
+## Datenschutz
+
+Keine Telemetrie, kein Schnippo-Server. Schnippo läuft auf deinem Rechner.
+
+| Daten | Wohin | Wann |
+|---|---|---|
+| Originalmedien, Cache, Einstellungen | bleiben lokal | immer |
+| Tonspur (16 kHz, mono, ohne Metadaten) | Gladia, `api.gladia.io` | beim Transkribieren |
+| Transkripte, Schnittkontext, Einzelbilder und Kontaktabzüge | das KI-Modell deines Chats, zum Beispiel Claude | während des Schnitts |
+| Suchbegriff oder Beschreibung | Freesound, ElevenLabs | nur mit eigenem Key und auf Wunsch |
+| Keine Daten, nur die Abfrage der neuesten Version | GitHub, `api.github.com` | höchstens einmal am Tag, abschaltbar |
+
+Nutze Schnippo nur mit Material, das du diesen Diensten geben darfst.
+
+### Privacy Policy
+
+Vollständige Fassung: [docs/PRIVACY.md](docs/PRIVACY.md), online unter https://schnippo.com/privacy.
+
+- **Datenerhebung:** Schnippo erhebt keine Daten und betreibt keinen eigenen Server.
+- **Nutzung und Speicherung:** Transkripte, Analysen und Einstellungen liegen lokal in `~/Library/Caches/schnippo` und `~/.config/schnippo`.
+- **Weitergabe an Dritte:** nur an die Dienste aus der Tabelle, mit deinem eigenen Konto.
+- **Aufbewahrung:** Lokale Daten löschst du jederzeit mit `clear_cache` oder im Finder. Bei Gladia und deinem KI-Anbieter gelten deren Bedingungen.
+- **Kontakt:** Seitz Dominik Visuals, https://sdv.design
+
+## Lizenzen
+
+Schnippo steht unter der [MIT-Lizenz](LICENSE), © Seitz Dominik Visuals. Fremde Bestandteile: [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+
+DaVinci Resolve ist eine Marke von Blackmagic Design. Schnippo ist ein unabhängiges Projekt und nicht mit Blackmagic Design verbunden.
+
+## Mitmachen
+
+Fehler und Wünsche gern als [Issue](https://github.com/Seitzdominik/schnippo/issues/new/choose). Bitte hänge nie echtes Material oder Keys an.
 
 ```bash
 uv sync
 uv run pytest
+git config core.hooksPath .githooks
 ```
 
-Gladia-Key – Umgebungsvariable `GLADIA_API_KEY` oder `~/.config/schnippo/config.toml` (nie committen):
+Der Hook startet `tools/check_public.py`. Technische Erkenntnisse stehen in [docs/ENTWICKLUNG.md](docs/ENTWICKLUNG.md).
 
-```toml
-language = "de"
-[gladia]
-api_key = "..."
-custom_vocabulary = ["DaVinci Resolve"]
-[analysis]
-pause_threshold_s = 0.4
-```
+---
 
-## In Claude einbinden (Claude Code / Desktop)
+## English summary
 
-```json
-{"mcpServers": {"schnippo": {"command": "uv", "args": ["--directory", "/ABS/PFAD/schnippo", "run", "schnippo"]}}}
-```
+**Schnippo** is an AI rough-cut assistant for DaVinci Resolve Studio. Tell Claude which folder to cut and get a non-destructive timeline built from your original clips, with optional B-roll, punch-ins, graphics, sound effects and reels. The interface and guides are in German; English footage works too.
 
-## Tools
+**Requirements:** Apple Silicon Mac, DaVinci Resolve Studio 21.1+ with external scripting set to Local, Claude Desktop, your own Gladia key (roughly USD 0.61 per hour of audio).
 
-| Tool | Zweck |
-|---|---|
-| `ingest_folder(path, import_to_resolve=False, recursive=False)` | Clips und Standbilder finden, ffprobe, VFR-Check, IDs `c01…`/`i01…`, optional Import in einen Bin |
-| `transcribe(clip_ids="all")` | Transkription (Gladia, 3 parallel) + Analyse, gecacht; vorher Schätzung (Audio, Kosten, Dauer), ab 30 min neuem Audio erst nach Bestätigung |
-| `list_clips()` | Übersicht |
-| `get_transcript(clip_id, from_word=None, to_word=None)` | kompaktes Transkript mit Wort-IDs |
-| `load_script(path=None)` | optionales Skript (.docx/.txt/.md) → Zeilen `L01…` |
-| `get_edit_context(…, pass="rough")` | Segmente, Retake-Gruppen, Skript-Kandidaten, Standbilder + nur der Leitfaden des Durchgangs; lange Videos: `overview=True`, dann `page=N` |
-| `get_frames(target, mode)` | Kontaktabzüge (Bild-IDs `c01:f0123`) von Segmenten, Intervallen, Szenen oder Standbildern – nur bei Bedarf |
-| `get_take_frames(group)` | Versuche einer Retake-Gruppe nebeneinander (knappe Take-Wahl) |
-| `validate_cutlist(cutlist)` | Trockenlauf: Teilstücke in Frames, Bewegungswerte je Schnitt, Overlays, gesprochener Endtext |
-| `preview_cuts(cutlist)` | Bildpaare „vor \| nach“ für die auffälligsten Schnitte |
-| `analyze_audio(clip_ids)` | Lautheit, True Peak, Rauschboden, Sprachspektrum mit Empfehlungen |
-| `set_word_text(word, text)` / `suggest_corrections(clip)` | Erkennungsfehler korrigieren (IDs bleiben; gilt für Endtext und Export) |
-| `export_transcript(cutlist \| timeline)` | SRT, TXT (und bei YouTube Kapitel) des fertigen Schnitts nach `schnippo-export/` |
-| `merge_cutlists(cutlists)` | Teil-Cutlists (seitenweise Entscheidungen) zusammenführen |
-| `build_timeline(cutlist)` | neue Timeline bauen (Framerate des Hauptmaterials), Punch-ins, B-Roll auf V2, Audio-Lautheit (True Peak ≤ −1 dBTP), Export-Preset, verifizieren |
-| `locate(timeline, ref)` | „#05“ (Marker), Zeit „0:23“ oder Zitat → Item, Wort-IDs, Position |
-| `revise(base_timeline, instructions)` | Änderungswünsche (entfernen, trimmen, verschieben, einfügen, Take tauschen, Zoom, Overlays) → neue Version `…_r2` mit Unterschieden |
-| `read_timeline_changes(timeline)` | Handänderungen in Resolve erkennen und framegenau als neue Version übernehmen; Unklares wird gemeldet |
-| `set_glossary(terms)` / `glossar.txt` | Namen, Marken, Orte, Adressen in richtiger Schreibweise: Gladia-Vokabular für neue Clips, Korrekturvorschläge, Untertitel, Freigabe für Bauchbinden |
-| `set_clip_role(clips, role)` | Clip von Hand als A-Roll oder B-Roll festlegen |
-| `resume_job(job_id=None)` | abgebrochenen Auftrag fortsetzen (Bauen: neu aus der gespeicherten Cutlist, halbe Timeline `…_unvollstaendig` wird entfernt; Transkription: fehlende Clips, laufende Gladia-Aufträge werden abgeholt) |
-| `clear_cache(older_than_days=30)` | Cache-Größe je Kategorie zeigen und Altes löschen (Transkripte und verwendete Renders nur auf Wunsch) |
-| `sense_check(timeline)` | fertigen Schnitt gegenhören (Gladia, etwa 0,10 USD je 10 min): unsaubere Nähte automatisch, der gehörte Text zur Sinnprüfung; nach `revise` kostet nur Geändertes |
-| `export_final(timeline, preset="auto")` | fertiges Video rendern: Reel 1080×1920 oder YouTube 1080p/4K (H.264/AAC, Lautheit aus Polish), Datei geprüft, SRT/TXT daneben |
-| `run_qc(timeline, audio=False)` | QC: Flash-Frames, Lücken, angeschnittene Wörter, Zoom auf jedem Schnitt, Framerate, Dauer, Sync, Wasserzeichen-Hinweise, optional Lautheit |
-| `check_setup()` | Einrichtungs-Assistent (Karte im Chat): Resolve, Studio, Version, Scripting, Projekt, Gladia-Key, ffmpeg, Speicher |
-| `detect_format(hint)` / `set_format(format)` | Reel, YouTube, Kurs oder Werbespot aus dem Material erkennen (Auswahlkarte bei Unklarheit) |
-| `show_review(timeline, decisions)` / `submit_review` | Review-Karte nach Rough/Fine: Behalten / Raus / Egal, Antwort kommt als Chat-Nachricht |
-| `preview_graphic(cutlist)` | Motion Graphics: 6 Standbilder je Grafik über dem echten Frame + Prüfungen, vor dem Rendern |
-| `motion_setup()` | Grafik-Renderer (Playwright + Chromium) vorab installieren; sonst beim ersten Gebrauch |
-| `setup_design(brand)` / `save_brand` | Design-Einrichtung (Karte): Stil, Schrift, Farben mit Kontrastprüfung, Radius, Vorschau |
-| `list_sfx()` | Sound-Effekte: Bibliothek und eigener Ordner (Kategorie, Stufe, Länge, Transient, Lizenz) |
-| `prepare_recordings(folder, category=None)` | Eigene Aufnahmen aufbereiten und in den Sound-Ordner legen |
-| `find_sfx(category, …)` / `fetch_sfx(sound_id, category)` | Freesound mit eigenem Key: Suche mit Lizenzfilter, Rangfolge nach Kennwerten, Download |
-| `generate_sfx(text, category, …)` | ElevenLabs mit eigenem Key: Effekt aus einer Beschreibung, kostet Credits |
-| `find_reel_candidates(timeline, …)` / `show_reel_candidates` | Reel-Kandidaten aus der langen Fassung, nummerierte Liste mit Vorschau |
-| `reel_cutlist(timeline, from_word, to_word, …)` | Cutlist eines Reels aus einer Stelle, mit Kürzungen und Cold Open |
-| `reel_sheet(timeline)` | Kontaktblatt mit Kopfbox und Safe Zone aus echten Frames |
-| `export_reels(reel_timelines, captions)` | MP4, SRT und Caption je Reel |
-| `onboarding(step, answers)` | Erster Start: Einrichtung, Vorlieben, Tipps, Test, Spickzettel |
-| `create_project(name)` | Projektordner im Standardordner anlegen |
-| `resolve_status()` | Verbindungscheck |
+**Install:** download the `.mcpb` from [Releases](https://github.com/Seitzdominik/schnippo/releases), double-click it, enter your key, then fully quit and reopen Claude from the menu bar. Say „Richte mich ein“ in a new chat. Other MCP clients can run `uvx schnippo` with `GLADIA_API_KEY` set.
 
-Prompt: `rohschnitt` (Ablauf der vier Durchgänge). Ressourcen: `schnippo://guides/rough|fine|broll|polish|technik`.
+**Privacy:** no telemetry and no Schnippo server. Audio goes to Gladia, transcripts and frames go to your AI model, and the update check asks GitHub once a day (optional). See [docs/PRIVACY.md](docs/PRIVACY.md).
 
-## Vier Durchgänge
-
-Jeder Durchgang hat genau einen Job und baut eine eigene Timeline (`<Name>_V1_Rough`, `_V2_Fine`, `_V3_BRoll`,
-`_V4_Polish`). Die Cutlist trägt `"pass"`; spätere Durchgänge geben `"base_cutlist": "<Timeline davor>"` an, der Server
-übernimmt alles daraus und ignoriert mit Warnung, was der Durchgang nicht ändern darf. Leitfäden: [guides/](guides/).
-
-| Durchgang | Job | darf setzen |
-|---|---|---|
-| `rough` | Inhalt, Reihenfolge, Take-Wahl, Laufzeit; nur harte Schnitte | `items`, `rejected`, `corrections` |
-| `fine` | Pausen/Füller nach Profil, Schnittpunkte, Punch-ins | `options`, `punch_in`, `item_changes`, `items` (gemeldet) |
-| `broll` | Standbilder und Video-B-Roll (stumm, optional Atmo/Zeitlupe) über passende Wortbereiche | `overlays` |
-| `polish` | Ton, QC, Export | `audio`, `item_changes` (nur nach QC-Fehler) |
-| `motion` (optional) | Motion Graphics als ProRes 4444 mit Alpha auf V3 | `graphics`, `brand` |
-
-Profile in `~/.config/schnippo/config.toml`: `format = "auto" | "reel" | "youtube" | "course" | "commercial"`,
-`style = "ruhig" | "ruhig-dicht" | "dicht"`, einzelne Werte unter `[profile]` bzw. `[profile.<format>]` (z. B.
-`keep_pause_ms`, `punch_in_scale`, `max_unchanged_s`; vollständige Liste in `src/schnippo/profiles.py`).
-
-| Format | Bild | Laufzeit | Eigenheiten |
-|---|---|---|---|
-| `reel` | 9:16 | 30–90 s | dichte Pausen, Wort-für-Wort-Untertitel |
-| `youtube` | 16:9 | 8–15 min | Kapitel, Interviews (Fragen kurz behalten), SRT 2 × 42 Zeichen |
-| `course` | 16:9 | 2–30 min | ruhiger (Restpause 350 ms, wenige Punch-ins), Kapitel je Lektion |
-| `commercial` | wie das Material | 15–60 s | viel B-Roll, Szenenfolge wird vor dem Rohschnitt bestätigt |
-
-Material mit mehreren Clips: Clips ohne Sprache (keine Wörter oder Ø-Konfidenz < 0,25) gelten automatisch als
-**B-Roll** (`set_clip_role` korrigiert). Interviews: Sprechererkennung (S1/S2); bei einem Mikro pro Person nimmt jedes
-Teilstück den Kanal seines Sprechers.
-
-## So legst du ein Projekt an
-
-Im Chat: „Leg ein Projekt Kunde Thema an.“ Das geht, sobald ein Standardordner eingestellt ist (Onboarding oder Einstellungen der Erweiterung). Dann reicht später der Name: „Schneide Kunde Thema.“
-
-```
-<Standardordner>/
-  2026-11-06_Kunde_Thema/
-    A-Roll/        Sprecher-Takes (bei mehreren Sprechern optional Unterordner je Person)
-    B-Roll/        Videos ohne Sprache
-    Bilder/        Standbilder, Logos
-    Skript/        .docx, .txt, .md (optional)
-    glossar.txt    Namen, Firmen, Orte, Adressen in richtiger Schreibweise (optional)
-    brief.md       Kurz-Briefing, Stichworte reichen (optional)
-    schnippo-export/   entsteht automatisch: Exporte, Transkripte, Reels
-```
-
-Je strukturierter, desto besser der Schnitt. Die Ordnernamen gelten direkt als Einordnung, auch `Interview`, `Footage`, `Images`, `Script` und Ähnliche. B-Roll aus dem Ordner wird nicht transkribiert, das spart Kosten. Klingt ein Clip dort nach Sprache, kommt ein Hinweis. Ein unsortierter Ordner funktioniert auch, dann zeigt Claude die Einordnung kurz zur Bestätigung. Dateien werden nie verschoben oder umbenannt.
-
-Einen Pfad kannst du immer in den Chat kopieren. Am Mac: Rechtsklick auf den Ordner, Wahltaste (⌥) halten, „… als Pfadname kopieren“ (oder ⌥⌘C im Finder).
-
-## Sound-Effekte
-
-38 Effekte liegen bei (`sfx/`, auch kommerziell frei): 28 selbst erzeugt (MIT), Maus, Tastatur, Uhr, Klingel und Vinyl-Scratch als echte Aufnahmen unter CC0. Der Vinyl-Scratch kommt nur auf Wunsch oder bei Bold Creator. Kategorien: whoosh, swish, pop, tick, click, ding, impact_soft, impact, riser, downer, typing, clock, alarm. Atmo und Applaus lassen sich nicht echt rechnen, sie kommen aus deinem Sound-Ordner. Claude schlägt die Effekte im B-Roll- oder Motion-Durchgang nach `guides/06_sound_design.md` vor. Der Server richtet den Transient auf das Ereignis aus (Box geht auf, Bildwechsel, Zähler-Endwert) und legt die Effekte auf eine eigene Spur „SFX“. Dort kannst du sie in Resolve einzeln verschieben, leiser machen oder löschen.
-
-| Einstellung | Wirkung |
-|---|---|
-| `sfx: "off"` | keine Effekte |
-| `sfx: "subtil"` (Standard) | leise: Akzente −20 dB, Whooshes −22 dB unter der Stimme |
-| `sfx: "normal"` | 2 dB präsenter, eine Intensitätsstufe höher |
-
-Die Designsprache verschiebt das: Minimal Editorial nimmt wenige und sehr leise Effekte, Bold Creator präsentere, Soft Premium keine harten Impacts, Clean Tech Ticks statt Whooshes.
-
-Riser enden auf dem Ereignis. Atmo, Ticken und Tippen beginnen darauf und laufen so lange wie das Element oder `duration_ms`; der Server legt dafür eine passend lange Kopie an.
-
-Eigene Aufnahmen: Anleitung in [docs/AUFNAHMEN.md](docs/AUFNAHMEN.md), `prepare_recordings` schneidet und pegelt sie. Freesound (`find_sfx`, `fetch_sfx`) und ElevenLabs (`generate_sfx`) gehen mit deinem eigenen Key, geladen wird in deinen Sound-Ordner. Die Pixabay-API bietet kein Audio; deine Pixabay-Downloads legst du einfach selbst in den Sound-Ordner, sie gehören nie ins Repo.
-
-Eigene Sounds: `sfx_folder` in den Einstellungen (oder `[sfx] folder` in der Config). Die Kategorie kommt aus dem Ordner- oder Dateinamen, der Transient wird gemessen. Für die Lizenz eigener Sounds bist du selbst verantwortlich. Mitgelieferte Effekte kopiert der Server beim Bauen in `schnippo-export/sfx/`, damit ein Projekt nach einem Update der Erweiterung nicht offline geht.
-
-## Reels aus dem langen Video
-
-Aus einer fertigen 16:9-Timeline entstehen eigene Timelines `<Name>_Reel_01` in 1080×1920, die lange Fassung bleibt unangetastet. Claude schlägt zusammenhängende Stellen von 10–60 s vor, du wählst aus. Der Ausschnitt folgt dem Gesicht und bleibt eine Eigenschaft der Timeline-Items, du kannst ihn in Resolve nachstellen. Grafiken und Sound-Effekte werden für das Hochformat neu gesetzt.
-
-Aus 4K bleibt das Bild scharf. Aus 1080p wird es rund 1,8-fach hochskaliert und sichtbar weicher; das meldet die Prüfung mit der effektiven Auflösung. Die fertigen Dateien liegen in `schnippo-export/reels/`: MP4, SRT, Caption und Kontaktblatt.
-
-## Sicherheit und Ordnung
-
-- Gelesen wird nur im angegebenen Material-Ordner (und im Export-Ordner); Pfade werden vorher aufgelöst, Verknüpfungen
-  nach außerhalb werden übersprungen und gemeldet. Zu allgemeine Ordner (`/`, Benutzerordner, Schreibtisch, Dokumente …)
-  werden abgelehnt.
-- Geschrieben wird nur in den Export-Ordner (`schnippo-export/` neben dem Material oder der eingestellte Ordner) und
-  in den Cache. Originalmedien werden nie verändert, verschoben oder gelöscht.
-- In Resolve legt das Werkzeug alles unter dem Bin **„Schnippo“** ab (`<Ordnername>`, `Standbilder`, `Grafiken`,
-  `Audio-Extrakte`). Clips, die schon in eigenen Bins liegen, werden nur benutzt, nie verschoben oder doppelt importiert.
-  Timelines werden nie überschrieben; während des Bauens heißen sie `…_unvollstaendig`.
-- Grafiken werden in einer Browser-Sandbox ohne Netzwerkzugriff gerendert; eigene Schriften nur als Schriftdatei aus den
-  Schriftordnern oder dem Material-Ordner.
-
-## Karten im Chat
-
-Die Tools liefern zusätzlich interaktive Karten (MCP Apps: Einrichtungs-Assistent, Review, Formatwahl, Design). **Claude
-Desktop zeigt Karten lokaler Erweiterungen derzeit nicht an** – auch das offizielle MCP-Apps-Beispiel erscheint dort nur als
-Text (Gegenprobe Phase 7). Standard ist deshalb der Text-Assistent; der Karten-Code bleibt für Hosts, die MCP Apps
-unterstützen.
-
-## So nimmst du für Schnippo auf
-
-**Ordner:** ein Ordner pro Projekt, alle Takes hinein – B-Roll-Clips und Fotos dürfen mit hinein (Clips ohne Sprache
-werden als B-Roll erkannt). Skript als `.docx` dazulegen; beim Werbespot gilt ein Storyboard oder eine Shotlist als
-Skript. Dateinamen sind egal, Kamera-Timecode hilft.
-
-**Versprecher:** kurz stoppen, deutlich **„nochmal“** sagen (oder einmal in die Hände klatschen) und den **ganzen Satz**
-neu beginnen – nicht mitten im Satz weitermachen. Der Satz davor wird dann als „vermutlich verworfen“ markiert (nur ein
-Hinweis, Claude entscheidet). Marker-Wörter sind einstellbar (`[analysis] retake_words`, Standard: nochmal, noch mal,
-nochmals, noch einmal, Cut, Schnitt, Stopp, von vorne, neu). Ein Marker zählt nur als eigene kurze Äußerung zwischen
-Pausen, nicht mitten im Satz.
-
-**Bild:** 1 Sekunde ruhig in die Kamera schauen, bevor du sprichst (ruhiger erster Frame für den Hook). Alle Takes mit
-derselben Framerate; B-Roll gern mit doppelter Rate (50p bei 25p), dann ist Zeitlupe möglich.
-
-**Ton:** Ansteckmikro auf einen Kanal, ein zweites Mikro auf den anderen ist in Ordnung – der Server wählt den besseren.
-Interview: ein Mikro pro Person auf eigenem Kanal, dann bekommt jeder Satz das Mikro seines Sprechers. Eine
-Sicherheitsspur (−6 dB) wird erkannt. Ruhiger Raum, Lüftung/Kühlschrank aus, 2–3 Sekunden Raumton am Anfang.
-
-**Namen:** Lege eine `glossar.txt` in den Ordner, eine Schreibweise pro Zeile, nach `=` bekannte Verhörer:
-`MOC AG = Moz AG, CU`, `Raum Inn-Isar`, `support@mondoria.de`.
-
-**Interview:** Fragen deutlich stellen; Vorgespräch und Technik-Absprachen stören nicht, sie werden erkannt und
-entfernt. Ob die Fragen im Video bleiben, entscheidet die Fassung (Social-Clip: raus, Langfassung: kurz drin).
-
-## Installation als Erweiterung (.mcpb)
-
-`uv run python packaging/build_mcpb.py` baut `dist/schnippo-<version>.mcpb` (MCP Bundle, `server.type = "uv"`).
-Doppelklick → Claude Desktop installiert die Erweiterung und fragt Gladia-Key (Schlüsselbund), Sprache, Format und
-optional einen Export-Ordner ab. Beim ersten Start lädt Claude Desktop über uv Python 3.14 und alle Abhängigkeiten
-(gemessen: ~1 min bei leerem Cache, danach < 1 s). Kein Terminal, kein Homebrew, kein eigenes Python nötig.
-ffmpeg/ffprobe: vorhandenes System-ffmpeg, sonst das PyPI-Paket `portable-ffmpeg-full` (GPL-Build, siehe
-[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)).
-
-## Entwicklung
-
-Testmedien und echte Takes (`testdata/`) werden nie committet. `tools/check_public.py` prüft das vor jedem Commit.
-
-## Lizenz
-
-[MIT](LICENSE)
+**Licence:** MIT, © Seitz Dominik Visuals. DaVinci Resolve is a trademark of Blackmagic Design. This project is independent of Blackmagic Design.
