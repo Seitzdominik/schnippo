@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="color-scheme" content="light dark">
+<title>{{APP_NAME}}</title>
+<!-- MCP App (ext-apps spec 2026-01-26), one view for all cards: structuredContent.view = setup | review | format | design.
+     View ↔ host: JSON-RPC 2.0 over postMessage; inline only (default CSP); host theme variables with own fallbacks. -->
+<style>
+  :root {
+    --color-background-primary: light-dark(#ffffff, #262624);
+    --color-background-secondary: light-dark(#f6f5f1, #30302d);
+    --color-background-tertiary: light-dark(#efede6, #383834);
+    --color-text-primary: light-dark(#1f1f1e, #f5f4ef);
+    --color-text-secondary: light-dark(#6b6a66, #a3a29c);
+    --color-border-primary: light-dark(#e6e4dd, #3a3a37);
+    --color-text-success: light-dark(#2f7d32, #7fc883);
+    --color-text-danger: light-dark(#b3261e, #f2867d);
+    --color-text-warning: light-dark(#8a5a00, #e6b45c);
+    --color-background-success: light-dark(#ecf6ec, #22331f);
+    --color-background-danger: light-dark(#fbeceb, #3a2321);
+    --color-background-warning: light-dark(#fbf3e2, #3a3020);
+    --color-ring-primary: light-dark(#1f1f1e, #f5f4ef);
+    --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-text-sm-size: 13px;
+    --font-text-md-size: 14px;
+    --border-radius-md: 8px;
+    --border-radius-lg: 12px;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 4px; font-family: var(--font-sans); font-size: var(--font-text-md-size);
+         color: var(--color-text-primary); background: transparent; }
+  .card { background: var(--color-background-primary); border: 1px solid var(--color-border-primary);
+          border-radius: var(--border-radius-lg); padding: 16px 18px; }
+  header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 4px; }
+  h1 { font-size: 15px; font-weight: 600; margin: 0; }
+  h2 { font-size: 14px; font-weight: 600; margin: 0 0 4px; }
+  .pill { font-size: var(--font-text-sm-size); padding: 3px 10px; border-radius: 999px; white-space: nowrap;
+          background: var(--color-background-secondary); color: var(--color-text-secondary); }
+  .pill.ok { color: var(--color-text-success); background: var(--color-background-success); }
+  .pill.bad { color: var(--color-text-danger); background: var(--color-background-danger); }
+  .sub { color: var(--color-text-secondary); font-size: var(--font-text-sm-size); margin: 0 0 12px; line-height: 1.45; }
+  .muted { color: var(--color-text-secondary); font-size: var(--font-text-sm-size); }
+  .box { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 12px 14px;
+         line-height: 1.5; font-size: var(--font-text-sm-size); }
+  .progress { display: flex; gap: 4px; margin: 2px 0 14px; }
+  .progress span { flex: 1; height: 4px; border-radius: 2px; background: var(--color-background-tertiary); }
+  .progress span.ok { background: var(--color-text-success); opacity: .55; }
+  .progress span.bad { background: var(--color-text-danger); opacity: .7; }
+  .progress span.now { outline: 2px solid var(--color-ring-primary); outline-offset: 1px; }
+  ul.list { list-style: none; margin: 0; padding: 0; }
+  ul.list li { display: grid; grid-template-columns: 20px 1fr; gap: 1px 10px; padding: 7px 0;
+               border-top: 1px solid var(--color-border-primary); font-size: var(--font-text-sm-size); }
+  ul.list li:first-child { border-top: none; }
+  .ic { width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; font-weight: 700; }
+  .ok .ic { color: var(--color-text-success); background: var(--color-background-success); }
+  .bad .ic { color: var(--color-text-danger); background: var(--color-background-danger); }
+  .skip .ic { color: var(--color-text-secondary); background: var(--color-background-secondary); }
+  .detail { grid-column: 2; color: var(--color-text-secondary); }
+  footer { display: flex; align-items: center; justify-content: space-between; margin-top: 14px; gap: 12px; flex-wrap: wrap; }
+  button { font: inherit; font-size: var(--font-text-sm-size); padding: 7px 14px; border-radius: var(--border-radius-md);
+           border: 1px solid var(--color-border-primary); background: var(--color-background-secondary);
+           color: var(--color-text-primary); cursor: pointer; }
+  button.primary { background: var(--color-text-primary); color: var(--color-background-primary); border-color: transparent; }
+  button:disabled { opacity: .55; cursor: default; }
+  button.link { border: none; background: none; padding: 4px 0; color: var(--color-text-secondary); text-decoration: underline; }
+  .seg { display: inline-flex; border: 1px solid var(--color-border-primary); border-radius: var(--border-radius-md); overflow: hidden; }
+  .seg button { border: none; border-radius: 0; background: transparent; padding: 6px 12px; }
+  .seg button + button { border-left: 1px solid var(--color-border-primary); }
+  .seg button[aria-pressed="true"] { background: var(--color-background-tertiary); font-weight: 600; }
+  .seg button.keep[aria-pressed="true"] { color: var(--color-text-success); background: var(--color-background-success); }
+  .seg button.drop[aria-pressed="true"] { color: var(--color-text-danger); background: var(--color-background-danger); }
+  .decision { border-top: 1px solid var(--color-border-primary); padding: 12px 0; display: grid; grid-template-columns: 1fr auto; gap: 8px 14px; }
+  .decision:first-of-type { border-top: none; }
+  .decision .kind { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--color-text-secondary); }
+  .decision .kind.widerspruch { color: var(--color-text-warning); }
+  .decision .q { font-weight: 500; margin: 2px 0 6px; }
+  .decision blockquote { margin: 0; padding: 6px 10px; border-left: 3px solid var(--color-border-primary);
+                         color: var(--color-text-secondary); font-size: var(--font-text-sm-size); line-height: 1.45; }
+  .decision img { width: 72px; border-radius: 6px; display: block; grid-row: span 2; align-self: start; }
+  .decision .act { grid-column: 1 / -1; display: flex; align-items: center; gap: 10px; }
+  .choices { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .choice { text-align: left; padding: 14px; border-radius: var(--border-radius-md); display: grid; gap: 6px; }
+  .choice[aria-pressed="true"] { outline: 2px solid var(--color-ring-primary); outline-offset: -1px; background: var(--color-background-tertiary); }
+  .choice .frame { border: 2px solid var(--color-text-secondary); border-radius: 4px; opacity: .7; }
+  .choice .t { font-weight: 600; } .choice .d { color: var(--color-text-secondary); font-size: 12px; }
+  .rec { font-size: 11px; color: var(--color-text-success); }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div class="card" id="root"><p class="muted">Lade …</p></div>
+<script>
+(() => {
+  // ---------- host bridge (spec 2026-01-26) ----------
+  let nextId = 1;
+  const pending = new Map();
+  const post = (msg) => window.parent.postMessage({ jsonrpc: "2.0", ...msg }, "*");
+  const request = (method, params) => new Promise((resolve, reject) => {
+    const id = nextId++;
+    pending.set(id, { resolve, reject });
+    post({ id, method, params });
+    setTimeout(() => { if (pending.has(id)) { pending.delete(id); reject(new Error("keine Antwort vom Host")); } }, 120000);
+  });
+  const notify = (method, params) => post({ method, params });
+  const callTool = (name, args) => request("tools/call", { name, arguments: args || {} });
+  const sendChat = (text) => request("ui/message", { role: "user", content: [{ type: "text", text }] });
+
+  function applyContext(ctx) {
+    if (!ctx) return;
+    if (ctx.theme) document.documentElement.style.colorScheme = ctx.theme;
+    const vars = (ctx.styles && ctx.styles.variables) || {};
+    for (const [k, v] of Object.entries(vars)) if (v) document.documentElement.style.setProperty(k, v);
+  }
+
+  // ---------- tiny DOM helper (text only, never innerHTML with data) ----------
+  function h(tag, attrs, ...kids) {
+    const el = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs || {})) {
+      if (v === undefined || v === null || v === false) continue;
+      if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
+      else if (k === "class") el.className = v;
+      else el.setAttribute(k, v === true ? "" : v);
+    }
+    for (const kid of kids.flat()) if (kid !== null && kid !== undefined && kid !== false)
+      el.append(kid instanceof Node ? kid : document.createTextNode(String(kid)));
+    return el;
+  }
+  const root = document.getElementById("root");
+  const show = (...kids) => root.replaceChildren(...kids);
+  let state = null;
+
+  function render(result) {
+    const data = result && result.structuredContent;
+    if (!data || !data.view) return;
+    state = data;
+    ({ setup: renderSetup, review: renderReview, format: renderFormat, design: window.renderDesign || renderUnknown }[data.view]
+      || renderUnknown)(data);
+  }
+  function renderUnknown(d) { show(h("p", { class: "muted" }, "Unbekannte Karte: " + d.view)); }
+
+  // ---------- setup assistant: one missing point at a time ----------
+  let showAll = false;
+  function renderSetup(d) {
+    const checks = d.checks || [];
+    const next = checks.find((c) => c.ok === false);
+    const nOk = checks.filter((c) => c.ok === true).length;
+    const bar = h("div", { class: "progress" }, checks.map((c) =>
+      h("span", { class: (c.ok === true ? "ok" : c.ok === false ? "bad" : "") + (next && c.id === next.id ? " now" : ""), title: c.label })));
+    const again = h("button", { class: d.ready ? "" : "primary", onclick: () => recheck(again) }, "Erneut prüfen");
+    let body;
+    if (d.ready) {
+      body = [h("h2", {}, "Alles bereit"),
+        h("p", { class: "sub" }, "Resolve, Gladia und ffmpeg sind eingerichtet. Zum Loslegen zum Beispiel:"),
+        h("div", { class: "box" }, d.example || "„Schneide den Ordner …/Aufnahmen als Reel, Name: Test1.“")];
+    } else if (next) {
+      const idx = checks.indexOf(next) + 1;
+      body = [h("div", { class: "muted" }, `Schritt ${idx} von ${checks.length}`), h("h2", {}, next.label),
+        next.detail ? h("p", { class: "sub" }, next.detail) : null,
+        next.fix ? h("div", { class: "box" }, next.fix) : null];
+    } else {
+      body = [h("h2", {}, "Fast fertig"), h("p", { class: "sub" }, "Einige Punkte werden geprüft, sobald die vorherigen erledigt sind.")];
+    }
+    const all = h("ul", { class: "list" + (showAll ? "" : " hidden") }, checks.map((c) =>
+      h("li", { class: c.ok === true ? "ok" : c.ok === false ? "bad" : "skip" },
+        h("span", { class: "ic" }, c.ok === true ? "✓" : c.ok === false ? "✕" : "–"), h("span", {}, c.label),
+        c.detail ? h("span", { class: "detail" }, c.detail) : null)));
+    const toggle = h("button", { class: "link", onclick: () => { showAll = !showAll; renderSetup(state); } },
+      showAll ? "Liste ausblenden" : `Alle ${checks.length} Punkte (${nOk} erledigt)`);
+    show(h("header", {}, h("h1", {}, "{{APP_NAME}} – Einrichtung"),
+           h("span", { class: "pill " + (d.ready ? "ok" : "bad") }, d.ready ? "Alles bereit" : `${d.failed} offen`)),
+         bar, ...body, h("div", { style: "margin-top:10px" }, toggle), all,
+         h("footer", {}, h("span", { class: "muted", id: "time" }, "Geprüft " + clock()), again));
+  }
+  async function recheck(btn) {
+    btn.disabled = true; btn.textContent = "Prüfe …";
+    try { render(await callTool("check_setup")); }
+    catch (e) { btn.disabled = false; btn.textContent = "Erneut prüfen"; alertLine("Prüfung fehlgeschlagen: " + (e.message || e)); }
+  }
+  const clock = () => new Date().toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  function alertLine(text) { root.append(h("p", { class: "muted" }, text)); }
+
+  // ---------- review after rough/fine: keep / drop / don't care ----------
+  function renderReview(d) {
+    const answers = {};
+    for (const it of d.decisions || []) answers[it.id] = it.answer || null;
+    const send = h("button", { class: "primary", onclick: () => submit() }, "Auswahl an Claude senden");
+    const status = h("span", { class: "muted" });
+    const rows = (d.decisions || []).map((it) => {
+      const seg = h("div", { class: "seg", role: "group" });
+      for (const [val, label, cls] of [["keep", "Behalten", "keep"], ["drop", "Raus", "drop"], ["any", "Egal", ""]]) {
+        const b = h("button", { class: cls, "aria-pressed": String(answers[it.id] === val), onclick: () => {
+          answers[it.id] = val;
+          for (const x of seg.children) x.setAttribute("aria-pressed", String(x === b));
+          update();
+        } }, label);
+        seg.append(b);
+      }
+      return h("div", { class: "decision" },
+        h("div", {}, h("div", { class: "kind " + (it.kind || "") }, it.kind_label || it.kind || ""),
+          h("div", { class: "q" }, it.question), it.text ? h("blockquote", {}, it.text) : null,
+          it.where ? h("div", { class: "muted", style: "margin-top:4px" }, it.where) : null),
+        it.image ? h("img", { src: it.image, alt: "" }) : h("span"),
+        h("div", { class: "act" }, seg, it.recommendation ? h("span", { class: "muted" }, "Vorschlag: " + it.recommendation) : null));
+    });
+    function update() {
+      const open = Object.values(answers).filter((v) => !v).length;
+      status.textContent = open ? `${open} offen` : "alles beantwortet";
+    }
+    async function submit() {
+      send.disabled = true; send.textContent = "Sende …";
+      const list = (d.decisions || []).map((it) => ({ id: it.id, answer: answers[it.id] || "any" }));
+      let summary = "";
+      try {
+        const res = await callTool("submit_review", { review_id: d.review_id, answers: list });
+        summary = (res && res.content && res.content[0] && res.content[0].text) || "";
+      } catch (e) { status.textContent = "Speichern fehlgeschlagen: " + (e.message || e); send.disabled = false; send.textContent = "Erneut senden"; return; }
+      try {
+        await sendChat(summary || ("Review " + d.review_id + ": " + list.map((x) => x.id + "=" + x.answer).join(", ")));
+        status.textContent = "An Claude gesendet ✓";
+      } catch (e) { status.textContent = "Gespeichert ✓ – schreibe im Chat „weiter“."; }
+      send.textContent = "Gesendet";
+    }
+    update();
+    show(h("header", {}, h("h1", {}, d.title || "Bitte kurz entscheiden"), h("span", { class: "pill" }, d.timeline || "")),
+         d.intro ? h("p", { class: "sub" }, d.intro) : null, ...rows,
+         h("footer", {}, status, send));
+  }
+
+  // ---------- format choice ----------
+  function renderFormat(d) {
+    let pick = d.recommended;
+    const opts = [["reel", "Reel 9:16", "30–90 s, Instagram/TikTok/Shorts", "width:14px;height:24px"],
+                  ["youtube", "YouTube-Video 16:9", "8–15 min, Kapitel, Bauchbinden", "width:30px;height:17px"],
+                  ["course", "Kursvideo 16:9", "ruhiger, Kapitel je Lektion, Bildschirmaufnahmen", "width:30px;height:17px"],
+                  ["commercial", "Werbespot", "15–60 s, viel Bild, Szenen", "width:30px;height:17px"]];
+    const LABEL = Object.fromEntries(opts.map(o => [o[0], o[1]]));
+    const buttons = opts.map(([val, t, desc, frame]) => h("button", { class: "choice", "aria-pressed": String(pick === val),
+      onclick: () => { pick = val; for (const b of buttons) b.setAttribute("aria-pressed", String(b.dataset.v === val)); } },
+      h("span", { class: "frame", style: frame }), h("span", { class: "t" }, t), h("span", { class: "d" }, desc),
+      d.recommended === val ? h("span", { class: "rec" }, "erkannt: " + (d.confidence != null ? Math.round(d.confidence * 100) + " %" : "")) : null));
+    buttons.forEach((b, i) => { b.dataset.v = opts[i][0]; });
+    const status = h("span", { class: "muted" });
+    const ok = h("button", { class: "primary", onclick: async () => {
+      ok.disabled = true;
+      try {
+        await callTool("set_format", { format: pick });
+        try { await sendChat(`Format: ${LABEL[pick] || pick}`); status.textContent = "Übernommen ✓"; }
+        catch (e) { status.textContent = "Gespeichert ✓ – schreibe im Chat „weiter“."; }
+      } catch (e) { status.textContent = "Fehler: " + (e.message || e); ok.disabled = false; }
+    } }, "Übernehmen");
+    show(h("header", {}, h("h1", {}, "Welches Format?")), h("p", { class: "sub" }, d.reason || ""),
+         h("div", { class: "choices" }, buttons), h("footer", {}, status, ok));
+  }
+
+  // ---------- messages from the host ----------
+  window.addEventListener("message", (event) => {
+    if (event.source !== window.parent) return;
+    const m = event.data;
+    if (!m || m.jsonrpc !== "2.0") return;
+    if (!m.method && m.id != null && pending.has(m.id)) {
+      const p = pending.get(m.id); pending.delete(m.id);
+      m.error ? p.reject(m.error) : p.resolve(m.result);
+      return;
+    }
+    if (m.method === "ui/notifications/tool-result") render(m.params);
+    else if (m.method === "ui/notifications/host-context-changed") applyContext(m.params);
+    else if (m.method && m.id != null) post({ id: m.id, result: {} });
+  });
+
+  window.__card = { h, show, callTool, sendChat, request, render, get state() { return state; } };
+
+  (async () => {
+    try {
+      const init = await request("ui/initialize", { appInfo: { name: "schnippo", version: "2.0.0" }, appCapabilities: {},
+                                                     protocolVersion: "2026-01-26" });
+      applyContext(init && init.hostContext);
+    } catch (e) { /* hosts without MCP Apps never load this view */ }
+    notify("ui/notifications/initialized", {});
+    const report = () => notify("ui/notifications/size-changed", {
+      width: Math.ceil(document.documentElement.scrollWidth), height: Math.ceil(document.documentElement.getBoundingClientRect().height) });
+    new ResizeObserver(report).observe(document.body);
+    report();
+  })();
+})();
+</script>
+<!--DESIGN-->
+</body>
+</html>

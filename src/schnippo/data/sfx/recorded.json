@@ -1,0 +1,289 @@
+[
+ {
+  "id": "click_mouse",
+  "file": "wav/click_mouse.wav",
+  "category": "click",
+  "intensity": 2,
+  "description": "echte Maus: Drücken und Loslassen",
+  "type": "oneshot",
+  "event_align": "transient",
+  "reference": "click",
+  "styles": [
+   "tech",
+   "minimal",
+   "bold"
+  ],
+  "hit_offset_ms": 12,
+  "duration_ms": 310,
+  "audible_ms": 225,
+  "peak_rms_db": -27.6,
+  "true_peak_db": -2.7,
+  "license": "CC0",
+  "source": "Freesound 192068: mouseclicks",
+  "author": "deleted_user_2902138",
+  "url": "https://freesound.org/s/192068/",
+  "cut_s": [
+   2.59,
+   2.9
+  ],
+  "changes": "geschnitten, ein Kanal auf beide Seiten"
+ },
+ {
+  "id": "click_mouse_soft",
+  "file": "wav/click_mouse_soft.wav",
+  "category": "click",
+  "intensity": 1,
+  "description": "echte Maus, leiser Anschlag",
+  "type": "oneshot",
+  "event_align": "transient",
+  "reference": "click",
+  "styles": [
+   "tech",
+   "minimal",
+   "bold"
+  ],
+  "hit_offset_ms": 8,
+  "duration_ms": 290,
+  "audible_ms": 215,
+  "peak_rms_db": -25.2,
+  "true_peak_db": -1.7,
+  "license": "CC0",
+  "source": "Freesound 192068: mouseclicks",
+  "author": "deleted_user_2902138",
+  "url": "https://freesound.org/s/192068/",
+  "cut_s": [
+   0.34,
+   0.63
+  ],
+  "changes": "geschnitten, ein Kanal auf beide Seiten"
+ },
+ {
+  "id": "click_mouse_sharp",
+  "file": "wav/click_mouse_sharp.wav",
+  "category": "click",
+  "intensity": 3,
+  "description": "echte Maus, kräftig",
+  "type": "oneshot",
+  "event_align": "transient",
+  "reference": "click",
+  "styles": [
+   "tech",
+   "minimal",
+   "bold"
+  ],
+  "hit_offset_ms": 12,
+  "duration_ms": 285,
+  "audible_ms": 190,
+  "peak_rms_db": -27.2,
+  "true_peak_db": -2.6,
+  "license": "CC0",
+  "source": "Freesound 192068: mouseclicks",
+  "author": "deleted_user_2902138",
+  "url": "https://freesound.org/s/192068/",
+  "cut_s": [
+   6.935,
+   7.22
+  ],
+  "changes": "geschnitten, ein Kanal auf beide Seiten"
+ },
+ {
+  "id": "typing_mech",
+  "file": "wav/typing_mech.wav",
+  "category": "typing",
+  "intensity": 2,
+  "description": "echte Tastatur, rote Schalter, flüssig",
+  "type": "sequence",
+  "event_align": "start",
+  "reference": "typing",
+  "styles": [
+   "tech",
+   "bold"
+  ],
+  "hit_offset_ms": 0,
+  "duration_ms": 3655,
+  "audible_ms": 3605,
+  "peak_rms_db": -23.4,
+  "true_peak_db": -2.6,
+  "license": "CC0",
+  "source": "Freesound 866643: Keyboard typing",
+  "author": "7empest",
+  "url": "https://freesound.org/s/866643/",
+  "cut_s": [
+   33.385,
+   37.04
+  ],
+  "changes": "geschnitten, Hochpass 50 Hz"
+ },
+ {
+  "id": "typing_mech_b",
+  "file": "wav/typing_mech_b.wav",
+  "category": "typing",
+  "intensity": 1,
+  "description": "echte Tastatur, zweite Passage",
+  "type": "sequence",
+  "event_align": "start",
+  "reference": "typing",
+  "styles": [
+   "tech",
+   "bold"
+  ],
+  "hit_offset_ms": 0,
+  "duration_ms": 3785,
+  "audible_ms": 3355,
+  "peak_rms_db": -24.7,
+  "true_peak_db": -2.8,
+  "license": "CC0",
+  "source": "Freesound 866643: Keyboard typing",
+  "author": "7empest",
+  "url": "https://freesound.org/s/866643/",
+  "cut_s": [
+   69.455,
+   73.24
+  ],
+  "changes": "geschnitten, Hochpass 50 Hz"
+ },
+ {
+  "id": "clock_timer",
+  "file": "wav/clock_timer.wav",
+  "category": "clock",
+  "intensity": 2,
+  "description": "echtes Uhrwerk, 4 Ticks je Sekunde, loopt nahtlos",
+  "type": "bed",
+  "event_align": "start",
+  "reference": "clock",
+  "styles": [
+   "tech",
+   "bold",
+   "minimal"
+  ],
+  "hit_offset_ms": 0,
+  "duration_ms": 3000,
+  "audible_ms": 2845,
+  "peak_rms_db": -27.1,
+  "true_peak_db": -2.9,
+  "license": "CC0",
+  "source": "Freesound 869203: Steba oven clock - mechanical timer",
+  "author": "initbruv216",
+  "url": "https://freesound.org/s/869203/",
+  "cut_s": [
+   87.94,
+   90.94
+  ],
+  "changes": "nur geschnitten"
+ },
+ {
+  "id": "clock_timer_b",
+  "file": "wav/clock_timer_b.wav",
+  "category": "clock",
+  "intensity": 1,
+  "description": "echtes Uhrwerk, zweite Passage",
+  "type": "bed",
+  "event_align": "start",
+  "reference": "clock",
+  "styles": [
+   "tech",
+   "bold",
+   "minimal"
+  ],
+  "hit_offset_ms": 0,
+  "duration_ms": 3000,
+  "audible_ms": 2835,
+  "peak_rms_db": -26.9,
+  "true_peak_db": -2.7,
+  "license": "CC0",
+  "source": "Freesound 869203: Steba oven clock - mechanical timer",
+  "author": "initbruv216",
+  "url": "https://freesound.org/s/869203/",
+  "cut_s": [
+   15.94,
+   18.94
+  ],
+  "changes": "nur geschnitten"
+ },
+ {
+  "id": "downer_vinyl",
+  "file": "wav/downer_vinyl.wav",
+  "category": "downer",
+  "intensity": 2,
+  "description": "Vinyl-Scratch, nur auf Wunsch oder bei Bold Creator",
+  "type": "oneshot",
+  "event_align": "transient",
+  "reference": "downer",
+  "styles": [
+   "bold"
+  ],
+  "hit_offset_ms": 48,
+  "duration_ms": 705,
+  "audible_ms": 660,
+  "peak_rms_db": -15.4,
+  "auto_styles": [
+   "bold"
+  ],
+  "true_peak_db": -3.0,
+  "license": "CC0",
+  "source": "Freesound 668909: Vinyl Scratch",
+  "author": "ChuckChuckGoof",
+  "url": "https://freesound.org/s/668909/",
+  "cut_s": [
+   0.0,
+   0.705
+  ],
+  "changes": "nur geschnitten"
+ },
+ {
+  "id": "ding_real",
+  "file": "wav/ding_real.wav",
+  "category": "ding",
+  "intensity": 2,
+  "description": "echte Klingel der Küchenuhr, kurz",
+  "type": "oneshot",
+  "event_align": "transient",
+  "reference": "ding",
+  "styles": [
+   "soft",
+   "bold",
+   "tech"
+  ],
+  "hit_offset_ms": 38,
+  "duration_ms": 1540,
+  "audible_ms": 1045,
+  "peak_rms_db": -23.3,
+  "true_peak_db": -2.9,
+  "license": "CC0",
+  "source": "Freesound 869203: Steba oven clock - mechanical timer",
+  "author": "initbruv216",
+  "url": "https://freesound.org/s/869203/",
+  "cut_s": [
+   180.46,
+   182.0
+  ],
+  "changes": "nur geschnitten"
+ },
+ {
+  "id": "alarm_real",
+  "file": "wav/alarm_real.wav",
+  "category": "alarm",
+  "intensity": 2,
+  "description": "echte Klingel der Küchenuhr, ganz, nur als Pointe",
+  "type": "oneshot",
+  "event_align": "start",
+  "reference": "clock",
+  "styles": [
+   "bold"
+  ],
+  "hit_offset_ms": 0,
+  "duration_ms": 3740,
+  "audible_ms": 1045,
+  "peak_rms_db": -23.3,
+  "true_peak_db": -2.9,
+  "license": "CC0",
+  "source": "Freesound 869203: Steba oven clock - mechanical timer",
+  "author": "initbruv216",
+  "url": "https://freesound.org/s/869203/",
+  "cut_s": [
+   180.46,
+   184.2
+  ],
+  "changes": "nur geschnitten"
+ }
+]

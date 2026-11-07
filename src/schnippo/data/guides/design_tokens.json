@@ -1,0 +1,124 @@
+{
+  "$comment": "Design-Tokens für Motion Graphics. Grafiken dürfen nur diese Werte nutzen. brand.* ist vom Nutzer anpassbar. Quellen: IBM Carbon, Material 3 (Kurven/Dauern), Synthese (Rest). head_clearance_px: Mindestabstand sichtbare Grafik-Pixel ↔ Kopfbox (bei 1080 px Breite).",
+  "brand": {
+    "font_family": "Inter",
+    "font_weights": [
+      600,
+      800
+    ],
+    "accent": "#FF5A36",
+    "text": "#FFFFFF",
+    "text_dark": "#111111",
+    "surface": "rgba(17,17,17,0.55)",
+    "surface_light": "rgba(255,255,255,0.92)",
+    "radius_px": 18
+  },
+  "motion": {
+    "dur": {
+      "micro_ms": 120,
+      "in_ms": 400,
+      "out_ms": 250,
+      "emph_ms": 600,
+      "small_ms": 200,
+      "large_ms": 550
+    },
+    "stagger": {
+      "word_ms": 50,
+      "line_ms": 100,
+      "text_after_box_frames": 4
+    },
+    "easing": {
+      "enter": "cubic-bezier(0.05, 0.7, 0.1, 1)",
+      "exit": "cubic-bezier(0.3, 0, 0.8, 0.15)",
+      "move": "cubic-bezier(0.2, 0, 0, 1)",
+      "enter_expressive": "cubic-bezier(0, 0, 0.3, 1)",
+      "exit_expressive": "cubic-bezier(0.4, 0.14, 1, 1)"
+    },
+    "overshoot_max": 0.08,
+    "expressive_max_per_video": 2,
+    "hold_min_ms": 1500,
+    "hold_complex_min_ms": 3000
+  },
+  "type": {
+    "reel": {
+      "hook_cap_height_px": 84,
+      "callout_cap_height_px": 64,
+      "tracking_em": -0.015,
+      "max_lines": 2,
+      "hook_max_words": 8,
+      "min_cap_height_px": 48
+    },
+    "youtube": {
+      "lower_third_name_px": 52,
+      "lower_third_role_px": 34,
+      "callout_px": 64,
+      "tracking_em": -0.01,
+      "min_px": 40
+    }
+  },
+  "contrast": {
+    "min_ratio": 4.5,
+    "scrim_opacity_range": [
+      0.4,
+      0.6
+    ],
+    "outline_px_range": [
+      4,
+      8
+    ]
+  },
+  "layout": {
+    "reel_1080x1920": {
+      "safe_box": {
+        "x": [
+          108,
+          900
+        ],
+        "y": [
+          290,
+          1340
+        ]
+      },
+      "callout_y": [
+        300,
+        700
+      ],
+      "avoid_face_margin_px": 40
+    },
+    "youtube_1920x1080": {
+      "title_safe": {
+        "x_margin": 96,
+        "y_margin": 54
+      }
+    },
+    "head_clearance_px": 48,
+    "head_from_face": {
+      "up": 0.6,
+      "side": 0.25,
+      "down": 0.05
+    }
+  },
+  "spacing": {
+    "$comment": "Innenabstände relativ zur Versalhöhe (cap = Schriftgröße × 0,72): Grafiken skalieren damit mit jeder Auflösung.",
+    "pad_x_cap": 1.05,
+    "pad_y_cap": 0.6,
+    "min_pad_x_cap": 0.9,
+    "min_pad_y_cap": 0.5,
+    "name_role_gap": 0.3,
+    "accent_gap_cap": 1.05,
+    "accent_width_cap": 0.12,
+    "underline_gap_cap": 0.3,
+    "lower_third_min_width_em": 6.0
+  },
+  "limits": {
+    "max_simultaneous_elements": 2,
+    "reel_max_graphics": 3,
+    "sfx": "nur große Eingänge, -18 bis -24 dB unter Stimme"
+  },
+  "render": {
+    "container": "mov",
+    "codec": "prores_ks profile 4 (4444), yuva444p10le, alpha_bits 16, bt709",
+    "fallback": "PNG-Sequenz",
+    "fps": "= Timeline-FPS"
+  }
+}

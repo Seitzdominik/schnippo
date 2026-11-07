@@ -1,0 +1,52 @@
+{
+  "name": "schnippo",
+  "displayName": "Schnippo",
+  "version": "0.11.0",
+  "description": "KI-Rohschnitt für DaVinci Resolve: Rohschnitt per Chat, mit Ton, Zooms, B-Roll, Grafiken und Reels.",
+  "author": {
+    "name": "Seitz Dominik Visuals",
+    "url": "https://sdv.design"
+  },
+  "homepage": "https://schnippo.com",
+  "repository": "https://github.com/Seitzdominik/schnippo",
+  "license": "MIT",
+  "keywords": [
+    "video",
+    "schnitt",
+    "davinci-resolve",
+    "transkript",
+    "reels"
+  ],
+  "documentationUrl": "https://github.com/Seitzdominik/schnippo#readme",
+  "supportUrl": "https://github.com/Seitzdominik/schnippo/issues",
+  "privacyPolicyUrl": "https://schnippo.com/privacy",
+  "userConfig": {
+    "gladia_api_key": {
+      "type": "string",
+      "title": "Gladia-API-Key",
+      "description": "Für die Transkription, von app.gladia.io.",
+      "sensitive": true,
+      "required": false
+    },
+    "projects_folder": {
+      "type": "directory",
+      "title": "Standardordner für Projekte",
+      "description": "Dann reicht im Chat der Projektname.",
+      "required": false
+    },
+    "format": {
+      "type": "string",
+      "title": "Format",
+      "description": "auto, reel, youtube, course oder commercial.",
+      "default": "auto",
+      "required": false
+    },
+    "sfx": {
+      "type": "string",
+      "title": "Sound-Effekte",
+      "description": "off, subtil oder normal.",
+      "default": "subtil",
+      "required": false
+    }
+  }
+}

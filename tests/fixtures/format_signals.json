@@ -1,0 +1,66 @@
+{
+ "_note": "Kennzahlen je Filmtyp für die Format-Erkennung und die B-Roll-Einstufung. Nur Zahlen, keine Medien, keine Transkripte.",
+ "projects": {
+  "interview": {
+   "w": 3840,
+   "h": 2160,
+   "speech_s": 638.4,
+   "raw_s": 1119.8,
+   "speakers": 2,
+   "aroll_clips": 1,
+   "broll_clips": 5,
+   "longest_take_speech_s": 638.4,
+   "text_hits": "",
+   "expect": "youtube"
+  },
+  "kurs": {
+   "w": 1920,
+   "h": 1080,
+   "speech_s": 306.2,
+   "raw_s": 602.9,
+   "speakers": 1,
+   "aroll_clips": 6,
+   "broll_clips": 0,
+   "longest_take_speech_s": 124.7,
+   "text_hits": "willkommen zum guide kurs lektion",
+   "expect": "course"
+  },
+  "werbefilm": {
+   "w": 3840,
+   "h": 2160,
+   "speech_s": 62.7,
+   "raw_s": 368.0,
+   "speakers": 1,
+   "aroll_clips": 6,
+   "broll_clips": 12,
+   "longest_take_speech_s": 16.2,
+   "text_hits": "",
+   "expect": "commercial"
+  }
+ },
+ "broll_mean_confidence": {
+  "hallucinated_on_ambience": [
+   0.13,
+   0.04,
+   0.14,
+   0.08
+  ],
+  "noisy_chatter": [
+   0.41,
+   0.35
+  ],
+  "speech": [
+   0.74,
+   0.83,
+   0.71,
+   0.65,
+   0.73,
+   0.65,
+   0.76,
+   0.92,
+   0.92,
+   0.87,
+   0.87
+  ]
+ }
+}

@@ -1,0 +1,56 @@
+[project]
+name = "schnippo"
+version = "0.11.0"
+description = "KI-Rohschnitt für DaVinci Resolve: MCP-Server für Rohschnitte per Chat"
+license = "MIT"
+readme = "README.md"
+authors = [
+    { name = "Seitz Dominik Visuals" }
+]
+keywords = ["mcp", "davinci resolve", "video editing", "rough cut", "transcript"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: MacOS X",
+    "Intended Audience :: End Users/Desktop",
+    "Natural Language :: German",
+    "Operating System :: MacOS",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Multimedia :: Video :: Non-Linear Editor",
+]
+requires-python = ">=3.14,<3.16"  # tested with Resolve 21.1.2 fusionscript: 3.14 (default via .python-version) and 3.15
+dependencies = [
+    "httpx>=0.28.1",
+    "mcp[cli]>=2.3.0",
+    "numpy>=2.5.4",
+    "opencv-python-headless>=4.10,<5",
+    "pillow>=13.0.0",
+    "portable-ffmpeg-full==0.5.0",
+    "pydantic>=2.14.2",
+    "python-docx>=1.2.0",
+    "rapidfuzz>=3.14.6",
+]
+
+[project.urls]
+Homepage = "https://schnippo.com"
+Repository = "https://github.com/Seitzdominik/schnippo"
+Issues = "https://github.com/Seitzdominik/schnippo/issues"
+
+[project.optional-dependencies]
+# installed on first use of motion graphics (motion_setup), not with the extension
+motion = ["playwright==1.64.1"]
+
+[project.scripts]
+schnippo = "schnippo.server:main"
+
+[build-system]
+requires = ["uv_build>=0.13.7,<0.14.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "playwright==1.64.1",
+    "pytest>=9.2.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

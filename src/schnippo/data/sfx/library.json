@@ -1,0 +1,860 @@
+{
+ "version": 2,
+ "sample_rate": 48000,
+ "bit_depth": 24,
+ "effects": [
+  {
+   "id": "whoosh_big",
+   "file": "wav/whoosh_big.wav",
+   "category": "whoosh",
+   "intensity": 3,
+   "description": "cinematisch, mit Körper und Raum",
+   "type": "oneshot",
+   "event_align": "transient",
+   "reference": "whoosh",
+   "styles": [
+    "bold",
+    "soft",
+    "minimal"
+   ],
+   "hit_offset_ms": 672,
+   "duration_ms": 1920,
+   "audible_ms": 1370,
+   "peak_rms_db": -14.8,
+   "true_peak_db": -3.0,
+   "license": "MIT (selbst erzeugt)"
+  },
+  {
+   "id": "whoosh_end",
+   "file": "wav/whoosh_end.wav",
+   "category": "whoosh",
+   "intensity": 2,
+   "description": "kurz, tief, endet hart",
+   "type": "oneshot",
+   "event_align": "transient",
+   "reference": "whoosh",
+   "styles": [
+    "bold",
+    "soft",
+    "minimal"
+   ],
+   "hit_offset_ms": 472,
+   "duration_ms": 858,
+   "audible_ms": 650,
+   "peak_rms_db": -12.6,
+   "true_peak_db": -3.0,
+   "license": "MIT (selbst erzeugt)"
+  },
+  {
+   "id": "whoosh_mid",
+   "file": "wav/whoosh_mid.wav",
+   "category": "whoosh",
+   "intensity": 2,
+   "description": "rund, von links nach rechts",
+   "type": "oneshot",
+   "event_align": "transient",
+   "reference": "whoosh",
+   "styles": [
+    "bold",
+    "soft",
+    "minimal"
+   ],
+   "hit_offset_ms": 468,
+   "duration_ms": 1276,
+   "audible_ms": 960,
+   "peak_rms_db": -13.6,
+   "true_peak_db": -3.0,
+   "license": "MIT (selbst erzeugt)"
+  },
+  {
+   "id": "whoosh_soft",
+   "file": "wav/whoosh_soft.wav",
+   "category": "whoosh",
+   "intensity": 1,
+   "description": "weich, luftig",
+   "type": "oneshot",
+   "event_align": "transient",
+   "reference": "whoosh",
+   "styles": [
+    "bold",
+    "soft",
+    "minimal"
+   ],
+   "hit_offset_ms": 432,
+   "duration_ms": 934,
+   "audible_ms": 730,
+   "peak_rms_db": -12.4,
+   "true_peak_db": -3.0,
+   "license": "MIT (selbst erzeugt)"
+  },
+  {
+   "id": "swish_bright",
+   "file": "wav/swish_bright.wav",
+   "category": "swish",
+   "intensity": 3,
+   "description": "hell",
+   "type": "oneshot",
+   "event_align": "transient",
+   "reference": "whoosh",
+   "styles": [
+    "bold",
+    "soft",
+    "minimal"
+   ],
+   "hit_offset_ms": 232,
+   "duration_ms": 684,
+   "audible_ms": 500,
+   "peak_rms_db": -12.9,
+   "true_peak_db": -3.0,
+   "license": "MIT (selbst erzeugt)"
+  },
+  {
+   "id": "swish_mid",
+   "file": "wav/swish_mid.wav",
+   "category": "swish",
+   "intensity": 2,
+   "description": "knapp",
+   "type": "oneshot",
+   "event_align": "transient",
+   "reference": "whoosh",
+   "styles": [
+    "bold",
+    "soft",
+    "minimal"
+   ],
+   "hit_offset_ms": 202,
+   "duration_ms": 579,
+   "audible_ms": 420,
+   "peak_rms_db": -13.3,
+   "true_peak_db": -3.0,
+   "license": "MIT (selbst erzeugt)"
+  },
+  {
+   "id": "swish_soft",
+   "file": "wav/swish_soft.wav",
+   "category": "swish",
+   "intensity": 1,
+   "description": "luftig, schnell",
+   "type": "oneshot",
+   "event_align": "transient",
+   "reference": "whoosh",
+   "styles": [
+    "bold",
+    "soft",
+    "minimal"
+   ],
+   "hit_offset_ms": 148,
+   "duration_ms": 477,
+   "audible_ms": 340,
+   "peak_rms_db": -12.3,
+   "true_peak_db": -3.0,
+   "license": "MIT (selbst erzeugt)"
+  },
+  {
+   "id": "pop_bright",
+   "file": "wav/pop_bright.wav",
+   "category": "pop",
+   "intensity": 3,
+   "description": "knackig",
+   "type": "oneshot",
+   "event_align": "transient",
+   "reference": null,
+   "styles": [
+    "bold"
+   ],
+   "hit_offset_ms": 2,
+   "duration_ms": 211,
+   "audible_ms": 115,
+   "peak_rms_db": -13.1,
+   "true_peak_db": -3.0,
+   "license": "MIT (selbst erzeugt)"
+  },
+  {
+   "id": "pop_mid",
+   "file": "wav/pop_mid.wav",
+   "category": "pop",
+   "intensity": 2,
+   "description": "rund",
+   "type": "oneshot",
+   "event_align": "transient",
+   "reference": null,
+   "styles": [
+    "bold"
+   ],
+   "hit_offset_ms": 2,
+   "duration_ms": 233,
+   "audible_ms": 140,
+   "peak_rms_db": -12.2,
+   "true_peak_db": -3.0,
+   "license": "MIT (selbst erzeugt)"
+  },
+  {
+   "id": "pop_soft",
+   "file": "wav/pop_soft.wav",
+   "category": "pop",
+   "intensity": 1,
+   "description": "weich, tief",
+   "type": "oneshot",
+   "event_align": "transient",
+   "reference": null,
+   "styles": [
+    "bold"
+   ],
+   "hit_offset_ms": 2,
+   "duration_ms": 234,
+   "audible_ms": 140,
+   "peak_rms_db": -11.6,
+   "true_peak_db": -3.0,
+   "license": "MIT (selbst erzeugt)"
+  },
+  {
+   "id": "tick_bright",
+   "file": "wav/tick_bright.wav",
+   "category": "tick",
+   "intensity": 3,
+   "description": "hell, trocken",
+   "type": "oneshot",
+   "event_align": "transient",
+   "reference": "click",
+   "styles": [
+    "tech",
+    "minimal",
+    "bold"
+   ],
+   "hit_offset_ms": 2,
+   "duration_ms": 43,
+   "audible_ms": 30,
+   "peak_rms_db": -23.2,
+   "true_peak_db": -2.6,
+   "license": "MIT (selbst erzeugt)"
+  },
+  {
+   "id": "tick_mid",
+   "file": "wav/tick_mid.wav",
+   "category": "tick",
+   "intensity": 2,
+   "description": "Kunststoff",
+   "type": "oneshot",
+   "event_align": "transient",
+   "reference": "click",
+   "styles": [
+    "tech",
+    "minimal",
+    "bold"
+   ],
+   "hit_offset_ms": 2,
+   "duration_ms": 33,
+   "audible_ms": 25,
+   "peak_rms_db": -22.6,
+   "true_peak_db": -2.8,
+   "license": "MIT (selbst erzeugt)"
+  },
+  {
+   "id": "tick_soft",
+   "file": "wav/tick_soft.wav",
+   "category": "tick",
+   "intensity": 1,
+   "description": "Holz, leise",
+   "type": "oneshot",
+   "event_align": "transient",
+   "reference": "click",
+   "styles": [
+    "tech",
+    "minimal",
+    "bold"
+   ],
+   "hit_offset_ms": 2,
+   "duration_ms": 48,
+   "audible_ms": 30,
+   "peak_rms_db": -24.8,
+   "true_peak_db": -3.0,
+   "license": "MIT (selbst erzeugt)"
+  },
+  {
+   "id": "click_mouse",
+   "file": "wav/click_mouse.wav",
+   "category": "click",
+   "intensity": 2,
+   "description": "echte Maus: Drücken und Loslassen",
+   "type": "oneshot",
+   "event_align": "transient",
+   "reference": "click",
+   "styles": [
+    "tech",
+    "minimal",
+    "bold"
+   ],
+   "hit_offset_ms": 12,
+   "duration_ms": 310,
+   "audible_ms": 225,
+   "peak_rms_db": -27.6,
+   "true_peak_db": -2.7,
+   "license": "CC0",
+   "source": "Freesound 192068: mouseclicks",
+   "author": "deleted_user_2902138",
+   "url": "https://freesound.org/s/192068/",
+   "cut_s": [
+    2.59,
+    2.9
+   ],
+   "changes": "geschnitten, ein Kanal auf beide Seiten"
+  },
+  {
+   "id": "click_mouse_sharp",
+   "file": "wav/click_mouse_sharp.wav",
+   "category": "click",
+   "intensity": 3,
+   "description": "echte Maus, kräftig",
+   "type": "oneshot",
+   "event_align": "transient",
+   "reference": "click",
+   "styles": [
+    "tech",
+    "minimal",
+    "bold"
+   ],
+   "hit_offset_ms": 12,
+   "duration_ms": 285,
+   "audible_ms": 190,
+   "peak_rms_db": -27.2,
+   "true_peak_db": -2.6,
+   "license": "CC0",
+   "source": "Freesound 192068: mouseclicks",
+   "author": "deleted_user_2902138",
+   "url": "https://freesound.org/s/192068/",
+   "cut_s": [
+    6.935,
+    7.22
+   ],
+   "changes": "geschnitten, ein Kanal auf beide Seiten"
+  },
+  {
+   "id": "click_mouse_soft",
+   "file": "wav/click_mouse_soft.wav",
+   "category": "click",
+   "intensity": 1,
+   "description": "echte Maus, leiser Anschlag",
+   "type": "oneshot",
+   "event_align": "transient",
+   "reference": "click",
+   "styles": [
+    "tech",
+    "minimal",
+    "bold"
+   ],
+   "hit_offset_ms": 8,
+   "duration_ms": 290,
+   "audible_ms": 215,
+   "peak_rms_db": -25.2,
+   "true_peak_db": -1.7,
+   "license": "CC0",
+   "source": "Freesound 192068: mouseclicks",
+   "author": "deleted_user_2902138",
+   "url": "https://freesound.org/s/192068/",
+   "cut_s": [
+    0.34,
+    0.63
+   ],
+   "changes": "geschnitten, ein Kanal auf beide Seiten"
+  },
+  {
+   "id": "ding_bell",
+   "file": "wav/ding_bell.wav",
+   "category": "ding",
+   "intensity": 2,
+   "description": "kleine Glocke",
+   "type": "oneshot",
+   "event_align": "transient",
+   "reference": "ding",
+   "styles": [
+    "soft",
+    "bold",
+    "tech"
+   ],
+   "hit_offset_ms": 2,
+   "duration_ms": 1672,
+   "audible_ms": 1035,
+   "peak_rms_db": -11.8,
+   "true_peak_db": -2.9,
+   "license": "MIT (selbst erzeugt)"
+  },
+  {
+   "id": "ding_bright",
+   "file": "wav/ding_bright.wav",
+   "category": "ding",
+   "intensity": 3,
+   "description": "hell, breit",
+   "type": "oneshot",
+   "event_align": "transient",
+   "reference": "ding",
+   "styles": [
+    "soft",
+    "bold",
+    "tech"
+   ],
+   "hit_offset_ms": 2,
+   "duration_ms": 1200,
+   "audible_ms": 765,
+   "peak_rms_db": -10.9,
+   "true_peak_db": -3.0,
+   "license": "MIT (selbst erzeugt)"
+  },
+  {
+   "id": "ding_chime",
+   "file": "wav/ding_chime.wav",
+   "category": "ding",
+   "intensity": 3,
+   "description": "Dreiklang, leicht versetzt",
+   "type": "oneshot",
+   "event_align": "transient",
+   "reference": "ding",
+   "styles": [
+    "soft",
+    "bold",
+    "tech"
+   ],
+   "hit_offset_ms": 2,
+   "duration_ms": 1627,
+   "audible_ms": 1175,
+   "peak_rms_db": -12.1,
+   "true_peak_db": -3.0,
+   "license": "MIT (selbst erzeugt)"
+  },
+  {
+   "id": "ding_glass",
+   "file": "wav/ding_glass.wav",
+   "category": "ding",
+   "intensity": 1,
+   "description": "Glas, ein Ton",
+   "type": "oneshot",
+   "event_align": "transient",
+   "reference": "ding",
+   "styles": [
+    "soft",
+    "bold",
+    "tech"
+   ],
+   "hit_offset_ms": 2,
+   "duration_ms": 1522,
+   "audible_ms": 1080,
+   "peak_rms_db": -10.3,
+   "true_peak_db": -2.8,
+   "license": "MIT (selbst erzeugt)"
+  },
+  {
+   "id": "ding_notify",
+   "file": "wav/ding_notify.wav",
+   "category": "ding",
+   "intensity": 2,
+   "description": "Benachrichtigung, zwei Lagen",
+   "type": "oneshot",
+   "event_align": "transient",
+   "reference": "ding",
+   "styles": [
+    "soft",
+    "bold",
+    "tech"
+   ],
+   "hit_offset_ms": 2,
+   "duration_ms": 1672,
+   "audible_ms": 1085,
+   "peak_rms_db": -10.4,
+   "true_peak_db": -3.0,
+   "license": "MIT (selbst erzeugt)"
+  },
+  {
+   "id": "ding_real",
+   "file": "wav/ding_real.wav",
+   "category": "ding",
+   "intensity": 2,
+   "description": "echte Klingel der Küchenuhr, kurz",
+   "type": "oneshot",
+   "event_align": "transient",
+   "reference": "ding",
+   "styles": [
+    "soft",
+    "bold",
+    "tech"
+   ],
+   "hit_offset_ms": 38,
+   "duration_ms": 1540,
+   "audible_ms": 1045,
+   "peak_rms_db": -23.3,
+   "true_peak_db": -2.9,
+   "license": "CC0",
+   "source": "Freesound 869203: Steba oven clock - mechanical timer",
+   "author": "initbruv216",
+   "url": "https://freesound.org/s/869203/",
+   "cut_s": [
+    180.46,
+    182.0
+   ],
+   "changes": "nur geschnitten"
+  },
+  {
+   "id": "impact_soft_low",
+   "file": "wav/impact_soft_low.wav",
+   "category": "impact_soft",
+   "intensity": 1,
+   "description": "sehr weich",
+   "type": "oneshot",
+   "event_align": "transient",
+   "reference": "impact",
+   "styles": [
+    "bold",
+    "minimal",
+    "soft"
+   ],
+   "hit_offset_ms": 2,
+   "duration_ms": 2211,
+   "audible_ms": 1675,
+   "peak_rms_db": -9.5,
+   "true_peak_db": -3.0,
+   "license": "MIT (selbst erzeugt)"
+  },
+  {
+   "id": "impact_soft_mid",
+   "file": "wav/impact_soft_mid.wav",
+   "category": "impact_soft",
+   "intensity": 2,
+   "description": "weich",
+   "type": "oneshot",
+   "event_align": "transient",
+   "reference": "impact",
+   "styles": [
+    "bold",
+    "minimal",
+    "soft"
+   ],
+   "hit_offset_ms": 2,
+   "duration_ms": 2570,
+   "audible_ms": 1885,
+   "peak_rms_db": -9.9,
+   "true_peak_db": -3.0,
+   "license": "MIT (selbst erzeugt)"
+  },
+  {
+   "id": "impact_boom",
+   "file": "wav/impact_boom.wav",
+   "category": "impact",
+   "intensity": 2,
+   "description": "Boom, tief und breit",
+   "type": "oneshot",
+   "event_align": "transient",
+   "reference": "impact",
+   "styles": [
+    "bold"
+   ],
+   "hit_offset_ms": 2,
+   "duration_ms": 2866,
+   "audible_ms": 2345,
+   "peak_rms_db": -10.0,
+   "true_peak_db": -3.0,
+   "license": "MIT (selbst erzeugt)"
+  },
+  {
+   "id": "impact_hit",
+   "file": "wav/impact_hit.wav",
+   "category": "impact",
+   "intensity": 3,
+   "description": "Schlag mit Kontakt",
+   "type": "oneshot",
+   "event_align": "transient",
+   "reference": "impact",
+   "styles": [
+    "bold"
+   ],
+   "hit_offset_ms": 2,
+   "duration_ms": 2666,
+   "audible_ms": 2000,
+   "peak_rms_db": -8.7,
+   "true_peak_db": -3.0,
+   "license": "MIT (selbst erzeugt)"
+  },
+  {
+   "id": "riser_impact",
+   "file": "wav/riser_impact.wav",
+   "category": "riser",
+   "intensity": 3,
+   "description": "Riser 2 s mit Impact auf dem Ereignis",
+   "type": "oneshot",
+   "event_align": "transient",
+   "reference": "riser",
+   "styles": [
+    "bold"
+   ],
+   "hit_offset_ms": 2190,
+   "duration_ms": 4648,
+   "audible_ms": 4005,
+   "peak_rms_db": -11.3,
+   "true_peak_db": -3.0,
+   "license": "MIT (selbst erzeugt)"
+  },
+  {
+   "id": "riser_long",
+   "file": "wav/riser_long.wav",
+   "category": "riser",
+   "intensity": 2,
+   "description": "2,4 s, mit Ton",
+   "type": "oneshot",
+   "event_align": "end",
+   "reference": "riser",
+   "styles": [
+    "bold"
+   ],
+   "hit_offset_ms": 2381,
+   "duration_ms": 2381,
+   "audible_ms": 2380,
+   "peak_rms_db": -13.8,
+   "true_peak_db": -3.0,
+   "license": "MIT (selbst erzeugt)"
+  },
+  {
+   "id": "riser_short",
+   "file": "wav/riser_short.wav",
+   "category": "riser",
+   "intensity": 1,
+   "description": "1,5 s, endet auf dem Ereignis",
+   "type": "oneshot",
+   "event_align": "end",
+   "reference": "riser",
+   "styles": [
+    "bold"
+   ],
+   "hit_offset_ms": 1486,
+   "duration_ms": 1486,
+   "audible_ms": 1485,
+   "peak_rms_db": -13.3,
+   "true_peak_db": -3.0,
+   "license": "MIT (selbst erzeugt)"
+  },
+  {
+   "id": "riser_swell",
+   "file": "wav/riser_swell.wav",
+   "category": "riser",
+   "intensity": 1,
+   "description": "rückwärts laufender Hall, 2 s",
+   "type": "oneshot",
+   "event_align": "end",
+   "reference": "riser",
+   "styles": [
+    "bold"
+   ],
+   "hit_offset_ms": 2000,
+   "duration_ms": 2000,
+   "audible_ms": 2000,
+   "peak_rms_db": -13.4,
+   "true_peak_db": -3.0,
+   "license": "MIT (selbst erzeugt)"
+  },
+  {
+   "id": "downer_tape",
+   "file": "wav/downer_tape.wav",
+   "category": "downer",
+   "intensity": 2,
+   "description": "Bandstopp",
+   "type": "oneshot",
+   "event_align": "transient",
+   "reference": "downer",
+   "styles": [
+    "bold"
+   ],
+   "hit_offset_ms": 2,
+   "duration_ms": 484,
+   "audible_ms": 315,
+   "peak_rms_db": -10.2,
+   "true_peak_db": -3.0,
+   "license": "MIT (selbst erzeugt)"
+  },
+  {
+   "id": "downer_vinyl",
+   "file": "wav/downer_vinyl.wav",
+   "category": "downer",
+   "intensity": 2,
+   "description": "Vinyl-Scratch, nur auf Wunsch oder bei Bold Creator",
+   "type": "oneshot",
+   "event_align": "transient",
+   "reference": "downer",
+   "styles": [
+    "bold"
+   ],
+   "hit_offset_ms": 48,
+   "duration_ms": 705,
+   "audible_ms": 660,
+   "peak_rms_db": -15.4,
+   "auto_styles": [
+    "bold"
+   ],
+   "true_peak_db": -3.0,
+   "license": "CC0",
+   "source": "Freesound 668909: Vinyl Scratch",
+   "author": "ChuckChuckGoof",
+   "url": "https://freesound.org/s/668909/",
+   "cut_s": [
+    0.0,
+    0.705
+   ],
+   "changes": "nur geschnitten"
+  },
+  {
+   "id": "typing_mech",
+   "file": "wav/typing_mech.wav",
+   "category": "typing",
+   "intensity": 2,
+   "description": "echte Tastatur, rote Schalter, flüssig",
+   "type": "sequence",
+   "event_align": "start",
+   "reference": "typing",
+   "styles": [
+    "tech",
+    "bold"
+   ],
+   "hit_offset_ms": 0,
+   "duration_ms": 3655,
+   "audible_ms": 3605,
+   "peak_rms_db": -23.4,
+   "true_peak_db": -2.6,
+   "license": "CC0",
+   "source": "Freesound 866643: Keyboard typing",
+   "author": "7empest",
+   "url": "https://freesound.org/s/866643/",
+   "cut_s": [
+    33.385,
+    37.04
+   ],
+   "changes": "geschnitten, Hochpass 50 Hz"
+  },
+  {
+   "id": "typing_mech_b",
+   "file": "wav/typing_mech_b.wav",
+   "category": "typing",
+   "intensity": 1,
+   "description": "echte Tastatur, zweite Passage",
+   "type": "sequence",
+   "event_align": "start",
+   "reference": "typing",
+   "styles": [
+    "tech",
+    "bold"
+   ],
+   "hit_offset_ms": 0,
+   "duration_ms": 3785,
+   "audible_ms": 3355,
+   "peak_rms_db": -24.7,
+   "true_peak_db": -2.8,
+   "license": "CC0",
+   "source": "Freesound 866643: Keyboard typing",
+   "author": "7empest",
+   "url": "https://freesound.org/s/866643/",
+   "cut_s": [
+    69.455,
+    73.24
+   ],
+   "changes": "geschnitten, Hochpass 50 Hz"
+  },
+  {
+   "id": "clock_timer",
+   "file": "wav/clock_timer.wav",
+   "category": "clock",
+   "intensity": 2,
+   "description": "echtes Uhrwerk, 4 Ticks je Sekunde, loopt nahtlos",
+   "type": "bed",
+   "event_align": "start",
+   "reference": "clock",
+   "styles": [
+    "tech",
+    "bold",
+    "minimal"
+   ],
+   "hit_offset_ms": 0,
+   "duration_ms": 3000,
+   "audible_ms": 2845,
+   "peak_rms_db": -27.1,
+   "true_peak_db": -2.9,
+   "license": "CC0",
+   "source": "Freesound 869203: Steba oven clock - mechanical timer",
+   "author": "initbruv216",
+   "url": "https://freesound.org/s/869203/",
+   "cut_s": [
+    87.94,
+    90.94
+   ],
+   "changes": "nur geschnitten"
+  },
+  {
+   "id": "clock_timer_b",
+   "file": "wav/clock_timer_b.wav",
+   "category": "clock",
+   "intensity": 1,
+   "description": "echtes Uhrwerk, zweite Passage",
+   "type": "bed",
+   "event_align": "start",
+   "reference": "clock",
+   "styles": [
+    "tech",
+    "bold",
+    "minimal"
+   ],
+   "hit_offset_ms": 0,
+   "duration_ms": 3000,
+   "audible_ms": 2835,
+   "peak_rms_db": -26.9,
+   "true_peak_db": -2.7,
+   "license": "CC0",
+   "source": "Freesound 869203: Steba oven clock - mechanical timer",
+   "author": "initbruv216",
+   "url": "https://freesound.org/s/869203/",
+   "cut_s": [
+    15.94,
+    18.94
+   ],
+   "changes": "nur geschnitten"
+  },
+  {
+   "id": "alarm_bell",
+   "file": "wav/alarm_bell.wav",
+   "category": "alarm",
+   "intensity": 2,
+   "description": "Wecker, nur als Pointe",
+   "type": "oneshot",
+   "event_align": "start",
+   "reference": "clock",
+   "styles": [
+    "bold"
+   ],
+   "hit_offset_ms": 0,
+   "duration_ms": 2248,
+   "audible_ms": 2010,
+   "peak_rms_db": -13.3,
+   "true_peak_db": -3.0,
+   "license": "MIT (selbst erzeugt)"
+  },
+  {
+   "id": "alarm_real",
+   "file": "wav/alarm_real.wav",
+   "category": "alarm",
+   "intensity": 2,
+   "description": "echte Klingel der Küchenuhr, ganz, nur als Pointe",
+   "type": "oneshot",
+   "event_align": "start",
+   "reference": "clock",
+   "styles": [
+    "bold"
+   ],
+   "hit_offset_ms": 0,
+   "duration_ms": 3740,
+   "audible_ms": 1045,
+   "peak_rms_db": -23.3,
+   "true_peak_db": -2.9,
+   "license": "CC0",
+   "source": "Freesound 869203: Steba oven clock - mechanical timer",
+   "author": "initbruv216",
+   "url": "https://freesound.org/s/869203/",
+   "cut_s": [
+    180.46,
+    184.2
+   ],
+   "changes": "nur geschnitten"
+  }
+ ]
+}

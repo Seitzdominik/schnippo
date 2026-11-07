@@ -1,0 +1,2 @@
+#!/bin/sh
+exec uv run --quiet python tools/check_public.py

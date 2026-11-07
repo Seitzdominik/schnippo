@@ -1,0 +1,51 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# Media & analysis artefacts – never commit
+testdata/
+.cache/
+*.wav
+*.aiff
+# Reference recordings (Pixabay) are listening and measuring material only: never in the repo, in any form.
+SFX-Pixabay/
+*.mp3
+*.flac
+*.ogg
+*.aif
+# except what the generator produces
+!src/schnippo/data/sfx/wav/*.wav
+
+# Secrets / local config
+.env
+config.toml
+
+.DS_Store
+.pytest_cache/
+
+# Media & render output (never commit footage)
+*.mov
+*.mp4
+*.m4v
+*.mxf
+*.braw
+*.r3d
+*.mkv
+*.npz
+*.preset
+*.drp
+*.fcpxml
+
+# Keys
+*.pem
+*.key
+.secrets*
+packaging/build/
+dist/

@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "schnippo": {
+      "command": "uvx",
+      "args": [
+        "schnippo@0.11.0"
+      ],
+      "env": {
+        "GLADIA_API_KEY": "${user_config.gladia_api_key}",
+        "SCHNIPPO_PROJECTS_FOLDER": "${user_config.projects_folder}",
+        "SCHNIPPO_FORMAT": "${user_config.format}",
+        "SCHNIPPO_SFX_MODE": "${user_config.sfx}"
+      }
+    }
+  }
+}
