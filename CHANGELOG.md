@@ -2,6 +2,14 @@
 
 Format: neueste zuerst. Versionen vor 0.11.0 hießen intern „Resolve Cut“ und waren nicht öffentlich.
 
+## 0.13.1 – Bereit für das Anthropic-Verzeichnis (2026-11-08)
+
+- **Plugin:** Beschreibung, Einstellungen und Eintrag im Verzeichnis sind englisch, der Skill heißt jetzt `rough-cut`. Das Paket ist exakt angeheftet.
+- **Cowork:** Der Server lädt auch ohne ausgefüllte Plugin-Einstellungen.
+- **Update-Hinweis:** Stichpunkte erscheinen als reiner Text und werden an der Wortgrenze gekürzt. Im Plugin lässt er sich abschalten.
+- **Einstufung:** Der Untertitel-Export gilt jetzt als ändernd, weil er frühere Exporte überschreiben kann.
+- **Release:** Der Branch `stable` folgt nur noch veröffentlichten Versionen.
+
 ## 0.13.0 – Eine Arbeits-Timeline, Schnitt in einem Rutsch (Phase 13, 2026-11-08)
 
 - **Arbeits-Timeline:** Pro Projekt eine Timeline `<Name>_Schnippo`. Vor jeder Änderung liegt eine Sicherung in `Schnippo/Versionen` (die letzten 5). `list_versions`, `restore_version`. Eine zweite Timeline nur auf ausdrücklichen Wunsch.

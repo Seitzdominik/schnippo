@@ -1,6 +1,6 @@
 [project]
 name = "schnippo"
-version = "0.13.0"
+version = "0.13.1"
 description = "KI-Rohschnitt für DaVinci Resolve: MCP-Server für Rohschnitte per Chat"
 license = "MIT"
 readme = "README.md"

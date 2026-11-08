@@ -8,6 +8,10 @@ SemVer. Beta bis 1.0: `0.x.y`. Releases nicht als „Pre-release“ markieren, s
 
 Die Action `release` prüft Tag und Version, startet `tools/check_public.py` als Pflichtschritt, vergleicht `plugin/`, lässt die Tests laufen, baut `.mcpb`, Wheel und sdist, startet das Wheel über `uvx` und hängt alles ans Release.
 
+## Branch `stable`
+
+Das Anthropic-Verzeichnis folgt dem Branch `stable`, nicht `main`. Die Action `release` setzt ihn als letzten Schritt auf den Release-Commit, nachdem das Paket auf PyPI liegt. So zeigt `plugin/.mcp.json` dort immer auf eine Version, die es gibt, und halbfertige Änderungen auf `main` erreichen das Verzeichnis nicht. Den Branch nicht von Hand ändern. Der Schritt schiebt nur vorwärts und schlägt fehl, wenn `stable` nicht im Release-Commit enthalten ist.
+
 ## PyPI einrichten (einmalig, nur du)
 
 Der Name `schnippo` war am 7. November 2026 auf PyPI und TestPyPI frei. Die Action nutzt Trusted Publishing und kommt ohne Token aus.

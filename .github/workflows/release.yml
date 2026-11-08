@@ -80,3 +80,17 @@ jobs:
       - uses: pypa/gh-action-pypi-publish@release/v1
         with:
           repository-url: ${{ vars.PYPI_PUBLISH == 'testpypi' && 'https://test.pypi.org/legacy/' || 'https://upload.pypi.org/legacy/' }}
+
+  # The directory follows this branch: it moves only after the package really is on PyPI, and only forward.
+  stable:
+    needs: pypi
+    if: github.ref_type == 'tag' && vars.PYPI_PUBLISH == 'pypi'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Branch stable auf den Release-Commit setzen
+        run: git push origin "HEAD:refs/heads/stable"

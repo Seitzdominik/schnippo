@@ -47,7 +47,7 @@ Try these prompts:
 
 ## What the plugin runs, sends and fetches
 
-The plugin starts the local MCP server with `uvx schnippo==0.13.0` from PyPI. Source code: https://github.com/Seitzdominik/schnippo. On your computer it talks to DaVinci Resolve through its scripting interface and runs `ffmpeg` and `ffprobe`. The key window uses `osascript` on macOS and `powershell` on Windows. Helpers are installed once with `uv pip install`. Graphics render in a headless Chromium with all network requests blocked.
+The plugin starts the local MCP server with `uvx schnippo==0.13.1` from PyPI. Source code: https://github.com/Seitzdominik/schnippo. On your computer it talks to DaVinci Resolve through its scripting interface and runs `ffmpeg` and `ffprobe`. The key window uses `osascript` on macOS and `powershell` on Windows. Helpers are installed once with `uv pip install`. Graphics render in a headless Chromium with all network requests blocked.
 
 | Destination | When | What |
 |---|---|---|

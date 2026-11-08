@@ -1,7 +1,7 @@
 {
   "name": "schnippo",
   "displayName": "Schnippo",
-  "version": "0.13.0",
+  "version": "0.13.1",
   "description": "AI rough cuts for DaVinci Resolve: cut by chat, with audio, zooms, B-roll, graphics and reels.",
   "author": {
     "name": "Seitz Dominik Visuals",
