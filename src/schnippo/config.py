@@ -54,6 +54,8 @@ class Config:
     update_check: bool = True  # GitHub Releases, once a day
     setting_problems: list[str] = field(default_factory=list)  # values from the settings that were not understood
     graphics: bool = True  # False: no motion pass unless asked for
+    checkpoints: str = "nur wenn nötig"  # keine | nur wenn nötig | nach jedem Schritt: how often a complete cut stops to ask
+    versions_keep: int = 5  # backups of the working timeline in Schnippo/Versionen
     sfx_mode: str = "subtil"  # off | subtil | normal
     sfx_folder: Path | None = None  # own sound effects (category from folder/file name, licence with the user)
     freesound_api_key: str | None = None  # optional, never logged
@@ -109,6 +111,7 @@ def load_config() -> Config:
         cfg.style = data.get("style", cfg.style)
         cfg.profile_overrides = dict(data.get("profile", {}))
         cfg.motion_sandbox = bool(data.get("motion", {}).get("sandbox", cfg.motion_sandbox))
+        cfg.versions_keep = max(1, int(data.get("versions", {}).get("keep", cfg.versions_keep)))
         cfg.sfx_mode = data.get("sfx", {}).get("mode", cfg.sfx_mode)
         cfg.update_check = bool(data.get("updates", {}).get("check", cfg.update_check))
         if data.get("projects_folder"):

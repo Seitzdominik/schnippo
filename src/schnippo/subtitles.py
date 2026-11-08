@@ -33,6 +33,9 @@ def blocks_for_plan(pieces: list, analyzed: dict, fps: float, corrections: dict[
     for k, pc in enumerate(pieces):
         if recs:
             rec = recs[k]
+        if pc.manual:
+            rec += pc.frames
+            continue
         at = analyzed[pc.clip]
         by_id = {e.id: e for e in at.entries}
         for wid in pc.word_ids:

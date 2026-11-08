@@ -61,6 +61,8 @@ class CutItem(BaseModel):
     end_frame: str | None = None  # optional explicit last shown frame (inclusive), e.g. "c01:f0190"
     pause_after_ms: int | None = None  # deliberate pause kept after the last word (key statement / before a punchline)
     beat: str | None = None  # key | section: the last word of this item ends a key statement / a section (see Beat)
+    pan: float | None = None  # as set by hand in Resolve (with zoom); None = from the face position
+    tilt: float | None = None
 
     @field_validator("beat")
     @classmethod
@@ -68,6 +70,26 @@ class CutItem(BaseModel):
         if v is not None and v not in ("key", "section"):
             raise ValueError("beat: key | section")
         return v
+
+
+class ManualItem(BaseModel):
+    """A clip the user put on the timeline by hand: no words behind it (B-roll without speech, foreign clips, own graphics).
+    Put back exactly at every rebuild and left alone otherwise, unless the user asks for a change."""
+    kind: Literal["manual"] = "manual"
+    media: str  # file path in the Media Pool
+    name: str = ""
+    source_in_frame: int
+    source_out_frame: int  # exclusive, source frames
+    track: int = 1
+    track_type: Literal["video", "audio"] = "video"
+    record_frame: int  # timeline frame (from timeline start) when it was adopted
+    frames: int  # length on the timeline
+    fps: float | None = None  # of the media, when it differs from the timeline
+    with_audio: bool = False  # video with its linked sound
+    audio_track: int | None = None
+    anchor: tuple[str, int] | None = None  # (clip, source frame) on V1 it belongs to: under its start, on V1 the last frame before it
+    properties: dict = Field(default_factory=dict)  # ZoomX, Pan, AudioVolume ... as read from Resolve
+    note: str = ""
 
 
 class Beat(BaseModel):
@@ -338,6 +360,8 @@ class Cutlist(BaseModel):
     markers: bool = True
     alternates: bool = False
     revision_of: str | None = None  # timeline this is a revision of (revise / read_timeline_changes) → diff in validate
+    manual: list[ManualItem] = Field(default_factory=list)  # hand edits without words, see ManualItem
+    new_timeline: bool = False  # only when the user asks for a separate timeline; default: the working timeline
 
     @model_validator(mode="before")
     @classmethod
@@ -368,10 +392,13 @@ class Piece(BaseModel):
     decay_ms: int = 0  # end moved later by the decay of the last word
     onset_ms: int = 0  # start moved earlier to the real onset of the first word
     expressive: int = 0  # voiced sounds after a sentence end that stayed ({?}, hm, sigh)
+    manual: bool = False  # from Cutlist.manual or a gap: no words, Schnippo does not change it
+    gap: bool = False  # empty stretch on V1 (read back from a timeline only)
+    tl_frames: int | None = None  # length on the timeline where it differs from the source frames
 
     @property
     def frames(self) -> int:
-        return self.end_frame - self.start_frame
+        return self.tl_frames if self.tl_frames is not None else self.end_frame - self.start_frame
 
 
 class Plan(BaseModel):
@@ -387,13 +414,15 @@ class Plan(BaseModel):
     corrections: dict[str, str] = Field(default_factory=dict)
     beats: list[dict] = Field(default_factory=list)  # placed beats: word, kind, target/actual/original pause (s)
     hard_edges: list[dict] = Field(default_factory=list)  # edges above the noise floor: timeline time, side, level
+    manual: list[dict] = Field(default_factory=list)  # hand-placed clips on upper/audio tracks: ManualItem fields + tl_start
 
     @property
     def ok(self) -> bool:
         return not self.errors
 
     def total_seconds(self, clips: dict) -> float:
-        return sum(p.frames / (clips[p.clip].resolve_fps or clips[p.clip].fps) for p in self.pieces)
+        fps = next(((clips[p.clip].resolve_fps or clips[p.clip].fps) for p in self.pieces if not p.manual), None)
+        return sum(p.frames / (fps or clips[p.clip].resolve_fps or clips[p.clip].fps) for p in self.pieces)
 
 
 def _sounds(at: AnalyzedTranscript) -> list[Word]:
@@ -705,6 +734,7 @@ def build_plan(cl: Cutlist, clips: dict[str, Clip], analyzed: dict[str, Analyzed
                                f"{b.start_frame}–{a.end_frame})")
     measure_beats(cl, plan, clips, analyzed, beat_map)
     check_edges(cl, plan, clips, acoustics or {})
+    splice_manual(cl, plan, clips)
     place_overlays(cl, plan, clips, analyzed, stills, prof)
     assign_zooms(cl, plan, clips, faces or {}, prof)
     if cl.reframe is not None:
@@ -735,6 +765,72 @@ def build_plan(cl: Cutlist, clips: dict[str, Clip], analyzed: dict[str, Analyzed
             if r.segment not in known:
                 plan.errors.append(f"rejected: unbekanntes Segment {r.segment}")
     return plan
+
+
+def first_piece(plan: Plan) -> Piece:
+    """The first piece of real material: a hand-placed clip may lead the timeline and has its own frame rate."""
+    return next((p for p in plan.pieces if not p.manual), plan.pieces[0])
+
+
+GAP = "gap"  # pseudo clip of an empty stretch on V1
+
+
+def manual_id(path: str) -> str:
+    """Stable id for media that is no clip of the folder."""
+    import hashlib
+    return "m" + hashlib.sha1(path.encode("utf-8")).hexdigest()[:8]
+
+
+def manual_clip_id(m: ManualItem, clips: dict[str, Clip]) -> str:
+    return next((cid for cid, c in clips.items() if c.path == m.media), manual_id(m.media))
+
+
+def _position(pieces: list[Piece], clip: str, frame: int) -> int | None:
+    """Timeline frame of a source frame of the cut, None if it is no longer in it."""
+    rec = 0
+    for p in pieces:
+        if p.clip == clip and not p.gap and p.start_frame <= frame < p.end_frame:
+            return rec + frame - p.start_frame
+        rec += p.frames
+    return None
+
+
+def splice_manual(cl: Cutlist, plan: Plan, clips: dict[str, Clip]) -> None:
+    """Hand-placed clips back into the plan: on V1 behind the frame they followed, on other tracks over the frame they lay on.
+    When that frame was cut away, the position it had is the best there is, and the plan says so."""
+    if not cl.manual:
+        return
+    v1 = sorted([m for m in cl.manual if m.track == 1 and m.track_type == "video"], key=lambda m: m.record_frame)
+    for m in v1:
+        cid = GAP if not m.media else manual_clip_id(m, clips)
+        if cid not in clips:
+            plan.errors.append(f"Handänderung „{m.name or m.media}“: Medium unbekannt")
+            continue
+        piece = Piece(item=0, clip=cid, start_s=0.0, end_s=0.0, start_frame=m.source_in_frame, end_frame=m.source_out_frame, text="", manual=True,
+                      gap=not m.media, tl_frames=m.frames, zoom=float(m.properties.get("ZoomX") or 1.0))
+        k = 0
+        if m.anchor is not None:
+            hit = next((j for j, p in enumerate(plan.pieces) if p.clip == m.anchor[0] and not p.gap and p.start_frame <= m.anchor[1] < p.end_frame), None)
+            if hit is None:
+                rec, k = 0, 0
+                for j, p in enumerate(plan.pieces):
+                    if rec >= m.record_frame:
+                        break
+                    rec += p.frames
+                    k = j + 1
+                plan.warnings.append(f"Handänderung „{m.name}“: die Stelle davor ist nicht mehr im Schnitt, bleibt bei Position {m.record_frame}")
+            else:
+                k = hit + 1
+        plan.pieces.insert(k, piece)
+    for m in cl.manual:
+        if m.track == 1 and m.track_type == "video":
+            continue
+        at = None if m.anchor is None else _position(plan.pieces, m.anchor[0], m.anchor[1])
+        if at is None:
+            at = m.record_frame
+            if m.anchor is not None:
+                plan.warnings.append(f"Handänderung „{m.name}“: der Schnitt darunter ist weg, bleibt bei Position {m.record_frame}")
+        plan.manual.append({**m.model_dump(), "tl_start": at})
 
 
 def plan_text(cl: Cutlist, plan: Plan, clips: dict[str, Clip]) -> str:
@@ -791,7 +887,7 @@ def plan_text(cl: Cutlist, plan: Plan, clips: dict[str, Clip]) -> str:
         out.append(f"Punch-ins: {sum(1 for p in plan.pieces if p.zoom > 1)} von {len(plan.pieces)} Teilstücken gezoomt, "
                    f"{n_zoom} Zoomwechsel an Schnitten (Ausschnitt am Gesicht ausgerichtet)")
     if plan.overlays:
-        fps0 = fps_of(plan.pieces[0].clip) if plan.pieces else 30.0
+        fps0 = fps_of(first_piece(plan).clip) if plan.pieces else 30.0
         out.append("Overlays (B-Roll, Positionen im fertigen Schnitt):")
         for o in plan.overlays:
             what = (f"Video ab {o.media}:f{o.src_start:04d} ({o.src_frames} Quell-Frames{', Zeitlupe 50 %' if o.speed < 1 else ''}, "
@@ -803,7 +899,7 @@ def plan_text(cl: Cutlist, plan: Plan, clips: dict[str, Clip]) -> str:
                 out.append("     Schnittkanten: " + describe(Snap(o.tl_start, o.tl_end, tuple(o.snap["moved"]), tuple(o.snap["on_cut"]),
                                                                o.snap["gaps"]), fps0))
     if plan.graphics:
-        fps0 = fps_of(plan.pieces[0].clip) if plan.pieces else 30.0
+        fps0 = fps_of(first_piece(plan).clip) if plan.pieces else 30.0
         out.append("Grafiken (Motion Graphics, Positionen im fertigen Schnitt):")
         for g in plan.graphics:
             out.append(f"  G{g.index} {g.template} V{g.track} {ts(g.tl_start / fps0)}–{ts(g.tl_end / fps0)} ({g.frames / fps0:.2f}s) "
@@ -813,7 +909,7 @@ def plan_text(cl: Cutlist, plan: Plan, clips: dict[str, Clip]) -> str:
                 out.append("     Schnittkanten: " + describe(Snap(g.tl_start, g.tl_end, tuple(g.snap["moved"]), tuple(g.snap["on_cut"]),
                                                                g.snap["gaps"]), fps0))
     if plan.sfx:
-        fps0 = fps_of(plan.pieces[0].clip)
+        fps0 = fps_of(first_piece(plan).clip)
         i = plan.sfx_info
         out.append(f"Sound-Effekte (Modus {i.get('mode')}, Designsprache {i.get('style')}, höchstens {i.get('limit')}; Stimme "
                    f"{i.get('voice_lufs')} LUFS, {i.get('voice_source')}):")
@@ -900,7 +996,7 @@ def place_graphics(cl: Cutlist, plan: Plan, clips: dict, analyzed: dict, faces: 
     if not cl.graphics or not plan.pieces:
         return
     from .mg.templates import TEMPLATES, min_duration
-    fps = clips[plan.pieces[0].clip].resolve_fps or clips[plan.pieces[0].clip].fps
+    fps = clips[first_piece(plan).clip].resolve_fps or clips[first_piece(plan).clip].fps
     total = sum(p.frames for p in plan.pieces)
     recs, rec = [], 0
     for pc in plan.pieces:
@@ -1253,7 +1349,7 @@ def measure_beats(cl: Cutlist, plan: Plan, clips: dict, analyzed: dict, beat_map
                 seq.append((pc.clip, int(wid[1:]), w, (r0 + (w.start_s * fps - pc.start_frame)) / fps,
                             (r0 + min(pc.frames, w.end_s * fps - pc.start_frame)) / fps))
         r0 += pc.frames
-    total = r0 / (clips[plan.pieces[0].clip].resolve_fps or clips[plan.pieces[0].clip].fps) if plan.pieces else 0.0
+    total = r0 / (clips[first_piece(plan).clip].resolve_fps or clips[first_piece(plan).clip].fps) if plan.pieces else 0.0
     pos = {(c, n): k for k, (c, n, *_ ) in enumerate(seq)}
     for cid, words in beat_map.items():
         for n, kind in sorted(words.items()):
@@ -1310,10 +1406,13 @@ def assign_zooms(cl: Cutlist, plan: Plan, clips: dict, faces: dict, prof=None) -
     current = scale  # the level of the running punch-in
     n_in = 0  # punch-ins so far
     uncovered = 0  # consecutive jump cuts without a level change
-    fps = (clips[plan.pieces[0].clip].resolve_fps or clips[plan.pieces[0].clip].fps) if clips else 25.0
+    fps = (clips[first_piece(plan).clip].resolve_fps or clips[first_piece(plan).clip].fps) if clips else 25.0
     hold = round((pi.min_hold_s if pi and pi.min_hold_s is not None else 0.0) * fps)
     since = 0  # timeline frames since the last level change
     for k, pc in enumerate(plan.pieces):
+        if pc.manual:
+            level, since, uncovered = False, 0, 0
+            continue
         if k and pi and pi.mode == "alternate":
             prev = plan.pieces[k - 1]
             since += prev.frames
@@ -1341,7 +1440,10 @@ def assign_zooms(cl: Cutlist, plan: Plan, clips: dict, faces: dict, prof=None) -
             c0 = clips[pc.clip]
             z = min(z, max_zoom_for(prof, c0.width, c0.height))
         pc.zoom = round(float(z), 3)
-        if pc.zoom > 1.0:
+        item = cl.items[pc.item - 1] if override and 0 < pc.item <= len(cl.items) else None
+        if item is not None and item.pan is not None:
+            pc.pan, pc.tilt = item.pan, item.tilt or 0.0
+        elif pc.zoom > 1.0:
             clip = clips[pc.clip]
             w, h = (clip.height, clip.width) if abs(clip.rotation) % 180 == 90 else (clip.width, clip.height)
             fx, fy = _face_center(faces.get(pc.clip), pc.start_frame, pc.end_frame)

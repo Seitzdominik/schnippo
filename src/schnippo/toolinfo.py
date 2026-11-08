@@ -2,6 +2,8 @@
 project or the user's files, or deletes; hosts ask before each call. n in the kind: reaches an outside service."""
 
 TOOLS = {
+    "complete_cut": ("Komplett-Schnitt", "d"), "master_audio": ("Ton mastern", "d"), "apply_zooms": ("Zooms setzen", "d"), "add_overlays": ("B-Roll einfügen", "d"), "add_graphics": ("Grafiken einfügen", "d"), "add_sfx": ("Sound-Effekte einfügen", "d"),
+    "list_versions": ("Sicherungen auflisten", "r"), "restore_version": ("Sicherung wiederherstellen", "d"), "set_checkpoints": ("Rückfragen einstellen", "w"),
     "analyze_audio": ("Ton analysieren", "r"), "build_timeline": ("Timeline bauen", "d"), "check_setup": ("Einrichtung prüfen", "rn"), "clear_cache": ("Cache aufräumen", "d"),
     "create_project": ("Projekt anlegen", "d"), "design_preview": ("Design-Vorschau", "r"), "detect_format": ("Format erkennen", "r"), "export_final": ("Video exportieren", "d"),
     "export_reels": ("Reels exportieren", "d"), "export_transcript": ("Untertitel exportieren", "w"), "fetch_sfx": ("Sound von Freesound laden", "dn"),

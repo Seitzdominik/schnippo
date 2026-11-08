@@ -28,6 +28,9 @@ def timeline_words(pieces: list, analyzed: dict, fps: float, corrections: dict[s
     out, rec = [], 0
     for k, pc in enumerate(pieces):
         r0 = recs[k] if recs else rec
+        if pc.manual:
+            rec += pc.frames
+            continue
         by_id = {e.id: e for e in analyzed[pc.clip].entries}
         for wid in pc.word_ids:
             w = by_id.get(wid)

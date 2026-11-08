@@ -13,7 +13,7 @@ from __future__ import annotations
 import difflib
 import re
 
-from .cutlist import Beat, Correction, Cutlist, CutItem, Overlay, Plan, SfxCue
+from .cutlist import Beat, Correction, Cutlist, CutItem, ManualItem, Overlay, Plan, SfxCue, manual_id
 
 _NORM = re.compile(r"[^\wäöüß]+")
 
@@ -55,6 +55,8 @@ def spoken_words(plan: Plan, analyzed: dict, fps: float, corrections: dict | Non
     corrections = corrections or {}
     out = []
     for pc, r0 in zip(plan.pieces, recs_of(plan.pieces)):
+        if pc.manual:
+            continue
         by_id = {e.id: e for e in analyzed[pc.clip].entries}
         for wid in pc.word_ids:
             w = by_id.get(wid)
@@ -366,8 +368,12 @@ def timeline_changes(built: Cutlist, plan: Plan, timeline: dict, analyzed: dict,
     """Compare V1 of a Resolve timeline with the pieces it was built from; build a cutlist that reproduces it 1:1.
     Returns {"lines": report, "unclear": [...], "cutlist": Cutlist | None, "changed": bool}."""
     v1 = timeline["v1"]
-    recs = recs_of(plan.pieces)
-    built_p = [(p.clip, p.start_frame, p.frames) for p in plan.pieces]
+    for it in v1:  # clips that are no takes of the folder have an id of their own
+        if it["clip"] is None and it.get("path"):
+            it["clip"] = manual_id(it["path"])
+    gaps_before = sum(p.frames for p in plan.pieces if p.gap)
+    built_p = [(p.clip, p.start_frame, p.frames) for p in plan.pieces if not p.gap]
+    pieces = [p for p in plan.pieces if not p.gap]
     lines, unclear = [], []
     status: list[str] = []
     matched: set[int] = set()
@@ -375,7 +381,7 @@ def timeline_changes(built: Cutlist, plan: Plan, timeline: dict, analyzed: dict,
     for k, it in enumerate(v1):
         if it["clip"] is None:
             status.append("unbekannt")
-            unclear.append(f"V1 {k + 1}: „{it['name']}“ ist kein Clip dieses Ordners – bleibt nur in Resolve "
+            unclear.append(f"V1 {k + 1}: „{it['name']}“ hat keine Datei (Titel oder Generator): bleibt in der Timeline, geht bei einem Neubau aber verloren "
                            f"(Position {it['rec']}, {it['frames']} Frames)")
             continue
         key = (it["clip"], it["src_start"], it["frames"])
@@ -384,7 +390,7 @@ def timeline_changes(built: Cutlist, plan: Plan, timeline: dict, analyzed: dict,
             matched.add(j)
             status.append("gleich")
             continue
-        over = [j for j, (c, s, n) in enumerate(built_p) if j not in matched and c == it["clip"]
+        over = [j for j, (c, s, n) in enumerate(built_p) if j not in matched and c == it["clip"] and not pieces[j].manual
                 and s < it["src_start"] + it["frames"] and it["src_start"] < s + n]
         if over:
             matched.add(over[0])
@@ -410,19 +416,38 @@ def timeline_changes(built: Cutlist, plan: Plan, timeline: dict, analyzed: dict,
             lines.append(f"  {'↕' if st == 'verschoben' else '+' if st == 'neu' else '✎'} {st}: V1 {k + 1} {it['clip']} "
                          f"f{it['src_start']}–f{it['src_start'] + it['frames'] - 1} an {it['rec']}")
     for j in removed:
-        p = plan.pieces[j]
-        lines.append(f"  − entfernt: Teilstück von #{p.item:02d} ({p.clip} f{p.start_frame}–f{p.end_frame - 1}): „{p.text[:70]}“")
-    changed = any(s != "gleich" for s in status) or bool(removed) or len(v1) != len(built_p)
-    # overlays / graphics on upper tracks: compared by count and position, not adopted automatically
+        p = pieces[j]
+        lines.append(f"  − entfernt: {'Handänderung' if p.manual else f'Teilstück von #{p.item:02d}'} ({p.clip} f{p.start_frame}–f{p.end_frame - 1}): „{p.text[:70]}“")
+    zoomed = [k for k, (it, st) in enumerate(zip(v1, status)) if st == "gleich" and not _same_zoom(it, pieces[built_p.index((it["clip"], it["src_start"], it["frames"]))])]
+    for k in zoomed:
+        lines.append(f"  ✎ Zoom von Hand: V1 {k + 1} auf {v1[k]['zoom']:g}")
+    gaps = _v1_gaps(v1, timeline.get("frames"))
+    changed = any(s != "gleich" for s in status) or bool(removed) or len(v1) != len(built_p) or bool(zoomed) or sum(g[1] for g in gaps) != gaps_before
+    # upper tracks: with the full readback ("others") the workspace sorts them; older readbacks only count
     up_now = sum(len(v) for v in (timeline.get("upper") or {}).values())
     up_built = len(plan.overlays) + len(plan.graphics)
-    if up_now != up_built:
+    if "others" not in timeline and up_now != up_built:
         unclear.append(f"Obere Spuren: {up_now} Clips statt {up_built} gebauter Overlays/Grafiken – nicht automatisch "
                        f"übernommen (bitte sagen, welche bleiben sollen)")
     # cutlist that reproduces V1: one item per clip, explicit frames, no tightening, zoom as in Resolve
-    items = []
+    items, manual = [], []
+
+    def by_hand(k: int, it: dict, note: str) -> None:
+        tl_fps = timeline.get("fps") or it.get("fps") or it.get("media_fps") or 25.0
+        mfps = it.get("media_fps")
+        rate = (mfps / tl_fps) if mfps and abs(mfps - tl_fps) > 0.005 else 1.0
+        prev = v1[k - 1] if k else None
+        manual.append(ManualItem(media=it["path"], name=it["name"], source_in_frame=it["src_start"], source_out_frame=it["src_start"] + round(it["frames"] * rate),
+                                 track=1, record_frame=it["rec"], frames=it["frames"], fps=mfps if rate != 1.0 else None, with_audio=bool(it.get("linked_audio")),
+                                 anchor=(prev["clip"], prev["src_start"] + prev["frames"] - 1) if prev else None,
+                                 properties={"ZoomX": it.get("zoom", 1.0), "ZoomY": it.get("zoom", 1.0), "Pan": it.get("pan", 0.0), "Tilt": it.get("tilt", 0.0)}, note=note))
+
     for k, (it, st) in enumerate(zip(v1, status)):
         if st == "unbekannt":
+            continue
+        was_manual = st in ("gleich", "verschoben") and pieces[built_p.index((it["clip"], it["src_start"], it["frames"]))].manual
+        if was_manual or it["clip"] not in analyzed:
+            by_hand(k, it, "von Hand eingefügt")
             continue
         at = analyzed[it["clip"]]
         fps = it["fps"]
@@ -440,15 +465,23 @@ def timeline_changes(built: Cutlist, plan: Plan, timeline: dict, analyzed: dict,
             unclear.append(f"V1 {k + 1}: Wort „{e.text}“ ({it['clip']}:{e.id}) angeschnitten – Schnitt bleibt framegenau "
                            f"wie in Resolve")
         if not full:
-            unclear.append(f"V1 {k + 1}: {it['clip']} f{a}–f{b - 1} enthält kein vollständiges Wort – als Cutlist-Item nicht "
-                           f"darstellbar, bleibt nur in Resolve")
+            by_hand(k, it, "von Hand eingefügt, ohne vollständiges Wort")
             continue
         items.append(CutItem(clip=it["clip"], from_word=full[0].id, to_word=full[-1].id, start_frame=f"{it['clip']}:f{a:04d}",
-                             end_frame=f"{it['clip']}:f{b - 1:04d}", zoom=round(it.get("zoom") or 1.0, 3),
+                             end_frame=f"{it['clip']}:f{b - 1:04d}", zoom=round(it.get("zoom") or 1.0, 3), pan=it.get("pan"), tilt=it.get("tilt"),
                              note=f"aus Resolve übernommen ({st})"))
+    for at_rec, n in gaps:
+        prev = [it for it in v1 if it["rec"] < at_rec]
+        manual.append(ManualItem(media="", name="Lücke", source_in_frame=0, source_out_frame=n, track=1, record_frame=at_rec, frames=n,
+                                 anchor=(prev[-1]["clip"], prev[-1]["src_start"] + prev[-1]["frames"] - 1) if prev else None, note="Lücke auf V1"))
+    manual.sort(key=lambda m: m.record_frame)
+    for k, st in enumerate(status):
+        if st == "neu" and any(m.record_frame == v1[k]["rec"] for m in manual):
+            lines.append(f"  ＋ ohne Wörter, als Handänderung übernommen: V1 {k + 1} „{v1[k]['name']}“")
     cl = None
     if items:
         cl = built.model_copy(deep=True)
+        cl.manual = [m for m in built.manual if not (m.track == 1 and m.track_type == "video")] + manual
         cl.pass_ = None
         cl.base_cutlist = None
         cl.items = items
@@ -457,6 +490,20 @@ def timeline_changes(built: Cutlist, plan: Plan, timeline: dict, analyzed: dict,
         cl.options = cl.options.model_copy(update={"tighten_gaps_over_ms": 10 ** 6, "cut_fillers": False,
                                                    "motion_aware_cuts": False, "keep_pause_ms": 10 ** 6})
     return {"lines": lines, "unclear": unclear, "cutlist": cl, "changed": changed, "status": status, "removed": removed}
+
+
+def _same_zoom(it: dict, piece) -> bool:
+    return piece.manual or abs(float(it.get("zoom") or 1.0) - float(piece.zoom or 1.0)) <= 0.005
+
+
+def _v1_gaps(v1: list[dict], total: int | None = None) -> list[tuple[int, int]]:
+    """Empty stretches on V1 as (timeline frame, length)."""
+    out, pos = [], 0
+    for it in v1:
+        if it["rec"] > pos:
+            out.append((pos, it["rec"] - pos))
+        pos = it["rec"] + it["frames"]
+    return out
 
 
 def _lis(seq: list[int]) -> list[int]:

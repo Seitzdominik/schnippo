@@ -4,6 +4,8 @@
 
 from __future__ import annotations
 
+from .cutlist import first_piece
+
 import re
 
 from .formatting import ts
@@ -72,12 +74,12 @@ def plan_checks(cl, plan, clips: dict, prof, analyzed: dict | None = None) -> li
     if not plan.pieces:
         return []
     out = ["Prüfungen (Leitfaden):"]
-    fps = clips[plan.pieces[0].clip].resolve_fps or clips[plan.pieces[0].clip].fps
+    fps = clips[first_piece(plan).clip].resolve_fps or clips[first_piece(plan).clip].fps
     total = sum(p.frames for p in plan.pieces)
     total_s = total / fps
     lo, hi = (cl.reframe.min_s, cl.reframe.max_s) if cl.reframe else prof.runtime_s
     out.append(f"  Laufzeit {ts(total_s)} " + ("✓" if lo <= total_s <= hi else f"⚠ außerhalb {ts(lo)}–{ts(hi)} ({prof.format})"))
-    first = plan.pieces[0]
+    first = first_piece(plan)
     at = (analyzed or {}).get(first.clip)
     w0 = next((e for e in at.entries if e.id == first.word_ids[0]), None) if at is not None and first.word_ids else None
     if w0 is not None:
@@ -261,8 +263,11 @@ def run(tl: dict, clips: dict, analyzed: dict, prof, master: str | None, built_p
     sliver = round(getattr(prof, "sliver_s", 0.5) * fps)
     margin = getattr(prof, "cover_margin_frames", 4)
     near = []
+    by_hand = {(m["track"], m["tl_start"]) for m in (built_plan.manual if built_plan is not None else [])}  # placed by the user: not ours to judge
     for t, items in tl["upper"].items():
         for name, a, d in items:
+            if (t, a) in by_hand:
+                continue
             for edge, side in ((a, "Anfang"), (a + d, "Ende")):
                 dist = min(abs(edge - c) for c in cuts)
                 if 0 < dist < max(sliver, margin + 1):

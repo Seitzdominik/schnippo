@@ -23,11 +23,12 @@ from .formatting import ts
 from .models import AnalyzedTranscript, Clip, RawTranscript, Still
 from . import context as ctx
 from . import retakes
-from .cutlist import Cutlist, CutOptions, Piece, Plan, build_plan, plan_item, plan_text
+from .cutlist import Cutlist, CutOptions, Piece, Plan, build_plan, first_piece, manual_clip_id, plan_item, plan_text
 from .script import ScriptLine, load_script, match
 from .segments import Segment, segment
 from .acoustic import Acoustic, AcousticParams, analyze_wav
 from .transcribe.base import get_provider, option_fingerprint
+from .versions import WORK_SUFFIX, work_name
 
 log = logging.getLogger("schnippo")
 
@@ -42,6 +43,23 @@ def eta_seconds(durations: list[float], lanes: int = 3) -> float:
     for d in sorted(durations, reverse=True):
         acc[acc.index(min(acc))] += ETA_OVERHEAD_S + ETA_PER_AUDIO_S * d
     return max(acc) if durations else 0.0
+
+
+class ClipTable(dict):
+    """The clips of the folder, plus (not listed, not saved) what the user placed by hand from elsewhere."""
+
+    def __init__(self, *a, **kw):
+        super().__init__(*a, **kw)
+        self.extra: dict[str, Clip] = {}
+
+    def __missing__(self, key):
+        return self.extra[key]
+
+    def __contains__(self, key):
+        return super().__contains__(key) or key in self.extra
+
+    def get(self, key, default=None):
+        return super().get(key, self.extra.get(key, default))
 
 
 class Workspace:
@@ -473,7 +491,31 @@ class Workspace:
             return ctx.render_page(blocks, pages, page, self.script)
         return ctx.render(blocks, self.script, self.broll_text() + self.stills_text(), str(self.folder), guide)
 
+    def register_manual(self, cl: Cutlist) -> None:
+        """Hand-placed clips from outside the folder get a pseudo clip, so the plan can treat them as material."""
+        if not isinstance(self.clips, ClipTable):
+            self.clips = ClipTable(self.clips)
+        if not cl.manual:
+            return
+        known = [c for c in self.clips.values() if c.resolve_fps or c.fps]
+        base = next((self.clips[it.clip.strip().lower()] for it in cl.items if it.clip.strip().lower() in self.clips), known[0] if known else None)
+        fps0 = (base.resolve_fps or base.fps) if base else 25.0
+
+        def pseudo(cid: str, path: str, fps: float, audio: int) -> Clip:
+            return Clip(id=cid, path=path, fingerprint="", duration_s=0.0, fps_num=round(fps * 1000), fps_den=1000, audio_channels=audio, resolve_fps=fps)
+
+        for m in cl.manual:
+            if not (m.track == 1 and m.track_type == "video"):
+                continue
+            if not m.media:
+                self.clips.extra["gap"] = pseudo("gap", "", fps0, 0)
+                continue
+            cid = manual_clip_id(m, self.clips)
+            if cid not in self.clips:
+                self.clips.extra[cid] = pseudo(cid, m.media, m.fps or fps0, 2 if m.with_audio else 0)
+
     def plan(self, cl: Cutlist) -> tuple[Plan, dict[str, AnalyzedTranscript], dict[str, list[Segment]]]:
+        self.register_manual(cl)
         need = {it.clip.strip().lower() for it in cl.items if it.clip.strip().lower() in self.clips}
         need |= {r.segment.split(":")[0] for r in cl.rejected if r.segment.split(":")[0] in self.clips}
         analyzed, segs = {}, {}
@@ -562,6 +604,8 @@ class Workspace:
                 base = Cutlist(**cl.base_cutlist)
             else:
                 base = self.built_cutlist(cl.base_cutlist)
+                if base is None and re.search(r"_V\d_\w+$", cl.base_cutlist):  # named after a pass: one working timeline now
+                    base = self.built_cutlist(re.sub(r"_V\d_\w+$", WORK_SUFFIX, cl.base_cutlist))
                 if base is None:
                     known = ", ".join(sorted(self.builds)) or "keine"
                     raise LookupError(f"base_cutlist „{cl.base_cutlist}“ unbekannt – gebaute Timelines: {known}")
@@ -570,14 +614,17 @@ class Workspace:
         eff, notes = resolve(cl, base, prof)
         if eff.format is None:
             eff.format = fmt
+        eff.new_timeline = cl.new_timeline
+        if not cl.new_timeline and eff.reframe is None and "timeline_name" not in cl.model_fields_set:
+            eff.timeline_name = work_name(cl.name or eff.name or (self.folder.name if self.folder else eff.timeline_name))
         return eff, notes
 
     def _hook_face_lines(self, plan: Plan, prof) -> list[str]:
         """01_rough_cut: face at least 1 s within the first hook_s seconds; first frame not mid-movement."""
         try:
-            fps = self.clips[plan.pieces[0].clip].resolve_fps or self.clips[plan.pieces[0].clip].fps
+            fps = self.clips[first_piece(plan).clip].resolve_fps or self.clips[first_piece(plan).clip].fps
             need, rec, seen, total = prof.hook_s * fps, 0, 0, 0
-            for pc in plan.pieces:
+            for pc in (x for x in plan.pieces if not x.manual):
                 boxes = self.person(self.clips[pc.clip])["boxes"]
                 for fr in range(pc.start_frame, pc.end_frame):
                     if rec >= need:
@@ -591,7 +638,7 @@ class Workspace:
             return []
         out = [f"  Hook: Gesicht in {seen / fps:.1f} s der ersten {total / fps:.1f} s "
                + ("✓" if seen >= fps else "⚠ (Leitfaden: mindestens 1 s in den ersten 3 s)")]
-        m = plan.pieces[0].start_motion
+        m = first_piece(plan).start_motion
         if m is not None and m > 6:
             out.append(f"  ⚠ Erster Frame mitten in einer Bewegung (Bew. {m:g}× Median) – Hereinkommen/Geste? "
                        "Mit get_frames(..., pad_s=1) prüfen; ohne ruhigen Frame vor dem ersten Wort: Grenzfall melden")
@@ -842,7 +889,7 @@ class Workspace:
             c["diff"] = round(diff, 1)
             c["score"] = diff / 10 + max(c["m_out"] or 0, c["m_in"] or 0)
         ranked = sorted(cuts, key=lambda c: -c["score"])[: max(1, top_n)] if top_n else cuts
-        clip0 = self.clips[plan.pieces[0].clip]
+        clip0 = self.clips[first_piece(plan).clip]
         fc = self.frame_cache(clip0)
         aspect = fc.tw / fc.th
         tiles = []
@@ -935,7 +982,7 @@ class Workspace:
         out = []
         for pc in pieces:
             by_id = {e.id: e for e in analyzed[pc.clip].entries} if pc.clip in analyzed else {}
-            raw = self.cached_transcript(self.clips[pc.clip])
+            raw = self.cached_transcript(self.clips[pc.clip]) if not pc.manual else None
             spk_of = {t.id: t.speaker for t in raw.tokens} if raw else {}
             votes: dict[int, int] = {}
             for wid in pc.word_ids:
@@ -1077,7 +1124,7 @@ class Workspace:
         info = ensure(self.cache.root)
         tok = _tokens.load(cl.brand)
         prof = self.profile(cl.format, cl.style)
-        clip0 = self.clips[plan.pieces[0].clip]
+        clip0 = self.clips[first_piece(plan).clip]
         w, h = (cl.reframe.width, cl.reframe.height) if cl.reframe else display_size(clip0)
         fps = clip0.resolve_fps or clip0.fps
         if cl.reframe and cl.reframe.layout == "framed" and plan.reframe.get("window"):
@@ -1090,7 +1137,7 @@ class Workspace:
             return None
         from .mg import plate as _plate
         from .mg import tokens as _tokens
-        clip0 = self.clips[plan.pieces[0].clip]
+        clip0 = self.clips[first_piece(plan).clip]
         fps = clip0.resolve_fps or clip0.fps
         tok = _tokens.load(cl.brand)
         frames = sum(pc.frames for pc in plan.pieces)
@@ -1365,21 +1412,54 @@ class Workspace:
     def _sense_file(self) -> Path:
         return self.cache.root / "sense" / (self.cache.workspace_file(self.folder).stem + ".json")
 
-    def sense_estimate(self, timeline: str) -> dict:
+    def _sense_target(self, timeline: str | None, cl: Cutlist | None):
+        """A built timeline, or a cutlist that is only planned (complete cut: nothing lands in Resolve before the check)."""
+        if cl is None:
+            return self._built(timeline)
+        eff, _ = self.prepare(cl)
+        plan, analyzed, _segs = self.plan(eff)
+        return eff, plan, analyzed, self.clips[first_piece(plan).clip].resolve_fps or self.clips[first_piece(plan).clip].fps
+
+    def plan_sound(self, cl: Cutlist, out: Path) -> Path:
+        """The sound of a planned cut from the cached 16-kHz audio of the clips: what a timeline would play, without building one."""
+        import wave
+        eff, plan, _, fps = self._sense_target(None, cl)
+        rate, frames = 16000, []
+        cache: dict[str, bytes] = {}
+        for p in plan.pieces:
+            if p.manual or p.clip not in self.clips:
+                frames.append(b"\0\0" * round(p.frames / fps * 16000))
+                continue
+            if p.clip not in cache:
+                with wave.open(str(self.audio(self.clips[p.clip])), "rb") as f:
+                    rate = f.getframerate()
+                    cache[p.clip] = f.readframes(f.getnframes())
+            cf = self.clips[p.clip].resolve_fps or self.clips[p.clip].fps
+            a, b = round(p.start_frame / cf * rate) * 2, round(p.end_frame / cf * rate) * 2
+            frames.append(cache[p.clip][a:b])
+        with wave.open(str(out), "wb") as f:
+            f.setnchannels(1)
+            f.setsampwidth(2)
+            f.setframerate(rate)
+            f.writeframes(b"".join(frames))
+        return out
+
+    def sense_estimate(self, timeline: str | None = None, cl: Cutlist | None = None) -> dict:
         from . import sense
-        cl, plan, analyzed, fps = self._built(timeline)
+        cl, plan, analyzed, fps = self._sense_target(timeline, cl)
         data = Cache.read_json(self._sense_file()) or {"pieces": {}}
         regions = sense.missing_regions(data["pieces"], plan.pieces, fps)
         new_s = sum(b - a for a, b in regions)
         return {"regions": regions, "new_s": new_s, "cost_usd": round(new_s / 3600 * self.cfg.gladia_price_usd_per_hour, 2),
                 "total_s": plan.total_seconds(self.clips)}
 
-    def sense_check(self, timeline: str, wav: Path | None, transcribe=None) -> dict:
+    def sense_check(self, timeline: str | None, wav: Path | None, transcribe=None, cl: Cutlist | None = None) -> dict:
         """Hear the finished cut. wav = 16-kHz sound of the whole timeline (None if everything is cached). Only pieces not
         in the cache are transcribed: their regions are cut out of the wav, joined and sent to Gladia once."""
         from . import sense
         from .revise import spoken_words
-        cl, plan, analyzed, fps = self._built(timeline)
+        cl, plan, analyzed, fps = self._sense_target(timeline, cl)
+        timeline = timeline or cl.timeline_name
         path = self._sense_file()
         path.parent.mkdir(parents=True, exist_ok=True)
         data = Cache.read_json(path) or {"pieces": {}, "timing": {}}
@@ -1422,7 +1502,7 @@ class Workspace:
         cl, plan, analyzed, fps = self._built(timeline)
         words = spoken_words(plan, analyzed, fps, plan.corrections)
         spk, src, energy = {}, {}, {}
-        for cid in {pc.clip for pc in plan.pieces}:
+        for cid in {pc.clip for pc in plan.pieces if not pc.manual}:
             raw = self.cached_transcript(self.clips[cid])
             spk.update({f"{cid}:{t.id}": t.speaker for t in raw.tokens} if raw else {})
             src.update({f"{cid}:{e.id}": (e.start_s, e.end_s) for e in analyzed[cid].entries})
@@ -1482,7 +1562,7 @@ class Workspace:
         from .mg import tokens as _tokens
         cl, plan, analyzed, fps = self._built(timeline)
         faces = {}
-        for cid in {pc.clip for pc in plan.pieces}:
+        for cid in {pc.clip for pc in plan.pieces if not pc.manual}:
             pa = self.person(self.clips[cid])
             faces[cid] = (pa["boxes"], tuple(int(v) for v in pa["size"]))
         tok = _tokens.load(cl.brand)
@@ -1499,7 +1579,7 @@ class Workspace:
             known = ", ".join(sorted(self.builds)) or "keine"
             raise LookupError(f"„{timeline}“ wurde nicht von {self.cfg and 'diesem Server'} gebaut – bekannt: {known}")
         plan, analyzed, _ = self.plan(cl)
-        fps = self.clips[plan.pieces[0].clip].resolve_fps or self.clips[plan.pieces[0].clip].fps
+        fps = self.clips[first_piece(plan).clip].resolve_fps or self.clips[first_piece(plan).clip].fps
         return cl, plan, analyzed, fps
 
     def locate(self, timeline: str, ref: str) -> dict:
@@ -1523,27 +1603,32 @@ class Workspace:
             out.append(f"Weitere Stelle ({a['score']:.2f}): {a['words'][0]}–{a['words'][1]} @{t(a['start'])} „{a['text']}“")
         return "\n".join(out)
 
-    def revision(self, base_timeline: str, instructions: list[dict], existing: set[str] | None = None) -> tuple[Cutlist, list[str]]:
+    def revision(self, base_timeline: str, instructions: list[dict], existing: set[str] | None = None, new_version: bool = False) -> tuple[Cutlist, list[str]]:
         from .revise import apply_ops, next_revision_name
         base = self.built_cutlist(base_timeline)
         if base is None:
             raise LookupError(f"„{base_timeline}“ unbekannt – gebaute Timelines: {', '.join(sorted(self.builds)) or 'keine'}")
         new, log = apply_ops(base, instructions, lambda r: self.locate(base_timeline, r))
         new.pass_, new.base_cutlist, new.revision_of = None, None, base_timeline
-        new.timeline_name = next_revision_name(base_timeline, set(self.builds) | (existing or set()))
+        new.timeline_name = next_revision_name(base_timeline, set(self.builds) | (existing or set())) if new_version else base_timeline
         new.__pydantic_fields_set__ = set(new.model_fields_set) | {"timeline_name"}
         return new, log
 
-    def timeline_changes(self, timeline: dict) -> dict:
+    def timeline_changes(self, timeline: dict, new_version: bool = False) -> dict:
+        """Compare a timeline with its cutlist. Default: the adopted cutlist keeps the name of the timeline (working timeline)."""
         from .revise import next_revision_name, timeline_changes
         cl, plan, analyzed, fps = self._built(timeline["name"])
-        need = {it["clip"] for it in timeline["v1"] if it["clip"]} - set(analyzed)
-        analyzed.update({c: self.analyzed(self.clips[c]) for c in need})
+        need = {it["clip"] for it in timeline["v1"] if it["clip"] and it["clip"] in self.clips and self.clips[it["clip"]].fingerprint} - set(analyzed)
+        for c in need:
+            try:
+                analyzed[c] = self.analyzed(self.clips[c])
+            except LookupError:  # B-roll without a transcript: a clip like any hand-placed one
+                pass
         res = timeline_changes(cl, plan, timeline, analyzed, self.clips)
         new = res["cutlist"]
         if new is not None:
             new.revision_of = timeline["name"]
-            new.timeline_name = next_revision_name(timeline["name"], set(self.builds))
+            new.timeline_name = next_revision_name(timeline["name"], set(self.builds)) if new_version else timeline["name"]
             new.__pydantic_fields_set__ = set(new.model_fields_set) | {"timeline_name"}
             nplan, _, _ = self.plan(new)
             bad = [e for e in nplan.errors if e.startswith("Overlay") or e.startswith("Grafik")]
@@ -1555,12 +1640,105 @@ class Workspace:
                 res["unclear"] += [f"{e} → Grafik nicht übernommen" for e in bad if e.startswith("Grafik")]
                 new.graphics = gk
                 nplan, _, _ = self.plan(new)
+            if "others" in timeline:
+                nplan = self._adopt_upper(new, nplan, timeline, res)
             res["plan_ok"] = nplan.ok
             res["errors"] = nplan.errors
-            same = [(p.clip, p.start_frame, p.frames) for p in nplan.pieces] == [
+            same = [(p.clip, p.start_frame, p.frames) for p in nplan.pieces if not p.gap] == [
                 (it["clip"], it["src_start"], it["frames"]) for it in timeline["v1"] if it["clip"]]
             res["reproduces"] = same
         return res
+
+    def _own_expected(self, cl: Cutlist, plan: Plan) -> list[dict]:
+        """Where everything from the cutlist above V1 should lie according to the plan."""
+        rows = [{"kind": "video", "rec": o.tl_start, "frames": o.frames, "what": "overlay", "index": o.index} for o in plan.overlays]
+        rows += [{"kind": "video", "rec": g.tl_start, "frames": g.frames, "what": "graphic", "index": g.index} for g in plan.graphics]
+        rows += [{"kind": "audio", "rec": s.tl_start, "frames": s.frames, "what": "sfx", "index": s.index} for s in plan.sfx]
+        rows += [{"kind": m["track_type"], "rec": m["tl_start"], "frames": m["frames"], "what": "manual", "index": k} for k, m in enumerate(plan.manual)]
+        rows += [{"kind": "audio", "rec": o.tl_start, "frames": o.frames, "what": "atmo", "index": o.index} for o in plan.overlays if o.audio == "atmo"]
+        if cl.reframe is not None and cl.reframe.layout == "framed":
+            rows.append({"kind": "video", "rec": 0, "frames": sum(p.frames for p in plan.pieces), "what": "plate", "index": 0})
+        return rows
+
+    def _adopt_upper(self, new: Cutlist, nplan: Plan, timeline: dict, res: dict) -> Plan:
+        """Upper and audio tracks: what is not where the cutlist would put it was placed, moved or deleted by hand. Such clips become
+        manual items, exactly as they lie; what the user deleted leaves the cutlist."""
+        from .cutlist import ManualItem
+        from .revise import manual_id
+        v1 = timeline["v1"]
+
+        def anchor(rec: int):
+            hit = next((it for it in v1 if it["rec"] <= rec < it["rec"] + it["frames"] and it["clip"]), None)
+            return (hit["clip"], hit["src_start"] + rec - hit["rec"]) if hit else None
+
+        tl_fps = timeline.get("fps") or 25.0
+        left = list(timeline["others"])
+        missing = []
+        for e in self._own_expected(new, nplan):
+            hit = next((o for o in left if o["kind"] == e["kind"] and abs(o["rec"] - e["rec"]) <= 1 and abs(o["frames"] - e["frames"]) <= 1), None)
+            if hit is not None:
+                left.remove(hit)
+            elif e["what"] != "atmo":
+                missing.append(e)
+        added = []
+        for o in left:
+            if not o["path"]:
+                res["unclear"].append(f"{o['kind'][0].upper()}{o['track']}: „{o['name']}“ hat keine Datei (Titel oder Generator): bleibt in der Timeline, geht bei einem Neubau aber verloren")
+                continue
+            rate = (o["media_fps"] / tl_fps) if o.get("media_fps") and abs(o["media_fps"] - tl_fps) > 0.005 else 1.0
+            added.append(ManualItem(media=o["path"], name=o["name"], source_in_frame=int(o["src_start"]), source_out_frame=int(o["src_start"]) + round(o["frames"] * rate), track=o["track"],
+                                    track_type=o["kind"], record_frame=o["rec"], frames=o["frames"], fps=o["media_fps"] if rate != 1.0 else None, with_audio=o.get("with_audio", False),
+                                    audio_track=o.get("audio_track"), anchor=anchor(o["rec"]), properties=o.get("props", {}), note="von Hand gesetzt"))
+            res["lines"].append(f"  ＋ von Hand auf {o['kind'][0].upper()}{o['track']}: „{o['name']}“ an Frame {o['rec']} ({o['frames']} Frames), bleibt erhalten")
+        if not missing and not added:
+            return nplan
+        res["changed"] = True
+        gone = {w: {e["index"] for e in missing if e["what"] == w} for w in ("overlay", "graphic", "sfx", "manual")}
+        for what, label in (("overlay", "Overlay"), ("graphic", "Grafik"), ("sfx", "Effekt")):
+            for i in sorted(gone[what]):
+                res["lines"].append(f"  − {label} {i} liegt nicht mehr an seiner Stelle: von Hand verschoben oder gelöscht")
+        new.overlays = [o for k, o in enumerate(new.overlays, 1) if k not in gone["overlay"]]
+        new.graphics = [g for k, g in enumerate(new.graphics, 1) if k not in gone["graphic"]]
+        new.sfx = [c for k, c in enumerate(new.sfx, 1) if k not in gone["sfx"]]
+        uppers = [m for m in new.manual if not (m.track == 1 and m.track_type == "video")]
+        keep_upper = [m for k, m in enumerate(uppers) if k not in gone["manual"]]
+        new.manual = [m for m in new.manual if m.track == 1 and m.track_type == "video"] + keep_upper + added
+        return self.plan(new)[0]
+
+    def sync(self, timeline: dict) -> tuple[Cutlist | None, list[str]]:
+        """Bring the cutlist of a built timeline up to what is really on it. Returns (cutlist, what was adopted)."""
+        name = timeline["name"]
+        if name not in self.builds:
+            return None, []
+        res = self.timeline_changes(timeline)
+        new, out = res["cutlist"], []
+        if res["changed"] and new is not None:
+            report = self.builds[name].get("_graphics_report")
+            self.builds[name] = new.model_dump(mode="json", by_alias=True, exclude_none=True)
+            if report:
+                self.builds[name]["_graphics_report"] = report
+            self._save()
+            out = [ln for ln in res["lines"][1:]]
+        if res["unclear"]:
+            out += [f"Unklar: {u}" for u in res["unclear"]]
+        return self.built_cutlist(name), out
+
+    def remember_version(self, work: str, version: str) -> None:
+        """The cutlist belonging to a backup, so restoring brings both back."""
+        if work in self.builds:
+            self.builds[version] = dict(self.builds[work])
+            self._save()
+
+    def forget_versions(self, names: list[str]) -> None:
+        for n in names:
+            self.builds.pop(n, None)
+        if names:
+            self._save()
+
+    def restore_build(self, work: str, version: str) -> None:
+        if version in self.builds:
+            self.builds[work] = dict(self.builds[version])
+            self._save()
 
     def built_cutlist(self, timeline_name: str) -> Cutlist | None:
         d = self.builds.get(timeline_name)
@@ -1600,7 +1778,7 @@ class Workspace:
             plan, analyzed, _ = self.plan(cl)
             if not plan.ok:
                 raise ValueError("Cutlist ungültig:\n" + "\n".join(plan.errors))
-            fps = self.clips[plan.pieces[0].clip].resolve_fps or self.clips[plan.pieces[0].clip].fps
+            fps = self.clips[first_piece(plan).clip].resolve_fps or self.clips[first_piece(plan).clip].fps
             return ex.export(cl.timeline_name, plan.pieces, analyzed, fps, plan.corrections, self.export_dir(), fmt,
                              max_words, max_line_chars, chapters, **sub)
         items = [it for it in timeline["v1"] if it["clip"]]
@@ -1648,7 +1826,7 @@ class Workspace:
         acoustics = {cid: self.acoustic(self.clips[cid]) for cid in analyzed}
         face_first = None
         if plan is not None and built.reframe and plan.pieces:
-            first = plan.pieces[0]
+            first = first_piece(plan)
             boxes = self.person(self.clips[first.clip])["boxes"]
             # a turned head escapes the detector for a moment: half a second decides
             fps0 = self.clips[first.clip].resolve_fps or self.clips[first.clip].fps

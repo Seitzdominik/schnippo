@@ -242,7 +242,7 @@ def build_timeline(bridge: "ResolveBridge", cl, pieces: list, clips: dict, alter
                    work_dir: str | None = None, force_way: str | None = None, overlays: list | None = None,
                    stills: dict | None = None, audio_spectrum: dict | None = None, export_dir: str | None = None,
                    fmt: str = "reel", channel_plans: dict | None = None, graphics: list | None = None,
-                   progress=None, on_stage=None, sfx: list | None = None) -> dict:
+                   progress=None, on_stage=None, sfx: list | None = None, manual: list | None = None, replace: str | None = None) -> dict:
     """Build the cut (+ optional alternates timeline) with the frame rate of the main clip, in any project.
 
     Ways, each verified by reading back timeline *and* playback rate before anything is appended:
@@ -268,7 +268,8 @@ def build_timeline(bridge: "ResolveBridge", cl, pieces: list, clips: dict, alter
         import time
         r.OpenPage("edit")
         time.sleep(1.0)
-    used = sorted({pc.clip for pc in pieces} | {pc.clip for pc, _ in (alternates or [])})
+    used = sorted({pc.clip for pc in pieces if not pc.manual} | {pc.clip for pc, _ in (alternates or [])})
+    hand = sorted({pc.clip for pc in pieces if pc.manual and not pc.gap})  # lie in the Media Pool already, Schnippo imports nothing for them
     fps = clips[master_clip].resolve_fps or clips[master_clip].fps
     other = {c: (clips[c].resolve_fps or clips[c].fps) for c in used if abs((clips[c].resolve_fps or clips[c].fps) - fps) > 0.005}
     if other:
@@ -289,6 +290,9 @@ def build_timeline(bridge: "ResolveBridge", cl, pieces: list, clips: dict, alter
         bridge.import_clips([Path(m) for m in missing], bin_name)
         by_path = _pool_by_path(mp)
     mpi = {cid: by_path.get(clips[cid].path) for cid in used}
+    gone = [clips[c].path for c in hand if clips[c].path not in by_path]
+    if gone:
+        raise BuildError(f"Von Hand eingefügte Clips sind nicht mehr im Media Pool: {gone}. Nichts gebaut.")
     if any(v is None for v in mpi.values()):
         raise BuildError(f"Clips nicht im Media Pool: {[k for k, v in mpi.items() if v is None]}. Nichts gebaut.")
     # Everything goes into the pool before the timeline gets its first item: ImportMedia after B-roll was placed ended in std::out_of_range (NOTES, Phase 10)
@@ -299,6 +303,7 @@ def build_timeline(bridge: "ResolveBridge", cl, pieces: list, clips: dict, alter
     clip_bad = [f"{c}={v}" for c, v in fps_readback(p, mpis=mpi)["clip_fps"].items() if v is None or abs(v - fps) > 0.005]
     if clip_bad:
         raise BuildError(f"Clip-FPS in Resolve {', '.join(clip_bad)} ≠ {fps:g} (Clip-Attribute geändert?). Nichts gebaut.")
+    mpi.update({c: by_path.get(clips[c].path) for c in hand})
 
     # way 1: empty project -> set the project rate (playback rate may not follow: checked per timeline below)
     rb0 = fps_readback(p)
@@ -327,6 +332,8 @@ def build_timeline(bridge: "ResolveBridge", cl, pieces: list, clips: dict, alter
         for pc in plist:
             recs.append(rec)
             rec += pc.frames
+        recs = [r for r, pc in zip(recs, plist) if not pc.gap]  # an empty stretch only moves what follows
+        plist = [pc for pc in plist if not pc.gap]
 
         # way 1: project (already right or just set)
         bad = _mismatch(fps_readback(p), fps)
@@ -366,7 +373,7 @@ def build_timeline(bridge: "ResolveBridge", cl, pieces: list, clips: dict, alter
             assets = {cid: {"path": clips[cid].path, "frames": int(mpi[cid].GetClipProperty("Frames") or 0),
                             "tc_frames": _tc_frames(mpi[cid].GetClipProperty("Start TC"), fps), "name": Path(clips[cid].path).name,
                             "audio_channels": clips[cid].audio_channels or 2} for cid in used}
-            write_fcpxml(f, tl_name, num, den, disp_w, disp_h, assets, [(pc.clip, pc.start_frame, pc.end_frame) for pc in plist],
+            write_fcpxml(f, tl_name, num, den, disp_w, disp_h, assets, [(pc.clip, pc.start_frame, pc.end_frame) for pc in plist if not pc.manual],
                          [(fr, mname, note) for fr, _, mname, note in marker_rows])
             src_folders = list({id(mpi[c].GetParentFolder()): mpi[c].GetParentFolder() for c in used}.values())
             t3 = mp.ImportTimelineFromFile(str(f), {"timelineName": tl_name, "importSourceClips": False,
@@ -388,6 +395,9 @@ def build_timeline(bridge: "ResolveBridge", cl, pieces: list, clips: dict, alter
         if way != "FCPXML-Import":
             infos = [{"mediaPoolItem": mpi[pc.clip], "startFrame": pc.start_frame, "endFrame": pc.end_frame,
                       "recordFrame": t0 + rc, "trackIndex": 1} for pc, rc in zip(plist, recs)]
+            for info, pc in zip(infos, plist):
+                if pc.manual and clips[pc.clip].audio_channels == 0:
+                    info["mediaType"] = 1
             mp.AppendToTimeline(infos)
         chan_info = remap_channels(tl, mpi, channel_plans or {})
         items = sorted(tl.GetItemListInTrack("video", 1) or [], key=lambda i: i.GetStart())
@@ -401,6 +411,10 @@ def build_timeline(bridge: "ResolveBridge", cl, pieces: list, clips: dict, alter
         for k, (pc, it, rc) in enumerate(zip(plist, items, recs)):
             got = (it.GetStart() - t0, it.GetDuration(), it.GetLeftOffset())
             want = (rc, pc.frames, pc.start_frame)
+            if pc.manual:  # another frame rate rounds by a frame, and sound is optional here
+                if abs(got[0] - want[0]) + abs(got[1] - want[1]) > 1:
+                    errors.append(f"Handänderung an Stück {k + 1}: Position/Dauer {got[:2]} ≠ Soll {want[:2]}")
+                continue
             if got != want:
                 errors.append(f"Stück {k + 1}: Position/Dauer/Quell-Offset {got} ≠ Soll {want}")
                 continue
@@ -417,6 +431,8 @@ def build_timeline(bridge: "ResolveBridge", cl, pieces: list, clips: dict, alter
             errors += chan_info["errors"]
         n_zoom = 0
         for k, (pc, it) in enumerate(zip(plist, items)):
+            if pc.manual:
+                continue
             fill = getattr(pc, "fill", False)
             if fill:
                 it.SetProperties({"Scaling": r.SCALE_FILL})
@@ -452,7 +468,7 @@ def build_timeline(bridge: "ResolveBridge", cl, pieces: list, clips: dict, alter
                     n_x += a.AddTransition({"type": "Cross Fade 0 dB", "category": "audio", "position": "end",
                                             "alignment": "center", "duration": crossfade}) is not None
             for k, (pc, it, rc) in enumerate(zip(plist, items, recs)):
-                if (it.GetStart() - t0, it.GetDuration()) != (rc, pc.frames):
+                if not pc.manual and (it.GetStart() - t0, it.GetDuration()) != (rc, pc.frames):
                     errors.append(f"Stück {k + 1}: nach Überblendung verändert")
         return {"name": tl_name, "way": way, "attempts": attempts, "pieces": len(plist), "frames": tl_frames,
                 "seconds": round(tl_seconds, 3), "expected_seconds": None if expect_seconds is None else round(expect_seconds, 3),
@@ -462,7 +478,7 @@ def build_timeline(bridge: "ResolveBridge", cl, pieces: list, clips: dict, alter
 
     rows, pos, seen = [], 0, set()
     for pc in pieces:
-        if pc.item not in seen and cl.markers:
+        if pc.item > 0 and pc.item not in seen and cl.markers:
             seen.add(pc.item)
             it = cl.items[pc.item - 1]
             first = " ".join(pc.text.split()[:5])
@@ -473,7 +489,10 @@ def build_timeline(bridge: "ResolveBridge", cl, pieces: list, clips: dict, alter
     stage = on_stage or (lambda name, info=None: None)
     # built under "<name>_unvollstaendig" and renamed only when every stage ran: an abort (crash, kill, Resolve gone)
     # leaves a clearly marked timeline, never one that looks finished
-    final = _unique_name(existing, cl.timeline_name)
+    if replace and replace in existing:
+        final = replace  # the working timeline: stays in place until the new one is complete
+    else:
+        final = _unique_name(existing, cl.timeline_name)
     existing.add(final)
     say(f"Timeline wird angelegt ({len(pieces)} Teilstücke)")
     main = make(final + INCOMPLETE, pieces, rows, audio_crossfade_frames, plan_seconds)
@@ -506,6 +525,15 @@ def build_timeline(bridge: "ResolveBridge", cl, pieces: list, clips: dict, alter
             main["verified"] = False
             main["errors"] += [e for c in main["sfx"] for e in c["errors"]]
         stage("sfx")
+    if manual:
+        say(f"Handänderungen: {len(manual)} Clips wieder einsetzen")
+        tl_main = find_timeline(p, main["name"])
+        settle(p, tl_main)
+        main["manual"] = place_manual(bridge, p, tl_main, manual)
+        if any(not m["verified"] for m in main["manual"]):
+            main["verified"] = False
+            main["errors"] += [e for m in main["manual"] for e in m["errors"]]
+        stage("manual")
     if getattr(cl, "audio", None) is not None:
         tl_main = find_timeline(p, main["name"])
         settle(p, tl_main)
@@ -532,6 +560,11 @@ def build_timeline(bridge: "ResolveBridge", cl, pieces: list, clips: dict, alter
             main["errors"].append(f"True Peak {main['audio']['after'].get('true_peak')} dBTP über {cl.audio.true_peak_max}")
         stage("audio")
     tl_done = find_timeline(p, main["name"])
+    if final == replace:  # complete, and the previous state lies in Schnippo/Versionen
+        p.SetCurrentTimeline(tl_done)
+        if not mp.DeleteTimelines([find_timeline(p, final)]):
+            main["errors"].append(f"Alte Arbeits-Timeline „{final}“ ließ sich nicht ersetzen")
+            main["verified"] = False
     if not tl_done.SetName(final):
         main["errors"].append(f"Umbenennen von „{main['name']}“ in „{final}“ abgelehnt – Timeline trägt noch den Zusatz")
         main["verified"] = False
@@ -551,6 +584,11 @@ def build_timeline(bridge: "ResolveBridge", cl, pieces: list, clips: dict, alter
     for i in range(p.GetTimelineCount()):
         if p.GetTimelineByIndex(i + 1).GetName() == main["name"]:
             p.SetCurrentTimeline(p.GetTimelineByIndex(i + 1))
+    if hasattr(tl_done, "GetMediaPoolItem") and getattr(cl, "reframe", None) is None:  # one place to find it, the bin of graphics is none
+        from .versions import bins
+        item = tl_done.GetMediaPoolItem()
+        if item is not None:
+            mp.MoveClips([item], bins(mp)[0])
     pm.SaveProject()
     return receipt
 
@@ -692,6 +730,7 @@ def _place_video_overlay(bridge, p, mp, tl, ov, clip, bin_name: str, t0: int) ->
     return res
 
 
+OWN_AUDIO_FX = ("De-Esser", "Limiter", "Multiband Compressor")
 ATMO_BELOW_LU = 20.0  # B-roll ambience sits this far under the programme target (quiet, but audible)
 
 
@@ -791,6 +830,14 @@ def _apply_audio(r, p, tl, opts, spectrum, out_dir, render, measure, duplicate_t
         if atmo:
             notes.append(_level_atmo(tl, atmo, _path, opts.target_lufs - ATMO_BELOW_LU))
         auds = keep
+    removed = 0
+    for a in auds:  # mastering again: our own chain comes off first, or it would stack up (the rest of the item is the user's)
+        own = [e for e in (a.GetEffects("audio") if hasattr(a, "GetEffects") else None) or [] if (e.GetInfo() or {}).get("name") in OWN_AUDIO_FX]
+        if own and a.DeleteEffects(own):
+            removed += len(own)
+    if removed:
+        actions.append(f"Vorherige Kette entfernt ({removed} Effekte), wird neu gesetzt")
+    base = [float(a.GetProperty("AudioVolume") or 0) for a in auds]  # gain by hand on single clips stays relative
     before = measure(render("audio_before", check))
     fx = {e["name"]: e["id"] for e in (r.GetEffectsList("audio") or [])}
     props = {}
@@ -825,15 +872,15 @@ def _apply_audio(r, p, tl, opts, spectrum, out_dir, render, measure, duplicate_t
     if opts.normalize and before.get("lufs") is not None:
         gain = opts.target_lufs - before["lufs"] + (opts.post_compressor_offset_db if post else 0.0)
         for iterations in range(1, opts.max_iterations + 1):
-            for a in auds:
-                a.SetProperties({"AudioVolume": max(-100.0, min(30.0, gain))})
+            for a, b0 in zip(auds, base):
+                a.SetProperties({"AudioVolume": max(-100.0, min(30.0, b0 + gain))})
             last = render(f"audio_it{iterations}", check)
             after = measure(last)
-            if after.get("lufs") is None or abs(after["lufs"] - opts.target_lufs) <= opts.tolerance_lu or gain >= 30.0:
+            if after.get("lufs") is None or abs(after["lufs"] - opts.target_lufs) <= opts.tolerance_lu or gain + max(base, default=0.0) >= 30.0:
                 break
-            gain = min(30.0, gain + opts.target_lufs - after["lufs"])
+            gain = min(30.0 - max(base, default=0.0), gain + opts.target_lufs - after["lufs"])
         actions.insert(0, f"Programm-Verstärkung {gain:+.1f} dB per Clip-Lautstärke (AudioVolume) auf {len(auds)} Clips")
-        if gain >= 30.0:
+        if gain + max(base, default=0.0) >= 30.0:
             notes.append("Clip-Lautstärke am Maximum (+30 dB) – Quelle zu leise für das Ziel")
     lufs_ok = after.get("lufs") is not None and abs(after["lufs"] - opts.target_lufs) <= opts.tolerance_lu
     tp_ok = after.get("true_peak") is not None and after["true_peak"] <= opts.true_peak_max + 1e-9
@@ -944,13 +991,25 @@ def place_sfx(bridge, p, tl, cues: list[dict]) -> list[dict]:
         bridge.import_clips([_P(x) for x in missing], tool_bin("SFX"))
         by = _pool_by_path(mp)
     plan = []
-    for k, lane in enumerate(lanes(cues), 1):
-        if not tl.AddTrack("audio", "stereo"):
-            return [{**c, "verified": False, "errors": ["Spur SFX ließ sich nicht anlegen"]} for c in cues]
-        n = tl.GetTrackCount("audio")
-        tl.SetTrackName("audio", n, SFX_TRACK if k == 1 else f"{SFX_TRACK} {k}")
-        plan += [(c, n) for c in lane]
     t0 = tl.GetStartFrame()
+    existing = sfx_tracks(tl)  # on a timeline that has effects already, the free stretches of its tracks come first
+    taken = {n: [(i.GetStart() - t0, i.GetDuration()) for i in tl.GetItemListInTrack("audio", n) or []] for n in existing}
+
+    def fits(n, lane):
+        return all(not (s < c["tl_start"] + c["frames"] + 1 and c["tl_start"] < s + d + 1) for c in lane for s, d in taken[n])
+
+    made = len(existing)
+    for lane in lanes(cues):
+        n = next((x for x in existing if fits(x, lane)), None)
+        if n is None:
+            if not tl.AddTrack("audio", "stereo"):
+                return [{**c, "verified": False, "errors": ["Spur SFX ließ sich nicht anlegen"]} for c in cues]
+            n = tl.GetTrackCount("audio")
+            made += 1
+            tl.SetTrackName("audio", n, SFX_TRACK if made == 1 else f"{SFX_TRACK} {made}")
+            taken[n] = []
+        taken[n] += [(c["tl_start"], c["frames"]) for c in lane]
+        plan += [(c, n) for c in lane]
     out = []
     for c, n in sorted(plan, key=lambda p: p[0]["index"]):
         res = {**c, "track": n, "verified": False, "errors": []}
@@ -1063,8 +1122,9 @@ def read_timeline(bridge: "ResolveBridge", name: str | None, clips: dict) -> dic
     for it in sorted(tl.GetItemListInTrack("video", 1) or [], key=lambda i: i.GetStart()):
         cid = mpi_clip(it)
         fps = (clips[cid].resolve_fps or clips[cid].fps) if cid else None
-        v1.append({"clip": cid, "name": it.GetName(), "rec": it.GetStart() - t0, "frames": it.GetDuration(),
-                   "src_start": it.GetLeftOffset(), "fps": fps, "zoom": float(it.GetProperty("ZoomX") or 1.0),
+        media = it.GetMediaPoolItem()
+        v1.append({"clip": cid, "name": it.GetName(), "path": (media.GetClipProperty("File Path") if media else "") or "", "rec": it.GetStart() - t0, "frames": it.GetDuration(),
+                   "src_start": it.GetLeftOffset(), "fps": fps, "media_fps": _f(media.GetClipProperty("FPS")) if media else None, "zoom": float(it.GetProperty("ZoomX") or 1.0),
                    "pan": float(it.GetProperty("Pan") or 0), "tilt": float(it.GetProperty("Tilt") or 0), "scaling": it.GetProperty("Scaling"),
                    "linked_audio": [(a.GetStart() - t0, a.GetDuration()) for a in (it.GetLinkedItems() or [])
                                     if a.GetType() == "audio"]})
@@ -1086,10 +1146,259 @@ def read_timeline(bridge: "ResolveBridge", name: str | None, clips: dict) -> dic
     rb = fps_readback(p, tl)
     sfx_items = sorted(({"rec": a.GetStart() - t0, "frames": a.GetDuration(), "name": a.GetName(), "volume": float(a.GetProperty("AudioVolume") or 0)}
                         for k in sfx_tracks(tl) for a in tl.GetItemListInTrack("audio", k) or []), key=lambda i: i["rec"])
-    return {"project": p.GetName(), "name": tl.GetName(), "frames": tl.GetEndFrame() - t0, "v1": v1, "audio": audio, "sfx": sfx_items, "upper_props": upper_props,
+    return {"project": p.GetName(), "name": tl.GetName(), "frames": tl.GetEndFrame() - t0, "v1": v1, "audio": audio, "sfx": sfx_items, "upper_props": upper_props, "others": other_items(tl),
             "scale_fill": getattr(bridge.resolve(), "SCALE_FILL", None), "size": (_int(tl.GetSetting("timelineResolutionWidth")), _int(tl.GetSetting("timelineResolutionHeight"))),
             "upper": upper, "markers": len(tl.GetMarkers() or {}), "readback": rb,
             "fps": rb.get("timeline_fps") or rb.get("project_fps")}
+
+
+PROPS_VIDEO = ("ZoomX", "ZoomY", "Pan", "Tilt", "Opacity", "CropLeft", "CropRight", "CropTop", "CropBottom", "Scaling")
+
+
+def other_items(tl) -> list[dict]:
+    """Everything on the timeline except V1 and the sound linked to it, for telling Schnippo's own clips from hand-placed ones."""
+    t0 = tl.GetStartFrame()
+    out = []
+    if not hasattr(tl, "GetTrackName"):
+        return out
+    fx = set(sfx_tracks(tl))
+    v1_keys = {(i.GetStart(), i.GetDuration()) for i in tl.GetItemListInTrack("video", 1) or []}
+    for kind in ("video", "audio"):
+        for k in range(1, (tl.GetTrackCount(kind) or 0) + 1):
+            if kind == "video" and k == 1:
+                continue
+            for it in tl.GetItemListInTrack(kind, k) or []:
+                if it.GetType() not in ("video", "audio", kind):
+                    continue
+                linked = [a for a in (it.GetLinkedItems() or [])]
+                if kind == "audio" and any(a.GetType() == "video" for a in linked):  # the sound of a video clip travels with the clip
+                    continue
+                if kind == "audio" and k not in fx and (it.GetStart(), it.GetDuration()) in v1_keys:
+                    continue  # imported timelines do not link: the copy of the V1 sound on a further track
+                m = it.GetMediaPoolItem()
+                keys = PROPS_VIDEO if kind == "video" else ("AudioVolume",)
+                props = {}
+                for key in keys:
+                    v = it.GetProperty(key)
+                    if v is not None:
+                        props[key] = v
+                sound = [a for a in linked if a.GetType() == "audio"]
+                out.append({"kind": kind, "track": k, "rec": it.GetStart() - t0, "frames": it.GetDuration(), "src_start": it.GetLeftOffset() or 0, "name": it.GetName(),
+                            "path": (m.GetClipProperty("File Path") if m else "") or "", "media_fps": _f(m.GetClipProperty("FPS")) if m else None, "sfx": k in fx and kind == "audio",
+                            "props": props, "audio_track": next((n for n in range(1, (tl.GetTrackCount("audio") or 0) + 1) for a in sound if any(
+                                x.GetStart() == a.GetStart() for x in tl.GetItemListInTrack("audio", n) or [])), None), "with_audio": bool(sound),
+                            "_item": it})
+    return out
+
+
+def occupied(items: list[dict], kind: str, track: int, a: int, b: int) -> bool:
+    return any(o["kind"] == kind and o["track"] == track and o["rec"] < b and a < o["rec"] + o["frames"] for o in items)
+
+
+def free_track(items: list[dict], kind: str, want: int, a: int, b: int) -> int:
+    """The wanted track, or the next one above it where nothing lies in that stretch: nothing the user put there is overwritten."""
+    k = want
+    while occupied(items, kind, k, a, b):
+        k += 1
+    return k
+
+
+def place_manual(bridge, p, tl, items: list[dict]) -> list[dict]:
+    """Hand-placed clips back onto upper and audio tracks, as read from the old timeline. They were in the Media Pool and stay untouched there."""
+    mp = p.GetMediaPool()
+    by = _pool_by_path(mp)
+    t0 = tl.GetStartFrame()
+    out = []
+    for m in sorted(items, key=lambda x: x["tl_start"]):
+        res = {"name": m.get("name") or m["media"], "track": m["track"], "kind": m["track_type"], "tl_start": m["tl_start"], "frames": m["frames"], "verified": False, "errors": []}
+        out.append(res)
+        item = by.get(m["media"])
+        if item is None:
+            res["errors"].append(f"Handänderung „{res['name']}“: nicht mehr im Media Pool")
+            continue
+        kind, k = m["track_type"], m["track"]
+        seen = other_items(tl) if hasattr(tl, "GetTrackName") else []
+        k = free_track(seen, kind, k, m["tl_start"], m["tl_start"] + m["frames"])
+        if kind == "audio" and k in sfx_tracks(tl):
+            k = (tl.GetTrackCount("audio") or 1) + 1
+        while (tl.GetTrackCount(kind) or 0) < k:
+            tl.AddTrack(kind, "stereo") if kind == "audio" else tl.AddTrack("video")
+        info = {"mediaPoolItem": item, "startFrame": m["source_in_frame"], "endFrame": m["source_out_frame"], "recordFrame": t0 + m["tl_start"], "trackIndex": k,
+                "mediaType": 1 if kind == "video" else 2}
+        got = mp.AppendToTimeline([info]) or []
+        it = got[0] if got else None
+        if it is None or it.GetStart() is None:
+            res["errors"].append(f"Handänderung „{res['name']}“: ließ sich nicht einsetzen")
+            continue
+        if k != m["track"]:
+            res["moved_track"] = k
+        res["track"] = k
+        if m.get("properties"):
+            it.SetProperties(m["properties"])
+        if m.get("with_audio") and kind == "video":
+            a = m.get("audio_track") or (tl.GetTrackCount("audio") or 1) + 1
+            while (tl.GetTrackCount("audio") or 0) < a:
+                tl.AddTrack("audio", "stereo")
+            ga = mp.AppendToTimeline([{**info, "trackIndex": a, "mediaType": 2}]) or []
+            if ga and hasattr(tl, "SetClipsLinked"):
+                tl.SetClipsLinked([it, ga[0]], True)
+        placed = (it.GetStart() - t0, it.GetDuration())
+        if placed[0] != m["tl_start"] or abs(placed[1] - m["frames"]) > 1:
+            res["errors"].append(f"Handänderung „{res['name']}“: Position/Dauer {placed} ≠ Soll ({m['tl_start']}, {m['frames']})")
+        else:
+            res["verified"] = True
+    return out
+
+
+def import_for_timeline(bridge, p, tl, paths: list[str], bin_name: str) -> None:
+    """Media into the pool for a timeline that holds clips already. All crashes of Phase 10 came at the first ImportMedia after an overlay lay on the current timeline (cause open, see NOTES): an empty helper
+    timeline is current meanwhile, the same order as in a fresh build."""
+    from pathlib import Path as _P
+    mp = p.GetMediaPool()
+    by = _pool_by_path(mp)
+    missing = [x for x in dict.fromkeys(paths) if x not in by]
+    if not missing:
+        return
+    helper = mp.CreateEmptyTimeline("_schnippo_import")
+    try:
+        if helper is not None:
+            p.SetCurrentTimeline(helper)
+            settle(p, helper, 0.3)
+        bridge.import_clips([_P(x) for x in missing], bin_name)
+    finally:
+        p.SetCurrentTimeline(tl)
+        if helper is not None:
+            mp.DeleteTimelines([helper])
+
+
+class NotInPlace(RuntimeError):
+    """This change cannot be made cleanly on the existing timeline."""
+
+
+def _piece_key(c: str | None, start: int, frames: int) -> tuple:
+    return (c, start, frames)
+
+
+def edit_steps(current: list[dict], target: list) -> list[dict]:
+    """What turns V1 into the target, block by block, right to left so positions further left stay valid: keep, trim, cut, insert.
+    Raises NotInPlace for a change of the order, which is a rebuild."""
+    import difflib
+    a = [_piece_key(c["clip"], c["src_start"], c["frames"]) for c in current]
+    b = [_piece_key(t.clip, t.start_frame, t.frames) for t in target]
+    kept = [k for k in a if k in b]
+    if [k for k in b if k in a] != kept:
+        raise NotInPlace("Reihenfolge geändert")
+    if len(set(a)) != len(a) or len(set(b)) != len(b):
+        raise NotInPlace("ein Stück kommt doppelt vor")
+    steps = []
+    for tag, i1, i2, j1, j2 in reversed(difflib.SequenceMatcher(a=a, b=b, autojunk=False).get_opcodes()):
+        if tag == "equal":
+            continue
+        cur, tgt = current[i1:i2], target[j1:j2]
+        at = cur[0]["rec"] if cur else (current[i1 - 1]["rec"] + current[i1 - 1]["frames"] if i1 else 0)
+        trims = []
+        if len(cur) == len(tgt) and all(c["clip"] == t.clip and c["src_start"] <= t.start_frame and t.end_frame <= c["src_start"] + c["frames"] for c, t in zip(cur, tgt)):
+            trims = list(zip(cur, tgt))
+        steps.append({"at": at, "old": sum(c["frames"] for c in cur), "new": sum(t.frames for t in tgt), "cut": [] if trims else cur, "insert": [] if trims else tgt, "trim": trims})
+    return steps
+
+
+def apply_edit_steps(p, tl, steps: list[dict], mpi: dict, t0: int) -> dict:
+    """Carry the steps out. Measured on 21.1.2: Ripple delete shortens an upper clip that reaches over the cut, so the cut is a plain delete and
+    what lies behind it is moved as a group; an upper clip reaching over the cut keeps its length."""
+    mp = p.GetMediaPool()
+    p.SetCurrentTimeline(tl)
+    n_new = 0
+    touched: set[int] = set()
+
+    def behind(frame: int) -> list:
+        out = []
+        for kind in ("video", "audio"):
+            for k in range(1, (tl.GetTrackCount(kind) or 0) + 1):
+                out += [i for i in tl.GetItemListInTrack(kind, k) or [] if i.GetType() in ("video", "audio", kind) and i.GetStart() >= t0 + frame]
+        return out
+
+    def shift(frame: int, delta: int) -> None:
+        if not delta:
+            return
+        group = behind(frame)
+        if group and not tl.MoveItems(group, {"startFrame": min(i.GetStart() for i in group) + delta}, False):
+            raise NotInPlace(f"Verschieben ab Frame {frame} abgelehnt")
+
+    v1 = lambda: sorted(tl.GetItemListInTrack("video", 1) or [], key=lambda i: i.GetStart())
+    for st in steps:
+        at, old, new = st["at"], st["old"], st["new"]
+        delta = new - old
+        for cur, tgt in reversed(st["trim"]):
+            it = next((i for i in v1() if i.GetStart() - t0 == cur["rec"]), None)
+            if it is None:
+                raise NotInPlace(f"Stück an Frame {cur['rec']} nicht gefunden")
+            lt, rt = tgt.start_frame - cur["src_start"], cur["src_start"] + cur["frames"] - tgt.end_frame
+            if rt and not it.SetRightOffset(it.GetRightOffset() + rt):
+                raise NotInPlace("Kürzen rechts abgelehnt")
+            if lt and not it.SetLeftOffset(it.GetLeftOffset() + lt):
+                raise NotInPlace("Kürzen links abgelehnt")
+        if st["trim"]:  # close up from the left, piece by piece
+            pos = at
+            for cur, tgt in st["trim"]:
+                it = next((i for i in v1() if cur["rec"] <= i.GetStart() - t0 < cur["rec"] + cur["frames"]), None)
+                if it is None:
+                    raise NotInPlace("gekürztes Stück nicht gefunden")
+                if it.GetStart() - t0 != pos and not it.SetPosition({"startFrame": t0 + pos}, True):
+                    raise NotInPlace("Position nach dem Kürzen abgelehnt")
+                touched.add(pos)
+                pos += tgt.frames
+            shift(at + old, delta)
+            continue
+        for cur in st["cut"]:
+            it = next((i for i in v1() if i.GetStart() - t0 == cur["rec"]), None)
+            if it is None:
+                raise NotInPlace(f"Stück an Frame {cur['rec']} nicht gefunden")
+            if not tl.DeleteClips([it] + [a for a in it.GetLinkedItems() or []], False):
+                raise NotInPlace("Löschen abgelehnt")
+        shift(at + old, delta)
+        rec = at
+        for t in st["insert"]:
+            item = mpi.get(t.clip)
+            if item is None:
+                raise NotInPlace(f"{t.clip} nicht im Media Pool")
+            got = mp.AppendToTimeline([{"mediaPoolItem": item, "startFrame": t.start_frame, "endFrame": t.end_frame, "recordFrame": t0 + rec, "trackIndex": 1}]) or []
+            if not got or got[0].GetStart() is None:
+                raise NotInPlace("Einfügen abgelehnt")
+            t_item = got[0]
+            if t.fill or t.zoom != 1.0:
+                t_item.SetProperties({"ZoomX": t.zoom, "ZoomY": t.zoom, "Pan": t.pan, "Tilt": t.tilt})
+            n_new += 1
+            rec += t.frames
+        touched |= {at, at + new}
+    return {"inserted": n_new, "cuts": sorted(touched)}
+
+
+def copy_audio_chain(tl, t0: int, frames: set[int]) -> int:
+    """New pieces take over gain and FX of the piece next to them, so a finished timeline stays even."""
+    auds = sorted([a for a in tl.GetItemListInTrack("audio", 1) or [] if a.GetType() == "audio"], key=lambda a: a.GetStart())
+    done = 0
+    for k, a in enumerate(auds):
+        if a.GetStart() - t0 not in frames or (a.GetEffects("audio") or []):
+            continue
+        ref = next((b for b in (auds[k + 1:] + auds[:k][::-1]) if b.GetEffects("audio")), None)
+        if ref is None:
+            continue
+        a.SetProperties({"AudioVolume": ref.GetProperty("AudioVolume")})
+        for e in ref.GetEffects("audio"):
+            a.AddEffect("audio", e.GetInfo()["id"])
+        done += 1
+    return done
+
+
+def add_crossfades(tl, t0: int, frames: list[int], length: int = 2) -> int:
+    """Audio crossfade on the cuts an edit created or changed."""
+    auds = sorted([a for a in tl.GetItemListInTrack("audio", 1) or [] if a.GetType() == "audio"], key=lambda a: a.GetStart())
+    n = 0
+    for a, b in zip(auds, auds[1:]):
+        if a.GetEnd() == b.GetStart() and b.GetStart() - t0 in frames:
+            n += a.AddTransition({"type": "Cross Fade 0 dB", "category": "audio", "position": "end", "alignment": "center", "duration": length}) is not None
+    return n
 
 
 def measure_timeline_audio(bridge: "ResolveBridge", name: str | None, out_dir) -> dict:

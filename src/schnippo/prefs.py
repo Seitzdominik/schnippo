@@ -17,6 +17,8 @@ FORMATS = {"reels": "reel", "reel": "reel", "youtube": "youtube", "kurse": "cour
            "werbung": "commercial", "commercial": "commercial", "automatisch": "auto", "auto": "auto", "automatisch erkennen": "auto"}
 STYLES = {"ruhig": "ruhig", "ausgewogen": "ruhig-dicht", "ruhig-dicht": "ruhig-dicht", "dicht": "dicht"}
 LANGUAGES = {"deutsch": "de", "de": "de", "englisch": "en", "english": "en", "en": "en"}
+CHECKPOINTS = {"keine": "keine", "nie": "keine", "off": "keine", "nur wenn nötig": "nur wenn nötig", "wenn nötig": "nur wenn nötig", "standard": "nur wenn nötig",
+               "nach jedem schritt": "nach jedem Schritt", "jeder schritt": "nach jedem Schritt", "durchgänge": "nach jedem Schritt"}
 SOUNDS = {"aus": "off", "off": "off", "subtil": "subtil", "normal": "normal"}
 
 
@@ -53,6 +55,8 @@ def apply(cfg, data: dict | None = None) -> None:
         cfg.content_type = prefs["content_type"]
     if "graphics" in prefs:
         cfg.graphics = bool(prefs["graphics"])
+    if prefs.get("checkpoints") in CHECKPOINTS.values():
+        cfg.checkpoints = prefs["checkpoints"]
     if prefs.get("projects_folder") and cfg.projects_folder is None:
         cfg.projects_folder = Path(prefs["projects_folder"]).expanduser()
 

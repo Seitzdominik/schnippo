@@ -34,43 +34,22 @@ from .workspace import Workspace
 
 logging.basicConfig(stream=sys.stderr, level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
 
-WORKFLOW = """Ablauf in vier Durchgängen, jeder mit genau einem Job und einer eigenen Timeline (nie überschreiben):
-0. Einrichtung: beim ersten Kontakt oder auf „Richte mich ein“ check_setup aufrufen und fehlende Punkte erklären.
-   ingest_folder (import_to_resolve=true) zeigt Clips, A-/B-Roll und das erkannte Format (reel | youtube | course |
-   commercial); bei „nachfragen“ detect_format (Auswahlkarte) und erst nach der Antwort schneiden. transcribe zeigt vorher
-   Audio, Kosten und Dauer; ab 30 min neuem Audio erst nach OK des Nutzers mit confirm=true.
-1. Rough Cut (Inhalt, Reihenfolge, Take-Wahl, Laufzeit; nur harte Schnitte): get_edit_context(pass="rough") (lange
-   Videos: overview=true, dann page=N) → Cutlist {"name": …, "pass": "rough", …} → validate_cutlist (Endtext mitlesen)
-   → build_timeline → <Name>_V1_Rough. Interview: Fragen (S2) je nach Fassung raus oder kurz behalten, Vorgespräch raus.
-   Retake-Marker („nochmal“, Klatscher) markieren den Satz davor. Werbespot/Szenen ohne Skript: VOR dem Rough Cut mit
-   get_frames("clips") Szenen bilden, Reihenfolge per show_review(decisions=[{kind: "reihenfolge", frame: …}]) bestätigen
-   lassen – nie eigenmächtig umstellen; ein Storyboard/eine Shotlist gilt als Skript.
-   ⏸ Danach show_review(timeline, decisions=[…]) mit Grenzfällen (note "Grenzfall: …"), verworfenen Inhalten, inhaltlichen
-   Widersprüchen und knappen Take-Entscheidungen (je kind, question, words/segment, recommendation). Die Antworten kommen
-   als Nachricht zurück (behalten/raus/egal) → in der Cutlist des nächsten Durchgangs umsetzen. Erst nach Antwort weiter.
-2. Fine Cut (Rhythmus, unsichtbare Schnitte, Punch-ins, Atempausen): get_edit_context(pass="fine", include_guide=true,
-   overview=true reicht) → {"pass": "fine", "base_cutlist": "<Name>_V1_Rough", "punch_in": {"mode": "alternate"},
-   "beats": [{"after": "c01:w0330", "beat": "key"|"section"}], …} (lange Formate: Pflicht, etwa ein Beat je 30–60 s) →
-   validate_cutlist → preview_cuts bei ⚠ → build_timeline → <Name>_V2_Fine.
-   ⏸ Wieder show_review (auffällige Schnitte, geänderte Takes, bewusste Pausen), erst nach Antwort weiter.
-3. B-Roll (nur Bilder ergänzen, Schnitt bleibt): get_frames("stills") / get_frames("broll") (Video-B-Roll mit Frame-IDs)
-   → {"pass": "broll", "base_cutlist": "<Name>_V2_Fine", "overlays": […]} (Video: media "c05" + from_frame, stumm; optional
-   audio "atmo", slowmo) → validate_cutlist → build_timeline → <Name>_V3_BRoll. Kein passendes Bild → keine B-Roll.
-   Sound-Effekte: im B-Roll- oder Motion-Durchgang "sfx": […] nach guides/06_sound_design.md (list_sfx zeigt die Bibliothek).
-   Neues Projekt: create_project anbieten. Liegt ein brief.md im Projekt, lies ihn vor dem Rough Cut (steht in get_edit_context) und richte Auswahl, Hook und Länge danach aus.
-   Reels aus dem fertigen langen Video: get_edit_context(pass="reel", include_guide=true), find_reel_candidates → show_reel_candidates (Nutzer wählt) → reel_cutlist → validate_cutlist →
-   build_timeline → reel_sheet → run_qc(audio=true) → sense_check → export_reels. Die lange Fassung bleibt unangetastet.
-4. Polish (Ton, QC, Export): analyze_audio → {"pass": "polish", "base_cutlist": "<Name>_V3_BRoll", "audio":
-   {"target_lufs": -14}} → build_timeline → <Name>_V4_Polish → run_qc(timeline, audio=true) →
-   export_final(timeline) (Reel 1080×1920 oder YouTube 1080p/4K, H.264, geprüft, SRT/TXT daneben).
-Korrekturen danach: Was der Nutzer meint („#05“ = Marker in Resolve, Zeit „0:23“, Zitat) mit locate finden →
-revise(base_timeline, [Operationen]) baut eine neue Version <Timeline>_r2 und zeigt den Unterschied. Hat der Nutzer in
-Resolve selbst geschnitten: read_timeline_changes(timeline) übernimmt das framegenau; „Unklar“-Punkte nachfragen.
-Abgebrochen (Absturz, Resolve zu, App beendet)? resume_job() setzt den letzten Auftrag fort; halbe Timelines heißen
-„…_unvollstaendig“. Große Caches: clear_cache().
-Abschlussbericht an den Nutzer: Laufzeit, Lautheit/True Peak, Anzahl Schnitte/Punch-ins/Overlays, QC-Ergebnis, Pfade der
-Exportdateien (Video, SRT/TXT), offene Grenzfälle und inhaltliche Fragen. Hinweis: einmal bei 1× komplett ansehen, einmal
-bei 1,25× auf Längen."""
+WORKFLOW = """Standard ist der Komplett-Schnitt in einem Rutsch (guides/00_komplett.md, get_edit_context(pass="komplett")):
+1. Vorab einmal und kurz: ingest_folder (import_to_resolve=true), transcribe (Kosten nennen; ab 30 min neuem Audio erst nach OK mit confirm=true), Format und Inhaltstyp aus Brief oder Erkennung,
+   Glossar bei unsicheren Namen, beim Werbespot die Szenenreihenfolge (show_review, nie eigenmächtig umstellen). Mehr wird nicht gefragt.
+2. Dann ohne Unterbrechung, intern: Rough Cut → Fine Cut (Pausen, Wortenden, Kernaussagen) → Gegenhören (sense_check(cutlist=…): Korrekturen in der Cutlist) → B-Roll/Overlays → Zooms → Grafiken →
+   Sound-Effekte → Ton. Zwischenstände prüfst du mit validate_cutlist und Kontaktabzügen, sie landen nicht als Timelines in Resolve. Zwischendurch je ein Satz im Chat („Rough Cut fertig, Gegenhören läuft“).
+3. complete_cut(cutlist, borderline=[…], open_questions=[…]) baut genau eine Timeline <Name>_Schnippo, sichert, misst den Ton, prüft (QC) und gibt den Bericht. Den Bericht an den Nutzer weitergeben.
+4. Korrekturen laufen direkt auf dieser Timeline, Handänderungen des Nutzers bleiben erhalten: revise, master_audio, apply_zooms, add_overlays, add_graphics, add_sfx. Vor jeder Änderung legt Schnippo eine
+   Sicherung in Schnippo/Versionen an; list_versions zeigt sie, restore_version holt eine zurück. Eine zusätzliche Timeline nur, wenn der Nutzer das ausdrücklich will („als neue Timeline“): new_timeline=true.
+Rückfragen (set_checkpoints): „nur wenn nötig“ (Standard) = nur bei echten Widersprüchen oder fehlender Szenenreihenfolge, Grenzfälle entscheidest du nach Leitfaden und listest sie im Bericht; „keine“; „nach jedem Schritt“ = Durchgänge wie unten.
+Sagt der Nutzer „ohne Grafiken“, „ohne Sound-Effekte“ oder „nur Rohschnitt“: complete_cut(skip=["graphics"|"sfx"|"overlays"|"zooms"|"audio"|"rough"]).
+Durchgänge (nur bei „nach jedem Schritt“): Cutlists mit "pass": rough, fine, broll, polish, optional motion, je get_edit_context(pass=…), validate_cutlist, build_timeline, dann show_review und auf die Antwort warten. Alle arbeiten auf <Name>_Schnippo, ab dem Fine Cut "base_cutlist": "<Name>_Schnippo".
+Reels aus dem fertigen langen Video: get_edit_context(pass="reel", include_guide=true), find_reel_candidates → show_reel_candidates (Nutzer wählt) → reel_cutlist → validate_cutlist → build_timeline → reel_sheet → run_qc(audio=true) → sense_check → export_reels. Die lange Fassung bleibt unangetastet.
+Werbespot oder Szenen ohne Skript: vor dem Schnitt mit get_frames("clips") Szenen bilden. Neues Projekt: create_project anbieten; ein brief.md im Projekt (steht in get_edit_context) gibt Auswahl, Hook und Länge vor.
+Export: export_final(timeline). Was der Nutzer mit „#05“, „0:23“ oder einem Zitat meint, findet locate. read_timeline_changes zeigt, was er in Resolve geändert hat (Fragen nur bei „Unklar“).
+Abgebrochen (Absturz, Resolve zu, App beendet)? resume_job() setzt fort; halbe Timelines heißen „…_unvollstaendig“. Große Caches: clear_cache().
+Hinweis an den Nutzer: einmal bei 1× komplett ansehen, einmal bei 1,25× auf Längen."""
 
 INSTRUCTIONS = f"""{DISPLAY_NAME}: Rohschnitt für DaVinci Resolve Studio.
 EIGENNAMEN: Namen von Personen, Firmen, Orten, Adressen nie raten. Meldet transcribe „Eigennamen unsicher“ oder steht ein Name
@@ -717,7 +696,7 @@ def _channel_plans(used: set, plan) -> dict:
     """Per clip the channel plan; with one mic per speaker additionally the channel of every piece (source start frame)."""
     plans = {cid: _ws.channel_plan(_ws.clips[cid]) for cid in used}
     if any(p and p.get("by_speaker") for p in plans.values()):
-        analyzed = {c: _ws.analyzed(_ws.clips[c]) for c in {pc.clip for pc in plan.pieces}}
+        analyzed = {c: _ws.analyzed(_ws.clips[c]) for c in {pc.clip for pc in plan.pieces if not pc.manual}}
         from .audio import louder_channels
         louder: dict = {}
         for cid, pl in plans.items():
@@ -738,10 +717,9 @@ def _hear(timeline: str):
     import tempfile
 
     from .delivery import ensure_check_preset
-    from .media import _bin, extract_audio
+    from .media import extract_audio
     from .render import render_timeline
     from .resolve_bridge import find_timeline
-    from .transcribe.base import get_provider
 
     r, p = _bridge.resolve(), _bridge.project()
     tl = find_timeline(p, timeline)
@@ -754,6 +732,13 @@ def _hear(timeline: str):
             p.SetCurrentTimeline(current)
     wav = extract_audio(mov, work / "cut16k.wav")
     platforms.unlink(mov)
+    return wav, _hear_regions(work), work
+
+
+def _hear_regions(work: Path):
+    """The callback that sends the not yet heard regions of a wav to Gladia."""
+    from .media import _bin
+    from .transcribe.base import get_provider
 
     def transcribe(wav_path, regions):
         """Cut the regions out of the wav, join them, transcribe once, map the words back to timeline seconds."""
@@ -774,34 +759,41 @@ def _hear(timeline: str):
                     out.append({"text": t.text, "s": a + t.start_s - lo, "e": a + t.end_s - lo, "c": t.confidence})
                     break
         return out
-    return wav, transcribe, work
+    return transcribe
 
 
 @tool
-def sense_check(timeline: str, confirm: bool = False, ctx: Context | None = None) -> str:
-    """Hear the finished cut again, before the export (polish): the sound of the timeline (small check render) goes to
-    Gladia. 1. Seams, automatic: heard vs. expected text ±2 words around every cut; swallowed, doubled or mangled words =
-    "unsaubere Naht" with time stamp. 2. Sense, your job: read the returned text like a viewer, section by section –
-    broken sentences, "das"/"er" without a referent, unfinished thoughts, abrupt jumps, contradictions – and list them
-    with time stamp and proposal (bring a sentence back, other take, remove a sentence). 3. Fix with revise, build, call
-    sense_check on the new version: only changed pieces are transcribed again. Unclear cases: ask the user. Cost about
-    0.10 USD per 10 min, shown in the receipt. export_transcript then uses the heard word times."""
+def sense_check(timeline: str | None = None, confirm: bool = False, ctx: Context | None = None, cutlist: dict | str | None = None) -> str:
+    """Hear the cut again. cutlist=…: BEFORE anything is built (complete cut), the sound comes from the source audio along the plan; timeline=…: a finished timeline (small check render). The sound goes to
+    Gladia. 1. Seams, automatic: heard vs. expected text ±2 words around every cut; swallowed, doubled or mangled words = "unsaubere Naht" with time stamp. 2. Sense, your job: read the returned text like a viewer, section by section –
+    broken sentences, "das"/"er" without a referent, unfinished thoughts, abrupt jumps, contradictions – and list them with time stamp and proposal (bring a sentence back, other take, remove a sentence). 3. Fix in the cutlist (complete cut) or with revise, then
+    check again: only changed pieces are transcribed again. Cost about 0.10 USD per 10 min, shown in the receipt. export_transcript then uses the heard word times."""
     import shutil
+    import tempfile
 
     say = _progress(ctx, "Gegenhören")
-    est = _ws.sense_estimate(timeline)
+    planned = _cutlist(cutlist) if cutlist is not None else None
+    if planned is None and not timeline:
+        raise ValueError("sense_check braucht timeline oder cutlist")
+    est = _ws.sense_estimate(timeline, planned)
     if est["new_s"] > _cfg.transcribe_confirm_over_min * 60 and not confirm:
         return (f"Schätzung: {_mmss(est['new_s'])} min neu zu hören ≈ {est['cost_usd']:.2f} USD. Nach OK des Nutzers "
                 "sense_check(confirm=true).")
     wav = work = transcribe_fn = None
     if est["regions"]:
-        say(f"Prüf-Render und {_mmss(est['new_s'])} min Ton an Gladia")
-        wav, transcribe_fn, work = _hear(timeline)
+        say(f"{'Ton aus dem Material' if planned is not None else 'Prüf-Render'} und {_mmss(est['new_s'])} min an Gladia")
+        if planned is not None:
+            work = Path(tempfile.mkdtemp(prefix="sense_", dir=_ws.cache.root))
+            wav = _ws.plan_sound(planned, work / "cut16k.wav")
+            transcribe_fn = _hear_regions(work)
+        else:
+            wav, transcribe_fn, work = _hear(timeline)
     try:
-        res = _ws.sense_check(timeline, wav, transcribe_fn)
+        res = _ws.sense_check(timeline, wav, transcribe_fn, cl=planned)
     finally:
         if work is not None:
             shutil.rmtree(work, ignore_errors=True)
+    timeline = timeline or planned.timeline_name
     st = res["stats"]
     lines = [f"Gegenhören „{timeline}“: {_mmss(res['total_s'])} min, davon {_mmss(res['new_s'])} min neu transkribiert "
              f"≈ {res['cost_usd']:.3f} USD (Rest aus dem Cache, kostenlos).",
@@ -1056,63 +1048,441 @@ def locate(timeline: str, ref: str) -> str:
 
 
 @tool
-def revise(base_timeline: str, instructions: list[dict], build: bool = True) -> str:
-    """Change requests on a built timeline → a NEW version "<timeline>_r2" (r3 …), never overwriting. instructions in
-    order; "#NN" always means the numbering of base_timeline; ref = "#05" | timecode | quote:
-    {"op": "remove", "ref": …} (quote/timecode: exactly those words/that sentence) or {"op": "remove", "words":
-    "c01:w0100-w0120"}; {"op": "trim", "ref": "#05", "from_word"?: "c01:w0130", "to_word"?: …}; {"op": "move", "ref":
-    "#05", "after"|"before": "#08"}; {"op": "insert", "after"|"before": "#04", "clip": "c01", "from_word": "w0100",
-    "to_word": "w0120"}; {"op": "replace", "ref": "#05", "clip", "from_word", "to_word"} (other take); {"op": "zoom",
-    "ref", "zoom": 1.25}; {"op": "correct", "word": "c01:w0643", "text": "Meer"}; {"op": "beat", "after": "c01:w0330", "beat":
-    "key"}; {"op": "remove_overlay", "ref": "O2"}; {"op": "add_overlay", …overlay}. Shows what changed
-    (new/removed/moved/changed, duration) and builds unless build=false."""
+def revise(base_timeline: str, instructions: list[dict], build: bool = True, new_timeline: bool = False) -> str:
+    """Change requests on the working timeline, directly on it (backup first): pieces come out, go in or get shorter without touching anything else, hand edits stay. What cannot be done cleanly
+    on the timeline (changed order) is a rebuild that puts every hand edit back. new_timeline=true only when the user asks for a separate version ("<timeline>_r2"). instructions in order; "#NN" always
+    means the numbering of base_timeline; ref = "#05" | timecode | quote: {"op": "remove", "ref": …} (quote/timecode: exactly those words/that sentence) or {"op": "remove", "words":
+    "c01:w0100-w0120"}; {"op": "trim", "ref": "#05", "from_word"?: "c01:w0130", "to_word"?: …}; {"op": "move", "ref": "#05", "after"|"before": "#08"}; {"op": "insert", "after"|"before": "#04", "clip": "c01", "from_word": "w0100",
+    "to_word": "w0120"}; {"op": "replace", "ref": "#05", "clip", "from_word", "to_word"} (other take); {"op": "zoom", "ref", "zoom": 1.25}; {"op": "correct", "word": "c01:w0643", "text": "Meer"}; {"op": "beat", "after": "c01:w0330", "beat":
+    "key"}; {"op": "remove_overlay", "ref": "O2"}; {"op": "add_overlay", …overlay}. Shows what changed (new/removed/moved/changed, duration). build=false only plans."""
+    from .resolve_bridge import read_timeline
     existing = set()
+    adopted: list[str] = []
     try:
         p = _bridge.project()
         existing = {p.GetTimelineByIndex(i + 1).GetName() for i in range(p.GetTimelineCount())}
-    except Exception:
+        if base_timeline in existing and base_timeline in _ws.builds:
+            _, adopted = _ws.sync(read_timeline(_bridge, base_timeline, _ws.clips))
+    except (ResolveUnavailable, BuildError, LookupError):
         pass
-    new, log = _ws.revision(base_timeline, instructions, existing)
-    text = "\n".join([f"Neue Version „{new.timeline_name}“ (Basis „{base_timeline}“):"] + [f"  · {x}" for x in log]
-                      + [_ws.validate_text(new)])
+    new, log = _ws.revision(base_timeline, instructions, existing, new_version=new_timeline)
+    new.new_timeline = new_timeline
+    head = f"Neue Version „{new.timeline_name}“" if new_timeline else f"Änderung an „{new.timeline_name}“"
+    text = "\n".join([f"{head}:"] + [f"  · Handänderung übernommen: {x.strip()}" for x in adopted] + [f"  · {x}" for x in log] + [_ws.validate_text(new)])
     if not build:
         return text + "\n\nCutlist (für build_timeline):\n" + new.model_dump_json(by_alias=True, exclude_defaults=True)
-    return text + "\n\n" + build_timeline(new.model_dump(mode="json", by_alias=True, exclude_none=True))
+    data = new.model_dump(mode="json", by_alias=True, exclude_none=True)
+    if new_timeline or base_timeline not in existing:
+        return text + "\n\n" + build_timeline(data)
+    return text + "\n\n" + _recut(base_timeline, new, instructions)
+
+
+def _recut(timeline: str, new: Cutlist, instructions: list[dict]) -> str:
+    """Directly on the timeline if that goes cleanly; if it does not, back to the backup and a rebuild that keeps the hand edits."""
+    from .resolve_bridge import NotInPlace, read_timeline
+    plan, _analyzed, _ = _ws.plan(new)
+    if not plan.ok:
+        raise ValueError("Cutlist ungültig, nichts geändert:\n" + "\n".join(plan.errors))
+    g_err, _ = _ws.glossary_check(new, plan)
+    if g_err:
+        raise ValueError("Nichts geändert:\n" + "\n".join(g_err))
+    rb = read_timeline(_bridge, timeline, _ws.clips)
+    b = _backup(timeline, "vor Neuschnitt")
+    state: dict = {}
+    try:
+        lines = _recut_in_place(timeline, new, plan, rb, state)
+    except NotInPlace as e:
+        if state.get("touched"):  # never continue on a half-edited timeline
+            from . import versions
+            versions.restore(_bridge.project(), b["name"], keep=_cfg.versions_keep)
+            _ws.restore_build(timeline, b["name"])
+        data = new.model_dump(mode="json", by_alias=True, exclude_none=True)
+        return f"Sicherung: {b['name']}\nDirekt auf der Timeline nicht sauber möglich ({e}), deshalb Neubau mit allen Handänderungen.\n" + _build_after_backup(data, b)
+    except Exception as e:
+        from . import versions
+        versions.restore(_bridge.project(), b["name"], keep=_cfg.versions_keep)
+        _ws.restore_build(timeline, b["name"])
+        raise ToolError(f"Änderung abgebrochen ({type(e).__name__}: {e}), die Timeline ist wieder im Stand von vorher ({b['name']}).") from e
+    return "\n".join([f"Sicherung: {b['name']}"] + lines)
+
+
+def _recut_in_place(timeline: str, new: Cutlist, plan, rb: dict, state: dict) -> list[str]:
+    from . import resolve_bridge as rb_
+    p = _bridge.project()
+    tl = rb_.find_timeline(p, timeline)
+    if new.reframe is not None:
+        raise rb_.NotInPlace("Reels werden neu gebaut")
+    target = [pc for pc in plan.pieces if not pc.gap]
+    steps = rb_.edit_steps(rb["v1"], target)
+    t0 = tl.GetStartFrame()
+    used = {pc.clip for pc in target if not pc.manual}
+    inserted = [t for st in steps for t in st["insert"]]
+    if inserted:  # one microphone per speaker etc. is set up clip by clip at the build
+        plans = _channel_plans(used, plan)
+        if any(pl and pl.get("class") in ("identisch", "unausgewogen", "verschieden", "je Sprecher") for pl in plans.values()):
+            raise rb_.NotInPlace("neue Stücke brauchen die Tonkanal-Zuordnung des Baus")
+    by = rb_._pool_by_path(p.GetMediaPool())
+    mpi = {c: by.get(_ws.clips[c].path) for c in {t.clip for t in inserted}}
+    moved_before = p.GetCurrentTimeline()
+    res = {"inserted": 0, "cuts": []}
+    state["touched"] = True
+    if steps:
+        res = rb_.apply_edit_steps(p, tl, steps, mpi, t0)
+    items = sorted(tl.GetItemListInTrack("video", 1) or [], key=lambda i: i.GetStart())
+    rec, bad, k = 0, [], 0
+    rows = []
+    seen = set()
+    for pc in plan.pieces:
+        if pc.gap:
+            rec += pc.frames
+            continue
+        it = items[k] if k < len(items) else None
+        got = None if it is None else (it.GetStart() - t0, it.GetDuration(), it.GetLeftOffset())
+        k += 1
+        if got != (rec, pc.frames, pc.start_frame):
+            bad.append(f"Stück {k}: {got} ≠ {(rec, pc.frames, pc.start_frame)}")
+        elif not pc.manual and abs(float(it.GetProperty("ZoomX") or 1.0) - pc.zoom) > 0.005:
+            it.SetProperties({"ZoomX": pc.zoom, "ZoomY": pc.zoom, "Pan": pc.pan, "Tilt": pc.tilt})
+        if pc.item > 0 and pc.item not in seen and new.markers:
+            seen.add(pc.item)
+            i = new.items[pc.item - 1]
+            rows.append((rec, f"#{pc.item:02d} {' '.join(pc.text.split()[:5])}…", f"{i.clip}:{i.from_word}–{i.to_word}" + (f" · {i.note}" if i.note else "")))
+        rec += pc.frames
+    if len(items) != len(target) or bad:
+        raise rb_.NotInPlace("Prüfung nach der Änderung: " + "; ".join(bad[:4] or [f"{len(items)} Stücke statt {len(target)}"]))
+    if new.markers:  # the numbering follows the cut; markers the user set stay
+        for f, m in (tl.GetMarkers() or {}).items():
+            if (m.get("name") or "").startswith("#"):
+                tl.DeleteMarkerAtFrame(f)
+        for f, name, note in rows:
+            tl.AddMarker(f, "Blue", name, note[:250], 1)
+    n_x = rb_.add_crossfades(tl, t0, res["cuts"]) if res["cuts"] else 0
+    n_chain = rb_.copy_audio_chain(tl, t0, {c for c in res["cuts"]}) if inserted else 0
+    upper = _sync_upper(timeline, tl, new, plan)
+    _ws.remember_build(timeline, new)
+    if moved_before is not None:
+        p.SetCurrentTimeline(tl)
+    p.GetMediaPool()
+    _bridge.resolve().GetProjectManager().SaveProject()
+    lines = [f"Direkt auf der Timeline geändert: {len(steps)} Stelle(n), {res['inserted']} Stücke neu, {rec} Frames ({ts(plan.total_seconds(_ws.clips))}), verifiziert: JA, Audio-Überblendungen neu: {n_x}"]
+    if n_chain:
+        lines.append(f"  Ton: {n_chain} neue Stücke haben Verstärkung und Effekte der Nachbarn übernommen. Für die exakte Lautheit danach master_audio.")
+    return lines + upper
+
+
+def _sync_upper(timeline: str, tl, new: Cutlist, plan) -> list[str]:
+    """Own elements above V1 after a change of the cut: where the plan moved one, it is set anew. Hand-placed clips are never touched."""
+    from pathlib import Path as _P
+    from . import resolve_bridge as rb_
+    p = _bridge.project()
+    others = rb_.other_items(tl)
+    expected = _ws._own_expected(new, plan)
+    left = list(others)
+    missing = []
+    for e in expected:
+        hit = next((o for o in left if o["kind"] == e["kind"] and abs(o["rec"] - e["rec"]) <= 1 and abs(o["frames"] - e["frames"]) <= 1), None)
+        if hit is not None:
+            left.remove(hit)
+        elif e["what"] != "manual" and e["what"] != "atmo":
+            missing.append(e)
+    own_paths = {_ws.clips[o.media].path for o in plan.overlays if o.kind == "video" and o.media in _ws.clips} | {_ws.stills[o.media].path for o in plan.overlays if o.media in _ws.stills}
+    cache = str(_ws.cache.root)
+    stale = [o for o in left if o["path"] and (o["path"].startswith(cache) or o["path"] in own_paths or o.get("sfx"))
+             and not any(m.media == o["path"] for m in new.manual)]
+    if stale:
+        tl.DeleteClips([o["_item"] for o in stale], False)
+    out = [f"  Entfernt, weil sein Inhalt weg ist oder neu liegt: {len(stale)} eigene Elemente"] if stale else []
+    if not missing:
+        return out
+    ov_new = [o for o in plan.overlays if any(e["what"] == "overlay" and e["index"] == o.index for e in missing)]
+    gr_new = [g for g in plan.graphics if any(e["what"] == "graphic" and e["index"] == g.index for e in missing)]
+    sf_new = [s for s in plan.sfx if any(e["what"] == "sfx" and e["index"] == s.index for e in missing)]
+    out += _place_new(timeline, tl, plan, ov_new, gr_new, sf_new)
+    return out
+
+
+def _place_new(timeline: str, tl, plan, overlays: list, graphics: list, sfx: list) -> list[str]:
+    """New elements onto a timeline that exists: imports first, tracks that are free in that stretch, nothing overwritten."""
+    from . import resolve_bridge as rb_
+    r, p = _bridge.resolve(), _bridge.project()
+    bin_name = rb_.tool_bin(_ws.folder.name if _ws.folder else "Material")
+    fps = _ws.clips[rb_first(plan).clip].resolve_fps or _ws.clips[rb_first(plan).clip].fps
+    w, h = (int(tl.GetSetting("timelineResolutionWidth") or 1920), int(tl.GetSetting("timelineResolutionHeight") or 1080))
+    others = rb_.other_items(tl)
+    out: list[str] = []
+    rendered, cues = [], []
+    if graphics:
+        sub = plan.model_copy(update={"graphics": graphics})
+        cl_ = _ws.built_cutlist(timeline)
+        rendered, info = _ws.render_graphics(cl_, sub)
+        out += [f"  Grafik NICHT GESETZT: {x}" for x in info.get("skipped", [])]
+    if sfx:
+        cues = _ws.sfx_cues(plan.model_copy(update={"sfx": sfx}))
+    rb_.import_for_timeline(_bridge, p, tl, [g["mov"] for g in rendered], rb_.tool_bin("Grafiken"))
+    rb_.import_for_timeline(_bridge, p, tl, [c["file"] for c in cues], rb_.tool_bin("SFX"))
+    rb_.import_for_timeline(_bridge, p, tl, [_ws.clips[o.media].path for o in overlays if o.kind == "video" and o.media in _ws.clips], bin_name)
+    for o in overlays:
+        o.track = rb_.free_track(others, "video", max(o.track, 2), o.tl_start, o.tl_end)
+        others.append({"kind": "video", "track": o.track, "rec": o.tl_start, "frames": o.frames})
+    for g in rendered:
+        g["track"] = rb_.free_track(others, "video", max(g["track"], 2), g["tl_start"], g["tl_start"] + g["frames"])
+        others.append({"kind": "video", "track": g["track"], "rec": g["tl_start"], "frames": g["frames"]})
+    if overlays:
+        res = rb_.place_overlays(_bridge, r, p, tl, overlays, _ws.stills, bin_name, fps, w, h, _ws.cache.root / "fcpxml" / "broll", plan.pieces, _ws.clips)
+        out += [f"  Overlay O{o['index']} {o.get('media')} V{o.get('track')} ab Frame {o.get('tl_start')} · verifiziert: {'JA' if o['verified'] else 'NEIN'}" + (" " + "; ".join(o["errors"]) if o["errors"] else "") for o in res if o.get("index")]
+    if rendered:
+        res = rb_.place_graphics(_bridge, p, tl, rendered, bin_name)
+        out += [f"  Grafik G{g['index']} {g.get('template')} V{g.get('track')} ab Frame {g.get('tl_start')} · verifiziert: {'JA' if g['verified'] else 'NEIN'}" + (" " + "; ".join(g["errors"]) if g["errors"] else "") for g in res if g.get("index")]
+    if cues:
+        res = rb_.place_sfx(_bridge, p, tl, cues)
+        out += [f"  Effekt S{c['index']} {c['id']} auf {c['at']}: A{c.get('track')} ab Frame {c['tl_start']} · verifiziert: {'JA' if c['verified'] else 'NEIN'}" + (" " + "; ".join(c["errors"]) if c["errors"] else "") for c in res]
+    return out
+
+
+def rb_first(plan):
+    from .cutlist import first_piece
+    return first_piece(plan)
+
+
+def _backup(timeline: str, label: str) -> dict:
+    from . import versions
+    from .resolve_bridge import find_timeline
+    p = _bridge.project()
+    try:
+        b = versions.backup(p, find_timeline(p, timeline), label, keep=_cfg.versions_keep)
+    except versions.BackupFailed as e:
+        raise ToolError(str(e)) from e
+    _ws.remember_version(timeline, b["name"])
+    _ws.forget_versions(b["removed"])
+    return b
+
+
+def _live(timeline: str, label: str, need_cut: bool = True) -> tuple:
+    """Start of every change on a timeline: read what is really there, adopt hand edits into the cutlist, back up."""
+    from .resolve_bridge import find_timeline, read_timeline
+    p = _bridge.project()
+    tl = find_timeline(p, timeline)
+    rb = read_timeline(_bridge, timeline, _ws.clips)
+    cl, adopted = _ws.sync(rb)
+    if cl is None and need_cut:
+        raise ToolError(f"„{timeline}“ wurde nicht von {DISPLAY_NAME} gebaut, deshalb fehlen die Wörter dazu. Ton geht trotzdem (master_audio), für B-Roll, Grafiken und Effekte braucht es einen Schnitt von {DISPLAY_NAME}.")
+    b = _backup(timeline, label)
+    head = [f"Sicherung: {b['name']}"] + [f"  Handänderung übernommen: {x.strip()}" for x in adopted]
+    return p, tl, rb, cl, head
+
+
+def _finish_live(tl) -> None:
+    _bridge.project().SetCurrentTimeline(tl)
+    _bridge.resolve().GetProjectManager().SaveProject()
+
+
+def _audio_lines(au: dict) -> list[str]:
+    b, a_ = au["before"], au["after"]
+    lines = [f"  Audio: vorher {b.get('lufs')} LUFS / {b.get('true_peak')} dBTP → nachher {a_.get('lufs')} LUFS / {a_.get('true_peak')} dBTP (Render-Messung, {au['iterations']} Durchgang/Durchgänge, Kette: "
+             f"{' → '.join(au.get('chain') or []) or '–'}); Lautheit {'OK' if au['lufs_ok'] else 'NICHT ERREICHT'}, True Peak {'OK' if au['tp_ok'] else 'ÜBER ZIEL'}"]
+    lines += [f"    – {x}" for x in au["actions"]] + [f"    Hinweis: {x}" for x in au["notes"]]
+    if au.get("balance") and au["balance"].get("rms_db"):
+        bl = au["balance"]
+        lines.append(f"    Ausgang L/R: {' / '.join(f'{v:g}' for v in bl['rms_db'])} dB RMS" + (f" (Unterschied {bl['diff_db']:g} dB {'✓' if bl['diff_db'] <= 0.5 else '⚠'})" if bl.get("diff_db") is not None else ""))
+    if au.get("delivery_preset"):
+        lines.append(f"    Export: Deliver-Tab → „Add to Render Queue“ → „Render All“ (Ziel {_ws.export_dir()})")
+    return lines
+
+
+@tool
+def master_audio(timeline: str, audio: dict | None = None, ctx: Context | None = None) -> str:
+    """Sound mastering on the existing timeline, no rebuild (backup first): measures the loudness of what is really there, then clip gain, limiter and compressor on every item, also those placed by hand, with
+    channel logic, check render and measurement. Manual gain on single clips stays relative, a second run does not stack the chain. audio: {"target_lufs": -14, …} (default: the cutlist's or -14 LUFS)."""
+    from pathlib import Path as _P
+    from .cutlist import AudioOptions
+    from .delivery import ensure_check_preset, ensure_delivery_preset
+    from .resolve_bridge import apply_audio, settle, sfx_tracks
+    say = _progress(ctx, "Ton-Mastering")
+    p, tl, rb, cl, head = _live(timeline, "vor Ton-Mastering", need_cut=False)
+    opts = AudioOptions(**audio) if audio else (cl.audio if cl is not None and cl.audio is not None else AudioOptions())
+    r = _bridge.resolve()
+    settle(p, tl)
+    voice = [k for k in range(1, (tl.GetTrackCount("audio") or 1) + 1) if k not in sfx_tracks(tl)]
+    atmo = {_ws.clips[o.media].path for o in (cl.overlays if cl else []) if o.audio == "atmo" and o.media in _ws.clips}
+    paths = set()
+    for k in voice:
+        for a in tl.GetItemListInTrack("audio", k) or []:
+            m = a.GetMediaPoolItem() if a.GetType() == "audio" else None
+            if m is not None:
+                paths.add(m.GetClipProperty("File Path"))
+    aroll = paths - atmo
+    used = {it["clip"] for it in rb["v1"] if it["clip"] and it["clip"] in _ws.clips and _ws.clips[it["clip"]].fingerprint}
+    master = _ws.master_clip(used) if used else None
+    spectrum = _ws.audio_report(_ws.clips[master]).get("spectrum") if master else None
+    plan_ch = _ws.channel_plan(_ws.clips[master]) if master else None
+    dup = len(voice) > 1 and (plan_ch or {}).get("class") == "identisch"
+    exp = _ws.export_dir() if _ws.folder else _P(_ws.cache.root) / "export"
+    fmt = (cl.format if cl is not None else None) or _ws.effective_format()[0]
+    presets = {"check": lambda: ensure_check_preset(r, p), "delivery": lambda: ensure_delivery_preset(r, p, fmt, exp, timeline)}
+    say(f"Lautheit messen und einstellen, {ts(rb['frames'] / (rb.get('fps') or 25))} Timeline (dauert je nach Länge Minuten)")
+    au = apply_audio(r, p, tl, opts, spectrum, _ws.cache.root / "fcpxml" / "audio", duplicate_tracks=dup, progress=say, presets=presets, aroll_paths=aroll)
+    if cl is not None:
+        cl.audio = opts
+        report = _ws.graphics_report(timeline)
+        _ws.remember_build(timeline, cl, graphics=report or None)
+    _finish_live(tl)
+    return "\n".join(head + [f"Ton-Mastering auf „{timeline}“ (kein Neubau):"] + _audio_lines(au))
+
+
+@tool
+def apply_zooms(timeline: str, punch_in: dict | None = None, changes: list[dict] | None = None) -> str:
+    """Zooms on the items that are really on the timeline (backup first), no rebuild. punch_in as in the cutlist, e.g. {"mode": "alternate"} (levels from the profile), and/or changes
+    [{"ref": "#05" | "0:23" | quote, "zoom": 1.25}]. Clips placed by hand stay as they are."""
+    from .cutlist import PunchIn
+    from .passes import _punch_defaults
+    p, tl, rb, cl, head = _live(timeline, "vor Zooms")
+    work = cl.model_copy(deep=True)
+    if punch_in is not None:
+        work.punch_in = PunchIn(**punch_in)
+        _punch_defaults(work, _ws.profile(work.format, work.style))
+        work.items = [i.model_copy(update={"zoom": None, "pan": None, "tilt": None}) for i in work.items]
+    wanted = {}
+    for ch in changes or []:
+        wanted[_ws.locate(timeline, ch["ref"])["item"]] = float(ch["zoom"])
+    for n, z in wanted.items():
+        work.items[n - 1] = work.items[n - 1].model_copy(update={"zoom": z, "pan": None, "tilt": None})
+    plan = _ws.plan(work)[0]
+    if not plan.ok:
+        raise ValueError("Nichts geändert:\n" + "\n".join(plan.errors))
+    items = sorted(tl.GetItemListInTrack("video", 1) or [], key=lambda i: i.GetStart())
+    target = [pc for pc in plan.pieces if not pc.gap]
+    if len(items) != len(target):
+        raise ToolError(f"{len(items)} Clips auf V1, geplant {len(target)}. Nichts geändert.")
+    n = 0
+    bad = []
+    for k, (it, pc) in enumerate(zip(items, target)):
+        if pc.manual:
+            continue
+        want = {"ZoomX": pc.zoom, "ZoomY": pc.zoom, "Pan": pc.pan, "Tilt": pc.tilt}
+        if pc.fill:
+            continue
+        if abs(float(it.GetProperty("ZoomX") or 1.0) - pc.zoom) > 0.005 or abs(float(it.GetProperty("Pan") or 0) - pc.pan) > 0.01:
+            it.SetProperties(want)
+            n += 1
+        if abs(float(it.GetProperty("ZoomX") or 1.0) - pc.zoom) > 0.01:
+            bad.append(f"Stück {k + 1}")
+    from .resolve_bridge import read_timeline
+    _ws.remember_build(timeline, work)
+    _ws.sync(read_timeline(_bridge, timeline, _ws.clips))
+    _finish_live(tl)
+    return "\n".join(head + [f"Zooms auf „{timeline}“: {n} Clips geändert, {sum(1 for t in target if t.zoom > 1.0 and not t.manual)} mit Zoom, Handänderungen unberührt, verifiziert: {'JA' if not bad else 'NEIN ' + ', '.join(bad)}"])
+
+
+def _add(timeline: str, label: str, field: str, new: list) -> str:
+    """Overlays, graphics or effects onto the existing timeline, at the positions it really has."""
+    p, tl, rb, cl, head = _live(timeline, label)
+    n0 = len(getattr(cl, field))
+    work = cl.model_copy(deep=True)
+    setattr(work, field, list(getattr(work, field)) + new)
+    plan = _ws.plan(work)[0]
+    tag = {"overlays": "Overlay", "graphics": "Grafik", "sfx": "Effekt"}[field]
+    errs = [e for e in plan.errors if not any(e.startswith(f"{tag} {k} ") for k in range(1, n0 + 1))]
+    if errs:
+        raise ValueError("Nichts gesetzt:\n" + "\n".join(errs))
+    ov = [o for o in plan.overlays if field == "overlays" and o.index > n0]
+    gr = [g for g in plan.graphics if field == "graphics" and g.index > n0]
+    sf = [s for s in plan.sfx if field == "sfx" and s.index > n0]
+    _ws.remember_build(timeline, work, graphics=_ws.graphics_report(timeline) or None)
+    out = _place_new(timeline, tl, plan, ov, gr, sf)
+    if plan.warnings:
+        out += [f"  Hinweis: {x}" for x in plan.warnings[:6]]
+    from .resolve_bridge import read_timeline
+    _ws.sync(read_timeline(_bridge, timeline, _ws.clips))
+    _finish_live(tl)
+    return "\n".join(head + [f"Auf „{timeline}“ gesetzt, an den tatsächlichen Positionen:"] + out)
+
+
+@tool
+def add_overlays(timeline: str, overlays: list[dict]) -> str:
+    """B-roll onto the existing timeline (backup first), no rebuild: positions from the words as they lie now, on a track that is free in that stretch, nothing placed by hand is overwritten. Overlay fields as in the cutlist."""
+    from .cutlist import Overlay
+    return _add(timeline, "vor B-Roll", "overlays", [Overlay(**o) for o in overlays])
+
+
+@tool
+def add_graphics(timeline: str, graphics: list[dict]) -> str:
+    """Motion graphics onto the existing timeline (backup first), no rebuild: rendered for the positions as they lie now, on a free track. Graphic fields as in the cutlist."""
+    from .cutlist import Graphic
+    return _add(timeline, "vor Grafiken", "graphics", [Graphic(**g) for g in graphics])
+
+
+@tool
+def add_sfx(timeline: str, sfx: list[dict]) -> str:
+    """Sound effects onto the existing timeline (backup first), no rebuild, in the free stretches of its SFX tracks. Cue fields as in the cutlist."""
+    from .cutlist import SfxCue
+    return _add(timeline, "vor Sound-Effekten", "sfx", [SfxCue(**c) for c in sfx])
+
+
+@tool
+def list_versions(timeline: str) -> str:
+    """The backups of a working timeline in the bin Schnippo/Versionen, newest first."""
+    from . import versions
+    rows = versions.versions_of(_bridge.project(), timeline)
+    if not rows:
+        return f"Keine Sicherungen von „{timeline}“."
+    return "\n".join([f"Sicherungen von „{timeline}“ ({len(rows)}, behalten werden die letzten {_cfg.versions_keep}):"] + [f"  {v['when']} · {v['label']} · {v['name']}" for v in rows])
+
+
+@tool
+def restore_version(name: str) -> str:
+    """Makes a backup the working timeline again. name as in list_versions. The state being replaced is backed up first, so this can be undone too."""
+    from . import versions
+    p = _bridge.project()
+    res = versions.restore(p, name, keep=_cfg.versions_keep)
+    if res["before"]:
+        _ws.remember_version(res["work"], res["before"])
+    _ws.restore_build(res["work"], name)
+    _bridge.resolve().GetProjectManager().SaveProject()
+    return f"„{res['work']}“ ist wieder auf dem Stand vom {res['when']} ({res['label']})." + (f" Der Stand davor liegt als „{res['before']}“ in Schnippo/Versionen." if res["before"] else "")
+
+
+@tool
+def set_checkpoints(mode: str) -> str:
+    """How often a complete cut stops to ask: keine | nur wenn nötig (default) | nach jedem Schritt. Stored for all jobs."""
+    from . import prefs
+    v = prefs.CHECKPOINTS.get(mode.strip().lower())
+    if v is None:
+        raise ValueError("checkpoints: keine | nur wenn nötig | nach jedem Schritt")
+    data = prefs.load()
+    data["preferences"]["checkpoints"] = v
+    prefs.save(data)
+    _cfg.checkpoints = v
+    return f"Rückfragen: {v}."
 
 
 @tool
 def read_timeline_changes(timeline: str, build: bool = False) -> str:
-    """Manual edits in Resolve: compares the timeline (V1) with the cutlist it was built from – unchanged, trimmed,
-    moved, new, removed, unknown media – and turns it into a cutlist that reproduces the edited timeline frame-exactly
-    (next version "<timeline>_r2"; later passes continue from it). Nothing is dropped silently: what cannot be expressed
-    (media from outside the folder, cut-off words, changed overlays) is listed under "Unklar" – ask the user.
-    build=true builds the adopted version right away."""
+    """Manual edits in Resolve: compares the timeline with its cutlist (trimmed, moved, new, removed, clips without words, foreign clips, clips on upper tracks) and adopts everything into the cutlist, losslessly: clips without
+    words become manual items that are put back exactly at every rebuild. Every change on the working timeline does this by itself. Only what has no file (titles, generators) is listed under "Unklar".
+    build=true rebuilds right away (backup first)."""
     from .resolve_bridge import read_timeline
     res = _ws.timeline_changes(read_timeline(_bridge, timeline, _ws.clips))
     out = list(res["lines"])
     if not res["changed"]:
-        out.append("Keine Handänderungen an V1.")
+        out.append("Keine Handänderungen.")
     if res["unclear"]:
         out.append("Unklar (bitte beim Nutzer nachfragen):")
         out += [f"  ? {u}" for u in res["unclear"]]
     new = res["cutlist"]
     if new is not None and res["changed"]:
-        out.append(f"Übernommen als „{new.timeline_name}“ – gibt die Timeline {'framegenau' if res.get('reproduces') else 'NICHT ganz'} "
-                   f"wieder" + ("" if res.get("plan_ok", True) else f" (Fehler: {'; '.join(res['errors'][:3])})"))
+        report = _ws.graphics_report(timeline)
+        _ws.remember_build(timeline, new, graphics=report or None)
+        out.append(f"In die Cutlist übernommen, sie gibt die Timeline {'framegenau' if res.get('reproduces') else 'NICHT ganz'} wieder" + ("" if res.get("plan_ok", True) else f" (Fehler: {'; '.join(res['errors'][:3])})"))
         if build and res.get("plan_ok", True):
             out.append(build_timeline(new.model_dump(mode="json", by_alias=True, exclude_none=True)))
-        else:
-            out.append("Cutlist (für build_timeline; erst gebaut taugt sie als base_cutlist):\n"
-                       + new.model_dump_json(by_alias=True, exclude_defaults=True))
     return "\n".join(out)
 
 
 @tool
 def build_timeline(cutlist: dict | str, ctx: Context | None = None) -> str:
-    """Build a NEW timeline in the open Resolve project from a valid cutlist (never overwrites; name conflicts get
-    _v2…). The timeline always gets the frame rate of the main clip, also in projects with another rate (own
-    timeline settings or FCPXML import). Verified by reading back rates, positions and durations; markers,
-    2-frame audio crossfades, optional alternates timeline."""
+    """Build the working timeline <Name>_Schnippo from a valid cutlist. If it exists, it is backed up first (Schnippo/Versionen) and hand edits are put back; a timeline Schnippo did not build is never replaced.
+    "new_timeline": true only when the user asks for a separate timeline. The timeline always gets the frame rate of the main clip, also in projects with another rate (own timeline settings or FCPXML import).
+    Verified by reading back rates, positions and durations; markers, 2-frame audio crossfades, optional alternates timeline."""
     say = _progress(ctx, "Bauen")
     request = _cutlist(cutlist)
     job = _jobs.start("build", request.model_dump(mode="json", by_alias=True, exclude_unset=True),
@@ -1130,8 +1500,42 @@ def build_timeline(cutlist: dict | str, ctx: Context | None = None) -> str:
         raise
 
 
+def _build_after_backup(data: dict, backup: dict) -> str:
+    """Rebuild for a change that was already backed up."""
+    global _skip_backup
+    _skip_backup = backup
+    try:
+        return build_timeline(data)
+    finally:
+        _skip_backup = None
+
+
+_skip_backup: dict | None = None
+_last_build: dict = {}
+
+
+def _working_target(cl) -> tuple[str | None, list[str]]:
+    """Is there a working timeline to replace? Carries hand edits over and backs it up. (name, report lines)."""
+    from .resolve_bridge import read_timeline
+    if cl.new_timeline or cl.reframe is not None or cl.timeline_name not in _ws.builds:
+        return None, []
+    p = _bridge.project()
+    if cl.timeline_name not in {p.GetTimelineByIndex(i + 1).GetName() for i in range(p.GetTimelineCount())}:
+        return None, []
+    current, adopted = _ws.sync(read_timeline(_bridge, cl.timeline_name, _ws.clips))
+    lines = [f"Handänderung übernommen: {x.strip()}" for x in adopted]
+    if current is not None and current.manual and not cl.manual:
+        cl.manual = current.manual
+    if _skip_backup is None:
+        b = _backup(cl.timeline_name, f"vor {cl.pass_ or 'Neubau'}")
+        lines.insert(0, f"Sicherung: {b['name']}")
+    return cl.timeline_name, lines
+
+
 def _build_timeline(request, say, job) -> str:
     cl, pass_notes = _ws.prepare(request)
+    replace, work_lines = _working_target(cl)
+    pass_notes = list(pass_notes)
     plan, analyzed, segs = _ws.plan(cl)
     if not plan.ok:
         raise ValueError("Cutlist ungültig, nichts gebaut:\n" + "\n".join(plan.errors))
@@ -1148,7 +1552,7 @@ def _build_timeline(request, say, job) -> str:
         say("Hintergrundfläche rendern")
         rendered = [plate] + [{**g, "track": g["track"] + 1} for g in rendered or []]
     alts = _ws.alternates(cl, plan, analyzed, segs) if cl.alternates else None
-    used = {pc.clip for pc in plan.pieces} | {pc.clip for pc, _ in (alts or [])}
+    used = {pc.clip for pc in plan.pieces if not pc.manual} | {pc.clip for pc, _ in (alts or [])}
     master = _ws.master_clip(used)
     from .resolve_bridge import tool_bin
     rc = _build(_bridge, cl, plan.pieces, _ws.clips, alts, bin_name=tool_bin(_ws.folder.name if _ws.folder else "Material"),
@@ -1157,8 +1561,9 @@ def _build_timeline(request, say, job) -> str:
                 audio_spectrum=(_ws.audio_report(_ws.clips[master]).get("spectrum") if cl.audio else None),
                 export_dir=str(_ws.export_dir()), fmt=cl.format or _ws.effective_format()[0],
                 channel_plans=_channel_plans(used, plan), graphics=rendered, progress=say, sfx=_ws.sfx_cues(plan) if plan.sfx else None,
-                on_stage=lambda name, info=None: _jobs.stage(job, name, info))
+                on_stage=lambda name, info=None: _jobs.stage(job, name, info), manual=plan.manual, replace=replace)
     t = rc["timeline"]
+    _last_build.update(cl=cl, plan=plan, receipt=rc)
     _jobs.finish(job, "fertig", final=t["name"])
     _ws.remember_build(t["name"], cl, graphics=[{k: g.get(k) for k in ("index", "template", "track", "tl_start", "frames", "stage",
                                                                        "bbox", "min_gap", "clearance", "safe_ok", "safe", "padding")}
@@ -1171,7 +1576,7 @@ def _build_timeline(request, say, job) -> str:
                 f"Timeline {g(rb.get('timeline_fps'))} / Wiedergabe {g(rb.get('timeline_playback_fps'))} · "
                 f"eigene Timeline-Einstellungen: {rb.get('timeline_custom_settings') or 'nein'} · Clip-FPS {clipf}")
 
-    lines = [f"Durchgang: {cl.pass_ or '–'}" + (f" (Basis {cl.base_cutlist})" if cl.base_cutlist else "")]
+    lines = list(work_lines) + [f"Durchgang: {cl.pass_ or '–'}" + (f" (Basis {cl.base_cutlist})" if cl.base_cutlist else "")]
     lines += [f"Hinweis {n}" for n in pass_notes]
     lines += [f"Projekt „{rc['project']}“ · Framerate {rc['fps']:g} fps aus Hauptmaterial {rc['master_clip']}",
              f"Timeline „{t['name']}“: {t['pieces']} Teilstücke, {ts(t['seconds'])} ({t['frames']} Frames; "
@@ -1208,20 +1613,11 @@ def _build_timeline(request, say, job) -> str:
     if mg_info:
         lines.append(f"  Motion Graphics: Marke „{mg_info['brand']}“, {mg_info['w']}×{mg_info['h']} @ {mg_info['fps']:g} fps"
                      + (f"; einmalig installiert ({mg_info['setup_s']} s): {', '.join(mg_info['installed'])}" if mg_info["installed"] else ""))
+    for m in t.get("manual", []):
+        lines.append(f"  Handänderung „{m['name']}“ {m['kind'][0].upper()}{m['track']} ab Frame {m['tl_start']} · {m['frames']} F · verifiziert: {'JA' if m['verified'] else 'NEIN'}"
+                     + (" (andere Spur: die alte war belegt)" if m.get("moved_track") else ""))
     if t.get("audio"):
-        au = t["audio"]
-        b, a_ = au["before"], au["after"]
-        lines.append(f"  Audio: vorher {b.get('lufs')} LUFS / {b.get('true_peak')} dBTP → nachher {a_.get('lufs')} LUFS / "
-                     f"{a_.get('true_peak')} dBTP (Render-Messung, {au['iterations']} Durchgang/Durchgänge, Kette: "
-                     f"{' → '.join(au.get('chain') or []) or '–'}); Lautheit {'OK' if au['lufs_ok'] else 'NICHT ERREICHT'}, "
-                     f"True Peak {'OK' if au['tp_ok'] else 'ÜBER ZIEL'}")
-        lines += [f"    – {x}" for x in au["actions"]] + [f"    Hinweis: {x}" for x in au["notes"]]
-        if au.get("balance") and au["balance"].get("rms_db"):
-            bl = au["balance"]
-            lines.append(f"    Ausgang L/R: {' / '.join(f'{v:g}' for v in bl['rms_db'])} dB RMS"
-                         + (f" (Unterschied {bl['diff_db']:g} dB {'✓' if bl['diff_db'] <= 0.5 else '⚠'})" if bl.get("diff_db") is not None else ""))
-        if au.get("delivery_preset"):
-            lines.append(f"    Export: Deliver-Tab → „Add to Render Queue“ → „Render All“ (Ziel {_ws.export_dir()})")
+        lines += _audio_lines(t["audio"])
     if "alternates" in rc:
         a = rc["alternates"]
         lines.append(f"Alternativen „{a['name']}“: {a['pieces']} Teilstücke, {ts(a['seconds'])}, verifiziert: "

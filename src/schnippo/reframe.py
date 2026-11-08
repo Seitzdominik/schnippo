@@ -10,6 +10,8 @@ Measured on 21.1.2 (white cross in a UHD and an HD clip, 1080×1920 timeline):
 
 from __future__ import annotations
 
+from .cutlist import first_piece
+
 import numpy as np
 
 MARGIN = 0.06  # head stays this far from the left and right edge (share of the width)
@@ -171,8 +173,11 @@ def apply(cl, plan, clips: dict, analyzed: dict, faces: dict, opts: dict | None 
     new, notes, splits, seen, no_face = [], [], 0, {}, 0
     last_speaker = {}
     framed = rf.layout == "framed"
-    box_h = framed_height([clips[p.clip] for p in plan.pieces], W, FRAMED_RATIO[rf.aspect]) if framed else H
+    box_h = framed_height([clips[p.clip] for p in plan.pieces if not p.manual], W, FRAMED_RATIO[rf.aspect]) if framed else H
     for pc, spk in zip(plan.pieces, speakers):
+        if pc.manual:
+            new.append(pc)
+            continue
         clip = clips[pc.clip]
         fps = clip.resolve_fps or clip.fps
         by_id = {e.id: e for e in analyzed[pc.clip].entries} if pc.clip in analyzed else {}
@@ -314,7 +319,7 @@ def qc_lines(tl: dict, plan, clips: dict, analyzed: dict, rf, faces_first=None) 
                 + (" – hochskaliert, wird weich" if soft else "")))
     total_s = tl["frames"] / (tl.get("fps") or 25.0)
     out.append((rf.min_s <= total_s <= rf.max_s, f"Dauer {total_s:.1f} s (Rahmen {rf.min_s:g}–{rf.max_s:g} s)"))
-    first = plan.pieces[0]
+    first = first_piece(plan)
     at = analyzed.get(first.clip)
     fps = (clips[first.clip].resolve_fps or clips[first.clip].fps)
     w0 = next((e for e in at.entries if e.id in first.word_ids), None) if at else None

@@ -22,7 +22,7 @@ MEDIA = {".mov", ".mp4", ".m4v", ".mxf", ".braw", ".avi", ".mkv", ".webm", ".wav
          ".ogg", ".png", ".jpg", ".jpeg", ".gif", ".heic", ".tif", ".tiff", ".webp", ".bmp"}
 IMAGES = {".png", ".jpg", ".jpeg", ".webp", ".bmp", ".tif", ".tiff"}
 ALLOWED_MEDIA = ("src/schnippo/data/sfx/wav/*.wav", "docs/hoerbeispiele/*.m4a", "packaging/icon.png", "assets/brand/*.png",
-                 "plugin/.claude-plugin/icon.png", "docs/bilder/*.png", "docs/bilder/*.gif")
+                 "plugin/.claude-plugin/icon.png", "docs/bilder/*.png", "docs/bilder/*.gif", "website/meta/*.png", "website/assets/*.png")
 SKIP_TEXT = ("uv.lock", "tools/public_denylist.json", "tools/check_public.py", "tests/test_check_public.py")
 KEYS = {
     "OpenAI/Anthropic-Key": r"\bsk-(?:ant-)?[A-Za-z0-9_\-]{20,}",

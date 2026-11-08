@@ -3,6 +3,8 @@ Every effect carries hit_offset_ms: where its transient lies. The transient is a
 
 from __future__ import annotations
 
+from .cutlist import first_piece
+
 from . import platforms
 import hashlib
 import json
@@ -240,7 +242,7 @@ def place(cl, plan, clips: dict, analyzed: dict, prof, tok: dict | None, opts: d
     if mode == "off":
         plan.warnings.append(f"sfx: Modus off – {len(cl.sfx)} Effekt(e) werden nicht gesetzt")
         return
-    fps = clips[plan.pieces[0].clip].resolve_fps or clips[plan.pieces[0].clip].fps
+    fps = clips[first_piece(plan).clip].resolve_fps or clips[first_piece(plan).clip].fps
     total = sum(p.frames for p in plan.pieces)
     uses: dict[str, int] = {}
     for k, cue in enumerate(cl.sfx, 1):

@@ -331,3 +331,22 @@ Bestandsaufnahme vor der Windows-Arbeit. Plattformabhängiges liegt jetzt in `sr
 | Texte | Finder, Menüleiste, Schlüsselbund, `~/Library` | Plattform-Texte in `platforms.py` |
 | Manifest | `platforms: darwin` | `darwin`, `win32`; `PYTHONUTF8=1` im Startbefehl |
 | Python-Bitbreite | 64 bit als gegeben | `check_setup` nennt auf Windows Python-Version und Bitbreite |
+
+
+## Arbeits-Timeline und Sicherungen (Phase 13)
+
+Gemessen auf Resolve 21.1.2 (Timeline mit Marker, Überblendungen, eigener Framerate):
+
+| Aufruf | Ergebnis |
+|---|---|
+| `Timeline.DuplicateTimeline(name)` | 0,12 s; Items, Marker, Timeline-Einstellungen identisch; **unabhängig** vom Original. Die Kopie landet im Bin des Originals, nicht im aktuellen Bin, und wird aktuelle Timeline. |
+| `Timeline.GetMediaPoolItem()` + `MediaPool.MoveClips` | verschiebt eine Timeline in einen Bin; der Name bleibt, `GetTimelineByIndex` findet sie weiter. |
+| `MediaPool.DeleteTimelines` + `SetName` | Wiederherstellen: Kopie der Sicherung anlegen, aktuell setzen, alte löschen, umbenennen. Media Pool bleibt unberührt. |
+| `TimelineItem.SetRightOffset` / `SetLeftOffset` | Kürzen rechts/links, verknüpfter Ton folgt; links wandert der Start mit. |
+| `Timeline.MoveItems(items, {startFrame}, moveLinked)` | verschiebt eine Gruppe relativ, nach links wie rechts. Überblendungen an der Kante gehen dabei verloren und werden neu gesetzt. |
+| `Timeline.DeleteClips(items, True)` (Ripple) | zieht alles dahinter nach, auch obere Spuren, **kürzt aber einen oberen Clip, der über die Schnittstelle reicht** (60 → 17 Frames). Deshalb löscht Schnippo ohne Ripple und verschiebt, was dahinter liegt, selbst. |
+| `TimelineItem.GetEffects` / `DeleteEffects` | `Effect.GetInfo()["name"]` nennt den Effekt; so entfernt ein zweites Mastering nur die eigene Kette. |
+
+Abläufe: `versions.py` (Sichern, Aufräumen, Wiederherstellen), `resolve_bridge.edit_steps` und `apply_edit_steps` (Neuschnitt direkt auf der Timeline), `Workspace.sync` und `_adopt_upper` (Handänderungen in die Cutlist).
+
+**Neu importieren auf einer Timeline, die schon Clips hat:** Alle Abstürze aus Phase 10 kamen beim ersten `ImportMedia`, nachdem ein Overlay auf der aktuellen Timeline lag (Ursache offen). `import_for_timeline` macht währenddessen eine leere Hilfs-Timeline zur aktuellen, also dieselbe Reihenfolge wie beim Neubau.
