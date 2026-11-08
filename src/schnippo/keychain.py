@@ -6,8 +6,6 @@ from __future__ import annotations
 from . import platforms
 from .branding import SLUG
 
-SERVICES = {"gladia": "Gladia", "freesound": "Freesound", "elevenlabs": "ElevenLabs"}
-
 
 def read(account: str) -> str | None:
     try:

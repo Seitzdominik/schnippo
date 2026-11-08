@@ -90,8 +90,6 @@ The plugin starts the local MCP server with `uvx schnippo=={version}` from PyPI.
 | Gladia (`api.gladia.io`) | transcribing, checking the finished cut (`sense_check`), checking your key; with your key | audio track (16 kHz mono, no metadata), glossary terms |
 | Your AI provider, for example Anthropic (Claude) | during the cut, through your own account | transcripts, editing context, file names, frames and contact sheets |
 | GitHub (`api.github.com`) | at most once a day, can be switched off | only a query for the latest version |
-| Freesound (`freesound.org`) | only on request, with your key | search terms |
-| ElevenLabs (`api.elevenlabs.io`) | only on request, with your key | description of a sound effect |
 | PyPI (`pypi.org`, `files.pythonhosted.org`) | at installation, at the first ingest (ffmpeg, OpenCV), at `motion_setup` | downloads only |
 | GitHub (`github.com`) | at installation, when uv needs a Python runtime | downloads only |
 | Playwright CDN (`cdn.playwright.dev`) | at `motion_setup` | downloads Chromium for graphics |
@@ -141,11 +139,12 @@ def main():
                   "projects_folder": {"type": "directory", "title": "Default projects folder", "description": "Lets you use just the project name in chat.", "required": False, "default": ""},
                   "format": {"type": "string", "title": "Format", "description": "auto, reel, youtube, course or commercial.", "default": "auto", "required": False},
                   "sfx": {"type": "string", "title": "Sound effects", "description": "off, subtil or normal.", "default": "subtil", "required": False},
+                  "sfx_folder": {"type": "directory", "title": "Your own sound effects (optional)", "description": "Folder with your own sounds, used before the built-in library. Licensing is up to you.", "required": False, "default": ""},
                   "update_check": {"type": "boolean", "title": "Check for new versions", "description": "One request a day to GitHub, without your data.", "default": True, "required": False}}}
     (OUT / ".claude-plugin" / "plugin.json").write_text(json.dumps(plugin, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     mcp = {"mcpServers": {b.SLUG: {"command": "uvx", "args": [f"schnippo=={version}"],
                                    "env": {"PYTHONUTF8": "1", "GLADIA_API_KEY": "${user_config.gladia_api_key}", "SCHNIPPO_PROJECTS_FOLDER": "${user_config.projects_folder}", "SCHNIPPO_FORMAT": "${user_config.format}",
-                                           "SCHNIPPO_SFX_MODE": "${user_config.sfx}", "SCHNIPPO_UPDATE_CHECK": "${user_config.update_check}"}}}}
+                                           "SCHNIPPO_SFX_MODE": "${user_config.sfx}", "SCHNIPPO_SFX_FOLDER": "${user_config.sfx_folder}", "SCHNIPPO_UPDATE_CHECK": "${user_config.update_check}"}}}}
     (OUT / ".mcp.json").write_text(json.dumps(mcp, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     (OUT / "README.md").write_text(README.format(tagline=b.TAGLINE, tagline_en=TAGLINE_EN, version=version, repo=b.REPOSITORY, privacy=b.PRIVACY_URL, privacy_de=b.PRIVACY_URL_DE, author=b.AUTHOR, contact=CONTACT), encoding="utf-8")
     shutil.copy2(REPO / "LICENSE", OUT / "LICENSE")

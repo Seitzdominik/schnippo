@@ -104,7 +104,7 @@ def load(user_folder: Path | None = None, cache_dir: Path | None = None) -> list
     data = json.loads((lib / "library.json").read_text(encoding="utf-8"))
     out = [{**e, "file": str(lib / e["file"])} for e in data["effects"]]
     if user_folder and Path(user_folder).is_dir():
-        out += scan_user_folder(Path(user_folder), Path(cache_dir or lib) / "sfx_user.json")
+        out = scan_user_folder(Path(user_folder), Path(cache_dir or lib) / "sfx_user.json") + out  # own sounds first, also for a sound named in cue.file
     return out
 
 
@@ -213,6 +213,7 @@ def _pick(lib: list[dict], cue, category: str | None, want: int, explicit: bool,
         return next((e for e in lib if name in (e["id"].lower(), e["id"].split(":")[-1].lower(), Path(e["file"]).name.lower())), None)
     # auto_styles: placed by category only in these design languages, otherwise only when named (cue.file)
     cands = [e for e in lib if e["category"] == category and ("auto_styles" not in e or style in e["auto_styles"])]
+    cands = [e for e in cands if e["id"].startswith("user:")] or cands  # the user's own sounds win their category, the library fills the rest
     if not explicit:  # vary, but never louder than one step above the wish
         cands = [e for e in cands if e["intensity"] <= want + 1] or cands
     return min(cands, key=lambda e: abs(e["intensity"] - want) + (0 if explicit else 1.5 * uses.get(e["id"], 0)), default=None)

@@ -251,21 +251,17 @@ def create_project(name: str) -> str:
 
 
 @tool
-def store_api_key(service: str = "gladia") -> str:
-    """Saves an API key in the system's credential store (macOS keychain, Windows Credential Manager) for hosts without a settings form (plugin, other MCP programs). A system window asks for it: never ask for a key in the chat, it must not reach the model.
-    service: gladia | freesound | elevenlabs."""
+def store_api_key() -> str:
+    """Saves the Gladia key in the system's credential store (macOS keychain, Windows Credential Manager) for hosts without a settings form (plugin, other MCP programs). A system window asks for it: never ask for a key in the chat, it must not reach the model."""
     from . import keychain
-    if service not in keychain.SERVICES:
-        raise ValueError("service: gladia | freesound | elevenlabs")
-    key = keychain.ask(keychain.SERVICES[service])
+    key = keychain.ask("Gladia")
     if not key:
         return "Abgebrochen, es wurde nichts gespeichert."
-    if not keychain.write(service, key):
+    if not keychain.write("gladia", key):
         return f"Der Key ließ sich nicht in der {platforms.key_store()} speichern." if platforms.is_windows() else "Der Key ließ sich nicht im Schlüsselbund speichern."
-    setattr(_cfg, {"gladia": "gladia_api_key", "freesound": "freesound_api_key", "elevenlabs": "elevenlabs_api_key"}[service], key)
-    if service == "gladia":
-        _cfg.gladia_key_source = platforms.key_store()
-    return f"{keychain.SERVICES[service]}-Key in {platforms.key_store_place()} gespeichert."
+    _cfg.gladia_api_key = key
+    _cfg.gladia_key_source = platforms.key_store()
+    return f"Gladia-Key in {platforms.key_store_place()} gespeichert."
 
 
 @tool
@@ -624,40 +620,6 @@ def prepare_recordings(folder: str, category: str | None = None) -> str:
     if not files:
         raise ValueError(f"Keine Audiodateien in {src}")
     return "\n".join(prepare(files, _sound_folder() / "Aufnahmen", category))
-
-
-@tool
-def find_sfx(category: str, query: str | None = None, license: str = "cc0", limit: int = 5) -> str:
-    """Searches Freesound with the user's key (license cc0, or cc-by with automatic credits) and ranks the candidates by key figures: distance 0 = in the range of the reference group.
-    Costs nothing; fetch_sfx loads one. Nothing is downloaded for keeps here."""
-    from .sfx_sources import freesound_search
-    if not _ws.cfg.freesound_api_key:
-        raise ValueError("Kein Freesound-Key: freesound.org/apiv2/apply, dann in den Einstellungen eintragen")
-    rows = freesound_search(_ws.cfg.freesound_api_key, category, query, license, limit)
-    return "\n".join(f"{c['id']} · {c['name']} · {c['author']} · {c['license']} · {c['duration_s']:.1f} s · Distanz {c['distance']}" for c in rows) or "Nichts gefunden"
-
-
-@tool
-def fetch_sfx(sound_id: int, category: str) -> str:
-    """Loads one Freesound sound (MP3 preview; the original would need OAuth2) into the user's sound folder with source, author and licence. Attribution for CC-BY goes to sfx_credits.txt
-    next to the export when the sound is used."""
-    from .sfx_sources import freesound_fetch
-    if not _ws.cfg.freesound_api_key:
-        raise ValueError("Kein Freesound-Key eingetragen")
-    return f"Geladen: {freesound_fetch(_ws.cfg.freesound_api_key, sound_id, category, _sound_folder())}"
-
-
-@tool
-def generate_sfx(text: str, category: str, seconds: float | None = None, loop: bool = False, confirm: bool = False) -> str:
-    """Generates a sound effect with ElevenLabs and the user's key from a description, e.g. "soft air swoosh, 0.5 seconds". Costs credits, so without confirm=true it only says that.
-    Commercial use needs a paid plan of the user. The result lands in the sound folder and shows its distance to the reference group."""
-    from .sfx_sources import elevenlabs_generate, score
-    if not _ws.cfg.elevenlabs_api_key:
-        raise ValueError("Kein ElevenLabs-Key eingetragen")
-    if not confirm:
-        return "Das kostet ElevenLabs-Credits (laut Preisseite 200 je Erzeugung). Mit confirm=true starten, nachdem der Nutzer zugestimmt hat."
-    f = elevenlabs_generate(_ws.cfg.elevenlabs_api_key, text, category, _sound_folder(), seconds, loop)
-    return f"Erzeugt: {f} · Distanz zur Referenzgruppe {score(f, category)}"
 
 
 @tool

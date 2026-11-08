@@ -55,8 +55,6 @@ The plugin starts the local MCP server with `uvx schnippo==0.13.1` from PyPI. So
 | Gladia (`api.gladia.io`) | transcribing, checking the finished cut (`sense_check`), checking your key; with your key | audio track (16 kHz mono, no metadata), glossary terms |
 | Your AI provider, for example Anthropic (Claude) | during the cut, through your own account | transcripts, editing context, file names, frames and contact sheets |
 | GitHub (`api.github.com`) | at most once a day, can be switched off | only a query for the latest version |
-| Freesound (`freesound.org`) | only on request, with your key | search terms |
-| ElevenLabs (`api.elevenlabs.io`) | only on request, with your key | description of a sound effect |
 | PyPI (`pypi.org`, `files.pythonhosted.org`) | at installation, at the first ingest (ffmpeg, OpenCV), at `motion_setup` | downloads only |
 | GitHub (`github.com`) | at installation, when uv needs a Python runtime | downloads only |
 | Playwright CDN (`cdn.playwright.dev`) | at `motion_setup` | downloads Chromium for graphics |

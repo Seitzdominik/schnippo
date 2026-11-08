@@ -107,7 +107,7 @@ def _fake_keyring(monkeypatch, store=None, fail=False):
 def test_keychain_stores_under_one_service_name(monkeypatch):
     store = _fake_keyring(monkeypatch)
     assert keychain.write("gladia", 'a"b geheim') and store == {("schnippo", "gladia"): 'a"b geheim'}
-    assert keychain.read("gladia") == 'a"b geheim' and keychain.read("freesound") is None
+    assert keychain.read("gladia") == 'a"b geheim' and keychain.read("andere") is None
 
 
 def test_keychain_without_a_store_counts_as_no_key(monkeypatch):

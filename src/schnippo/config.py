@@ -58,8 +58,6 @@ class Config:
     versions_keep: int = 5  # backups of the working timeline in Schnippo/Versionen
     sfx_mode: str = "subtil"  # off | subtil | normal
     sfx_folder: Path | None = None  # own sound effects (category from folder/file name, licence with the user)
-    freesound_api_key: str | None = None  # optional, never logged
-    elevenlabs_api_key: str | None = None  # optional, never logged
     motion_sandbox: bool = False  # free HTML graphics (seek contract checked, tokens, safe zone, no network)
     gladia_key_source: str | None = None  # Erweiterung | Umgebungsvariable | Config-Datei (never the key itself)  # [profile] / [profile.reel] / [profile.youtube]
     segment_pause_s: float = 0.7
@@ -118,8 +116,6 @@ def load_config() -> Config:
             cfg.projects_folder = Path(data["projects_folder"]).expanduser()
         if data.get("sfx", {}).get("folder"):
             cfg.sfx_folder = Path(data["sfx"]["folder"]).expanduser()
-        cfg.freesound_api_key = data.get("sfx", {}).get("freesound_api_key") or cfg.freesound_api_key
-        cfg.elevenlabs_api_key = data.get("sfx", {}).get("elevenlabs_api_key") or cfg.elevenlabs_api_key
         if "guides_dir" in data:
             cfg.guides_dir = Path(data["guides_dir"]).expanduser()
         if data.get("export_folder"):
@@ -160,10 +156,6 @@ def load_config() -> Config:
         cfg.sfx_mode = env("SCHNIPPO_SFX_MODE").lower()
     if env("SCHNIPPO_SFX_FOLDER"):
         cfg.sfx_folder = Path(env("SCHNIPPO_SFX_FOLDER")).expanduser()
-    if env("FREESOUND_API_KEY"):
-        cfg.freesound_api_key = env("FREESOUND_API_KEY")
-    if env("ELEVENLABS_API_KEY"):
-        cfg.elevenlabs_api_key = env("ELEVENLABS_API_KEY")
     if env("SCHNIPPO_EXPORT_FOLDER"):
         cfg.export_folder = Path(env("SCHNIPPO_EXPORT_FOLDER")).expanduser()
     if env("SCHNIPPO_PROJECTS_FOLDER"):
@@ -177,11 +169,4 @@ def load_config() -> Config:
         from .keychain import read
         cfg.gladia_api_key = read("gladia")
         cfg.gladia_key_source = key_store() if cfg.gladia_api_key else cfg.gladia_key_source
-    cfg.freesound_api_key = cfg.freesound_api_key or _keychain("freesound")
-    cfg.elevenlabs_api_key = cfg.elevenlabs_api_key or _keychain("elevenlabs")
     return cfg
-
-
-def _keychain(account: str) -> str | None:
-    from .keychain import read
-    return read(account)

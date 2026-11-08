@@ -52,6 +52,13 @@
       "default": "subtil",
       "required": false
     },
+    "sfx_folder": {
+      "type": "directory",
+      "title": "Your own sound effects (optional)",
+      "description": "Folder with your own sounds, used before the built-in library. Licensing is up to you.",
+      "required": false,
+      "default": ""
+    },
     "update_check": {
       "type": "boolean",
       "title": "Check for new versions",

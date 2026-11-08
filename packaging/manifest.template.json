@@ -47,8 +47,6 @@
         "SCHNIPPO_PROJECTS_FOLDER": "${user_config.projects_folder}",
         "SCHNIPPO_SFX_MODE": "${user_config.sfx}",
         "SCHNIPPO_SFX_FOLDER": "${user_config.sfx_folder}",
-        "FREESOUND_API_KEY": "${user_config.freesound_api_key}",
-        "ELEVENLABS_API_KEY": "${user_config.elevenlabs_api_key}",
         "SCHNIPPO_UPDATE_CHECK": "${user_config.update_check}"
       }
     }
@@ -104,21 +102,7 @@
     "sfx_folder": {
       "type": "directory",
       "title": "Your own sound effects (optional)",
-      "description": "Folder with your own sounds. Licensing is up to you.",
-      "required": false
-    },
-    "freesound_api_key": {
-      "type": "string",
-      "title": "Freesound API key (optional)",
-      "description": "Searches sounds with a license filter (freesound.org/apiv2/apply).",
-      "sensitive": true,
-      "required": false
-    },
-    "elevenlabs_api_key": {
-      "type": "string",
-      "title": "ElevenLabs API key (optional)",
-      "description": "Generates sound effects from text, uses credits.",
-      "sensitive": true,
+      "description": "Folder with your own sounds, used before the built-in library. Licensing is up to you.",
       "required": false
     }
   },
