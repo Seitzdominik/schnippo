@@ -73,6 +73,10 @@ Try these prompts:
 3. "Remove #05 from the timeline and master the audio again."
 4. "Make 3 reels from the finished video."
 
+### Sound effects
+
+Schnippo places sound effects automatically from its built-in library. Tip: build your own library, for example with Pixabay downloads for your own videos, and set the folder under "Your own sound effects" in the plugin settings. Your sounds then go first, categories you don't cover still come from the library. Schnippo reads the category from folder or file names (whoosh, pop, ding …). Licensing of your sounds is up to you, and the files stay on your computer.
+
 ### Troubleshooting
 
 - **The first start times out:** the download continues on the next try. Open `/mcp` and choose Reconnect, or start Claude Code once with `MCP_TIMEOUT=300000`.
@@ -121,6 +125,8 @@ MIT, © {author}. Third-party notices: {repo}/blob/main/THIRD_PARTY_NOTICES.md. 
 **Installation:** wie oben. Nach der Installation fragt Claude Code nach dem Key. Gibt es keine Abfrage, sag „Richte mich ein“: `store_api_key` öffnet ein Systemfenster, der Key läuft nie durch den Chat.
 
 **Nutzung:** Sag zum Beispiel „Schneide den Ordner … als Reel“ oder „Mach aus dem Video 3 Reels“. Beim ersten Start führt ein kurzes Onboarding durch alles.
+
+**Sound-Effekte** kommen automatisch aus der eingebauten Bibliothek. Tipp: Bau dir eine eigene auf, zum Beispiel mit Pixabay-Downloads für deine eigenen Videos, und gib den Ordner in den Plugin-Einstellungen unter „Your own sound effects“ an. Deine Sounds haben dann Vorrang.
 
 Datenschutz: {privacy_de}
 """

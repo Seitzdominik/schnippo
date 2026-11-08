@@ -20,7 +20,7 @@ Getestet mit: DaVinci Resolve Studio 21.1.2.10, macOS arm64, ffmpeg 9.0.2, uv 0.
 - Analyse: `acoustic`, `analysis`, `segments`, `retakes`, `script`, `edges` (Wortkanten), `frames`, `framing`.
 - Schnittplanung: `cutlist`, `passes`, `profiles`, `formats`, `snap` (Overlay-Kanten), `markers`, `revise`, `reels`, `reframe`.
 - Resolve und Ausgabe: `resolve_bridge`, `fcpxml`, `kenburns`, `render`, `audio`, `delivery`, `export`, `subtitles`, `qc`, `sense` (Sinnprüfung), `jobs`.
-- Grafik und Ton: `mg/` (Motion Graphics), `design`, `ui/` (Karten), `sfx`, `sfx_profile`, `sfx_record`, `sfx_sources`.
+- Grafik und Ton: `mg/` (Motion Graphics), `design`, `ui/` (Karten), `sfx`, `sfx_profile`, `sfx_record`.
 
 ### Durchgänge
 
@@ -279,7 +279,6 @@ Auswertung über `logs/LogArchive/ResolveDebug_C*.txt` im Resolve-Protokollordne
 - Effekt-Kopien tragen einen Inhalts-Hash im Namen, sonst ändert eine neue Bibliothek den Klang fertiger Timelines. Betten werden als eigene Kopie auf Länge geschnitten oder überblendet geloopt.
 - Pegel: Clip-Lautstärke = Stimme + Abstand − `peak_rms_db`. Effekte liegen außerhalb von Limiter und Programm-Verstärkung, die Erkennung „identische Tonspur“ darf SFX-Spuren nicht mitzählen.
 - Nulltest: Kopie mit und ohne Effekte rendern und abziehen. Transient 0 bis −23 ms zum Plan (ein Frame sind 33–40 ms), Pegel −19,5 bis −21,7 dB zur Stimme bei Soll −20/−22, außerhalb der Effekte −138 dBFS. Lautheit und True Peak unverändert.
-- Quellen laut Doku, nicht live getestet: Freesound liefert Suche und Vorschau mit Token (MP3 128 kBit/s), Original nur mit OAuth2. ElevenLabs `POST /v1/sound-generation`, 0,5–30 s.
 
 ## Paket und MCP
 

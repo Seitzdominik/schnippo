@@ -45,8 +45,6 @@ Alle Tools und Einstellungen im Detail. Einstieg: [README](../README.md).
 | `setup_design(brand)` / `save_brand` | Design-Einrichtung (Karte): Stil, Schrift, Farben mit Kontrastprüfung, Radius, Vorschau |
 | `list_sfx()` | Sound-Effekte: Bibliothek und eigener Ordner (Kategorie, Stufe, Länge, Transient, Lizenz) |
 | `prepare_recordings(folder, category=None)` | Eigene Aufnahmen aufbereiten und in den Sound-Ordner legen |
-| `find_sfx(category, …)` / `fetch_sfx(sound_id, category)` | Freesound mit eigenem Key: Suche mit Lizenzfilter, Rangfolge nach Kennwerten, Download |
-| `generate_sfx(text, category, …)` | ElevenLabs mit eigenem Key: Effekt aus einer Beschreibung, kostet Credits |
 | `find_reel_candidates(timeline, …)` / `show_reel_candidates` | Reel-Kandidaten aus der langen Fassung, nummerierte Liste mit Vorschau |
 | `reel_cutlist(timeline, from_word, to_word, …)` | Cutlist eines Reels aus einer Stelle, mit Kürzungen und Cold Open |
 | `reel_sheet(timeline)` | Kontaktblatt mit Kopfbox und Safe Zone aus echten Frames |
@@ -119,9 +117,9 @@ Die Designsprache verschiebt das: Minimal Editorial nimmt wenige und sehr leise 
 
 Riser enden auf dem Ereignis. Atmo, Ticken und Tippen beginnen darauf und laufen so lange wie das Element oder `duration_ms`; der Server legt dafür eine passend lange Kopie an.
 
-Eigene Aufnahmen: Anleitung in [docs/AUFNAHMEN.md](docs/AUFNAHMEN.md), `prepare_recordings` schneidet und pegelt sie. Freesound (`find_sfx`, `fetch_sfx`) und ElevenLabs (`generate_sfx`) gehen mit deinem eigenen Key, geladen wird in deinen Sound-Ordner. Die Pixabay-API bietet kein Audio; deine Pixabay-Downloads legst du einfach selbst in den Sound-Ordner, sie gehören nie ins Repo.
+Eigene Aufnahmen: Anleitung in [docs/AUFNAHMEN.md](docs/AUFNAHMEN.md), `prepare_recordings` schneidet und pegelt sie. Deine Pixabay-Downloads für eigene Videos legst du einfach selbst in den Sound-Ordner, sie gehören nie ins Repo.
 
-Eigene Sounds: `sfx_folder` in den Einstellungen (oder `[sfx] folder` in der Config). Die Kategorie kommt aus dem Ordner- oder Dateinamen, der Transient wird gemessen. Für die Lizenz eigener Sounds bist du selbst verantwortlich. Mitgelieferte Effekte kopiert der Server beim Bauen in `schnippo-export/sfx/`, damit ein Projekt nach einem Update der Erweiterung nicht offline geht.
+Eigene Sounds: `sfx_folder` in den Einstellungen unter „Your own sound effects“ (oder `[sfx] folder` in der Config). Ist der Ordner gesetzt, haben seine Sounds in ihrer Kategorie Vorrang, die übrigen Kategorien kommen weiter aus der Bibliothek. Die Kategorie kommt aus dem Ordner- oder Dateinamen, der Transient wird gemessen. Für die Lizenz eigener Sounds bist du selbst verantwortlich. Mitgelieferte Effekte kopiert der Server beim Bauen in `schnippo-export/sfx/`, damit ein Projekt nach einem Update der Erweiterung nicht offline geht.
 
 ## Reels aus dem langen Video
 

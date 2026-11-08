@@ -20,6 +20,10 @@ Kennzeichnung: **[V]** Anbieter-Meinung · **[S]** Default/Synthese (konfigurier
 - **Atmo (z. B. Vögel):** nur unter passender B-Roll, als Bett −28 bis −32 dB unter der Stimme, weich ein-/ausblenden.
 - **Applaus:** nur bei echtem Erfolgsmoment, kurz und leise; wirkt schnell billig.
 
+## Welche Sounds
+- Standard ist die eingebaute Bibliothek. Eine Kategorie zu setzen reicht, der Server wählt die Datei.
+- Ist ein eigener Sound-Ordner eingestellt (`sfx_folder`), nimmt der Server in jeder Kategorie zuerst die eigenen Sounds. Kategorien ohne eigene Sounds kommen weiter aus der Bibliothek. `list_sfx` zeigt, was da ist.
+
 ## Wie viel
 - Reel: **2–5 Effekte** gesamt, mindestens **3 s Abstand** zwischen zwei Effekten [S]. YouTube: an Abschnittsübergängen und großen Grafiken.
 - Pegel: **−18 bis −24 dB unter der Stimme** [V/S]; Whooshes eher leiser als Akzente. Die Stimme muss immer klar vorne bleiben.

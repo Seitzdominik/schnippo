@@ -136,3 +136,10 @@ def test_brief_names_the_format(tmp_path):
     assert projects.brief_format(p) == "reel"
     (p / "brief.md").write_text("Format: Hochzeit\n")
     assert projects.brief_format(p) is None
+
+
+def test_the_sound_tip_only_shows_when_effects_are_on():
+    prefs_ = {"format": "auto", "style": "ruhig-dicht", "language": "de", "graphics": True, "sfx": "subtil"}
+    tip = onb.saved_text(prefs_, [])
+    assert "Pixabay" in tip and "Your own sound effects" in tip and "Vorrang" in tip
+    assert "Pixabay" not in onb.saved_text({**prefs_, "sfx": "off"}, [])

@@ -80,6 +80,8 @@ Schnippo arbeitet auf einer Timeline pro Projekt. Vor jeder Änderung legt es ei
 
 Mehr dazu in der [Referenz](docs/REFERENZ.md#so-nimmst-du-für-schnippo-auf), eigene Sound-Effekte aufnehmen: [docs/AUFNAHMEN.md](docs/AUFNAHMEN.md).
 
+**Sound-Effekte** setzt Schnippo automatisch aus der eingebauten Bibliothek. Tipp: Bau dir eine eigene auf, zum Beispiel mit Pixabay-Downloads für deine eigenen Videos, und gib den Ordner in den Einstellungen unter „Your own sound effects“ an. Deine Sounds haben dann Vorrang, Kategorien ohne eigene Sounds kommen weiter aus der Bibliothek. Die Kategorie liest Schnippo aus Ordner- oder Dateinamen (whoosh, pop, ding …). Für die Lizenz deiner Sounds bist du selbst verantwortlich.
+
 ## Bekannte Grenzen
 
 - **Speichern-Dialog unter Windows:** Claude Desktop zeigt in „Diese Einstellungen … speichern?“ um Namen und Werte Kästchen mit FSI, PDI oder LRI. Das sind unsichtbare Steuerzeichen, die Claude Desktop selbst setzt und die die Windows-Dialogschrift als Kästchen darstellt. Schnippos Texte enthalten keine; speichern funktioniert trotzdem.
@@ -149,7 +151,6 @@ Keine Telemetrie, kein Schnippo-Server. Schnippo läuft auf deinem Rechner.
 | Originalmedien, Cache, Einstellungen | bleiben lokal | immer |
 | Tonspur (16 kHz, mono, ohne Metadaten) und Glossar | Gladia, `api.gladia.io` | beim Transkribieren und beim Gegenhören des fertigen Schnitts |
 | Transkripte, Schnittkontext, Einzelbilder und Kontaktabzüge | das KI-Modell deines Chats, zum Beispiel Claude | während des Schnitts |
-| Suchbegriff oder Beschreibung | Freesound, ElevenLabs | nur mit eigenem Key und auf Wunsch |
 | Keine Daten, nur die Abfrage der neuesten Version | GitHub, `api.github.com` | höchstens einmal am Tag, abschaltbar |
 | Keine Inhalte, nur Downloads von Abhängigkeiten | PyPI, GitHub, Playwright-CDN | bei der Installation, beim ersten Einlesen, bei der Grafik-Einrichtung |
 
@@ -202,6 +203,8 @@ Der Hook startet `tools/check_public.py`. Technische Erkenntnisse stehen in [doc
 - *Other MCP clients:* run `uvx schnippo` with `GLADIA_API_KEY` set.
 
 **First cut:** say "Set me up", then "Cut the folder /path/to/takes as a YouTube video". You get one timeline named `<name>_Schnippo` and a short report. Corrections work in plain words, for example "Remove #05" or "Make 3 reels from the finished video".
+
+**Sound effects:** Schnippo places them automatically from its built-in library. Tip: build your own library, for example with Pixabay downloads for your own videos, and set the folder under "Your own sound effects" in the settings. Your sounds then go first, categories you don't cover still come from the library. Schnippo reads the category from folder or file names (whoosh, pop, ding …). Licensing of your sounds is up to you.
 
 **Privacy:** no telemetry and no Schnippo server. Audio goes to Gladia, transcripts and frames go to your AI model, and the update check asks GitHub once a day (optional). Read the [Privacy Policy](https://schnippo.com/en/privacy/).
 

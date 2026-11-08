@@ -9,6 +9,7 @@ Format: neueste zuerst. Versionen vor 0.11.0 hießen intern „Resolve Cut“ un
 - **Update-Hinweis:** Stichpunkte erscheinen als reiner Text und werden an der Wortgrenze gekürzt. Im Plugin lässt er sich abschalten.
 - **Einstufung:** Der Untertitel-Export gilt jetzt als ändernd, weil er frühere Exporte überschreiben kann.
 - **Release:** Der Branch `stable` folgt nur noch veröffentlichten Versionen.
+- **Sound-Effekte:** Der Anschluss an ElevenLabs und Freesound ist entfernt (`generate_sfx`, `find_sfx`, `fetch_sfx`, ihre Keys und Einstellungen), weil das Verzeichnis kein KI-erzeugtes Audio erlaubt. Die eingebaute Bibliothek bleibt Standard, Sounds aus dem eigenen Ordner haben Vorrang, und der Ordner lässt sich auch im Plugin einstellen. `store_api_key` speichert nur noch den Gladia-Key.
 
 ## 0.13.0 – Eine Arbeits-Timeline, Schnitt in einem Rutsch (Phase 13, 2026-11-08)
 

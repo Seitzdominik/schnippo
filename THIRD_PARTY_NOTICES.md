@@ -51,7 +51,7 @@ Liegen in `src/schnippo/mg/fonts/`, jeweils mit Lizenztext, alle unter der [SIL 
 
 ## Sound-Effekte
 
-Eigene Effekte in `src/schnippo/data/sfx/wav/` sind synthetisch erzeugt und stehen unter MIT. Maus, Tastatur, Uhr, Klingel und Vinyl-Scratch sind Aufnahmen unter CC0 von [Freesound](https://freesound.org). Quelle, Urheber und Bearbeitung je Datei: [LICENSES.md](src/schnippo/data/sfx/LICENSES.md).
+Eigene Effekte in `src/schnippo/data/sfx/wav/` sind synthetisch erzeugt und stehen unter MIT. Maus, Tastatur, Uhr, Klingel und Vinyl-Scratch sind Aufnahmen unter CC0 von [Freesound](https://freesound.org). Das ist nur die Herkunft der mitgelieferten Dateien, Schnippo verbindet sich nicht mit dem Dienst. Quelle, Urheber und Bearbeitung je Datei: [LICENSES.md](src/schnippo/data/sfx/LICENSES.md).
 
 | Quelle | Urheber | Lizenz |
 |---|---|---|

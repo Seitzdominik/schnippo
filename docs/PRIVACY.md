@@ -25,12 +25,10 @@ Alles bleibt lokal, außer es steht im nächsten Abschnitt.
 |---|---|---|---|
 | Gladia (`api.gladia.io`) | Tonspur, 16 kHz mono, ohne Metadaten, und deine Glossar-Begriffe | beim Transkribieren und beim Gegenhören des fertigen Schnitts, mit deinem Key | dein Auftrag, dein Gladia-Konto |
 | Dein KI-Anbieter, zum Beispiel Anthropic (Claude) | Transkripte, Schnittkontext, Dateinamen, Einzelbilder und Kontaktabzüge | während des Schnitts im Chat | dein Konto beim Anbieter |
-| Freesound (`freesound.org`) | Suchbegriffe | nur auf Wunsch, mit deinem Key | dein Auftrag |
-| ElevenLabs (`api.elevenlabs.io`) | Beschreibung eines Effekts | nur auf Wunsch, mit deinem Key | dein Auftrag |
 | GitHub (`api.github.com`) | keine Inhalte, nur die Abfrage der neuesten Version; GitHub sieht dabei deine IP-Adresse | höchstens einmal am Tag, abschaltbar | Update-Hinweis |
 | PyPI, GitHub, Playwright-CDN | keine Inhalte, nur Downloads von Abhängigkeiten | bei Installation, beim ersten Einlesen und beim ersten Grafik-Render | Installation |
 
-Für diese Dienste gelten deren eigene Datenschutzbestimmungen: [Gladia](https://www.gladia.io/privacy-policy), [Anthropic](https://www.anthropic.com/legal/privacy), [Freesound](https://freesound.org/help/privacy/), [ElevenLabs](https://elevenlabs.io/privacy-policy), [GitHub](https://docs.github.com/site-policy/privacy-policies/github-general-privacy-statement).
+Für diese Dienste gelten deren eigene Datenschutzbestimmungen: [Gladia](https://www.gladia.io/privacy-policy), [Anthropic](https://www.anthropic.com/legal/privacy), [GitHub](https://docs.github.com/site-policy/privacy-policies/github-general-privacy-statement).
 
 Nutze Schnippo nur mit Material, das du diesen Diensten geben darfst. Das gilt besonders für Aufnahmen anderer Personen.
 
@@ -50,6 +48,6 @@ Schnippo is local software from Seitz Dominik Visuals, who run no server for it 
 
 - **Collection:** Schnippo processes your media, transcripts, settings and keys on your computer.
 - **Use and storage:** everything stays in `~/Library/Caches/schnippo` and `~/.config/schnippo` (Windows: `%LOCALAPPDATA%\\schnippo\\Cache` and `%APPDATA%\\schnippo`), unless listed below.
-- **Third parties:** audio goes to Gladia; transcripts, file names and frames go to your AI provider; search terms go to Freesound or ElevenLabs only on request and with your key; the update check calls GitHub at most daily and can be switched off.
+- **Third parties:** audio goes to Gladia; transcripts, file names and frames go to your AI provider; the update check calls GitHub at most daily and can be switched off.
 - **Retention:** local data stays until you delete it with `clear_cache` or in the Finder. Third-party retention follows their terms.
 - **Contact:** Seitz Dominik Visuals, https://sdv.design

@@ -67,6 +67,9 @@ def saved_text(p: dict, bad: list[str]) -> str:
     lines = [f"Gespeichert: {LABEL['format'].get(p['format'], p['format'])}, Tempo {LABEL['style'].get(p['style'], p['style'])}, Sprache {p['language']}, Grafiken {'an' if p['graphics'] else 'aus'}, "
              f"Sound-Effekte {LABEL['sfx'].get(p['sfx'], p['sfx'])}" + (f", Projekte in {p['projects_folder']}" if p.get("projects_folder") else ", kein Standardordner") + "."]
     lines.append("Das gilt für alle Jobs, du kannst es pro Job anders sagen.")
+    if p["sfx"] != "off":
+        lines.append("Tipp: Sound-Effekte kommen automatisch aus der eingebauten Bibliothek. Bau dir gern eine eigene auf, zum Beispiel mit Pixabay-Downloads für deine eigenen Videos, "
+                     "und gib den Ordner in den Einstellungen unter „Your own sound effects“ an. Deine Sounds haben dann Vorrang.")
     if bad:
         lines.append("Nicht verstanden, bitte noch einmal: " + "; ".join(bad))
     nxt = "Bei Grafiken an fragen: „Design jetzt einrichten oder später?“ (jetzt → setup_design). " if p["graphics"] else ""
