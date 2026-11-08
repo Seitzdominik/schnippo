@@ -117,7 +117,7 @@ Nicht getestet: ein echter sensibler Wert, weil Claude Code ihn in den echten Sc
 
 **Data handling: other services**
 
-> Yes, with the user's own accounts and keys: Gladia (audio track and glossary terms, for transcription), the user's AI provider such as Anthropic (transcripts, editing context, file names, frames and contact sheets). GitHub receives a version query at most once a day, which can be switched off. PyPI, GitHub and the Playwright CDN are used for downloads only. The publisher runs no server and receives no data. There is no telemetry.
+> Yes, with the user's own accounts and keys: Gladia (audio track and glossary terms, for transcription) and the user's AI provider such as Anthropic (transcripts, editing context, file names, frames and contact sheets). GitHub receives a version query at most once a day, which can be switched off. PyPI, GitHub and the Playwright CDN are used for downloads only. The publisher runs no server and receives no data. There is no telemetry.
 
 **Data handling: retention**
 
