@@ -297,3 +297,37 @@ Auswertung über `logs/LogArchive/ResolveDebug_C*.txt` im Resolve-Protokollordne
 - Zwei Personen in einem Bild: `reframe.speaker_x` ist nur logisch geprüft, `stacked` ist nicht gebaut.
 - Szenen ohne Sprache stehen nur als Overlays oder im Nachlauf (`tail`), ein Item ganz ohne Wörter gibt es nicht.
 - Die Ursache von `std::out_of_range: vector` ist offen.
+
+## Plattformen: macOS-Annahmen und ihre Lösung (Phase 12)
+
+Bestandsaufnahme vor der Windows-Arbeit. Plattformabhängiges liegt jetzt in `src/schnippo/platforms.py`. „Nur Windows prüfbar“ heißt: mit echtem Resolve auf einem Windows-PC, siehe `docs/TESTANLEITUNG_WINDOWS.md`.
+
+| Stelle | Annahme | Lösung |
+|---|---|---|
+| `resolve_bridge.py` | Pfade von Modul und `fusionscript.so` fest auf macOS | `platforms.resolve_paths()`: `RESOLVE_SCRIPT_API`, `RESOLVE_SCRIPT_LIB`, Windows-Standardpfade, Registry, andere Laufwerke. Windows: `os.add_dll_directory` für die DLLs neben `fusionscript.dll`. Nur Windows prüfbar |
+| `setup_check.py` | `pgrep` auf den App-Pfad | `psutil`, Prozessname `Resolve` bzw. `Resolve.exe` |
+| `guard.py` | Liste zu allgemeiner Ordner rein macOS | Windows-Liste: Laufwerks- und Freigabe-Wurzeln, `C:\\Windows`, Programmordner, `ProgramData`, `Users`, Benutzerprofil und seine Standardordner, OneDrive-Wurzeln |
+| `guard.clean_path` | Backslash ist Shell-Escape, `file:///`, Slash am Ende | auf Windows sind Backslashes Trenner; Laufwerke und UNC in `file:`-URLs; `%VARIABLEN%`; Wurzeln behalten ihren Trenner |
+| `guard.check_font` | Schriftordner von macOS | Windows-Schriftordner |
+| `guard.py` | keine Cloud-Platzhalter | OneDrive-Dateien ohne lokale Kopie werden übersprungen, mit Hinweis |
+| Pfadlänge | kein 260-Zeichen-Limit | `\\\\?\\`-Präfix für lange Pfade in Dateiprüfungen und ffmpeg-Aufrufen; Hinweis bei `ingest_folder`, weil Resolve selbst solche Pfade womöglich nicht öffnet |
+| Groß-/Kleinschreibung | Pfadvergleich auf Text | `Path`-Vergleiche sind auf Windows schon case-insensitiv; Media-Pool-Abgleich mit `os.path.normcase` |
+| `config.py`, `mg/tokens.py`, `prefs.py` | `~/.config/schnippo` | `%APPDATA%\\schnippo` |
+| `config.py` | `~/Library/Caches/schnippo` | `%LOCALAPPDATA%\\schnippo\\Cache` |
+| `migrate.py` | Altpfade von macOS | läuft auf Windows nicht |
+| `media.py` | Homebrew-Ordner, `brew install` | nur auf macOS; `shutil.which` findet `.exe` |
+| `ffmpeg_dist.py` | Wheels für den Mac | `portable-ffmpeg-full` 0.5.0 hat ein `win_amd64`-Wheel mit beiden Programmen, CI prüft das |
+| alle `subprocess`-Aufrufe | Konsole und Kodierung egal | `platforms.run`/`popen`: kein Konsolenfenster, UTF-8, lange Pfade |
+| `keychain.py` | `security` und `osascript` | `keyring`: Schlüsselbund bzw. Anmeldeinformationsverwaltung. Eingabefenster auf Windows über PowerShell |
+| `os.replace`, `unlink`, `rmtree`, `copy2` | geöffnete Dateien sind kein Hindernis | `platforms.replace/unlink/rmtree/copy`: Wiederholung mit Wartezeit, verständliche Meldung |
+| `tempfile.NamedTemporaryFile` in `setup_check.py` | löschbar während offen | unkritisch: wird nicht zweimal geöffnet |
+| `fcpxml.py` | `"file://" + Pfad` | `Path.as_uri()` |
+| `mg/preview.py` | Arial unter `/System/Library` | `platforms.ui_font()` |
+| `mg/render.py` | uv in Homebrew-Ordnern | `platforms.find_uv()` |
+| Schriften in Grafiken | keine Annahme | `@font-face` mit eingebetteten OFL-Schriften, nichts aus dem System |
+| Dateinamen | `:` und `?` erlaubt | `platforms.safe_filename` für Exporte |
+| `setup_check._volume` | Volume-Name aus dem macOS-Pfad | Laufwerk bzw. Freigabe |
+| Unicode NFD in `guard._by_unicode` | macOS-Eigenheit | bleibt, greift nur, wenn der Pfad so nicht existiert, schadet auf Windows nicht |
+| Texte | Finder, Menüleiste, Schlüsselbund, `~/Library` | Plattform-Texte in `platforms.py` |
+| Manifest | `platforms: darwin` | `darwin`, `win32`; `PYTHONUTF8=1` im Startbefehl |
+| Python-Bitbreite | 64 bit als gegeben | `check_setup` nennt auf Windows Python-Version und Bitbreite |

@@ -6,6 +6,7 @@ Kept free of MCP so it can be tested and scripted directly.
 
 from __future__ import annotations
 
+from . import platforms
 import logging
 import os
 import math
@@ -519,7 +520,7 @@ class Workspace:
             h = max(2, round(320 * c.height / c.width / 2) * 2)
             fr = []
             for k in (0.2, 0.5, 0.8):
-                raw = subprocess.run([_bin("ffmpeg"), "-nostdin", "-v", "error", "-ss", f"{(start + frames * k) / fps:.3f}", "-i", c.path, "-frames:v", "1", "-vf", f"scale=320:{h}",
+                raw = platforms.run([_bin("ffmpeg"), "-nostdin", "-v", "error", "-ss", f"{(start + frames * k) / fps:.3f}", "-i", c.path, "-frames:v", "1", "-vf", f"scale=320:{h}",
                                       "-f", "rawvideo", "-pix_fmt", "gray", "-"], capture_output=True).stdout
                 if len(raw) == 320 * h:
                     fr.append(np.frombuffer(raw, np.uint8).reshape(h, 320))

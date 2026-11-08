@@ -11,6 +11,7 @@ Saved presets copy the project's current render state, so normalization is switc
 
 from __future__ import annotations
 
+from . import platforms
 import re
 import struct
 import tempfile
@@ -204,6 +205,7 @@ def export_final(r, p, tl, preset: str, target_dir: Path, name: str, fmt: str, p
     target_dir.mkdir(parents=True, exist_ok=True)
     p.SetCurrentTimeline(tl)
     _wait_idle(p, 120)
+    name = platforms.safe_filename(name)
     ensure_delivery_preset(r, p, fmt, target_dir, name)  # H.264/AAC, normalization explicitly off, loaded
     if not p.SetRenderSettings({"TargetDir": str(target_dir), "CustomName": name, "SelectAllFrames": True,
                                 "FormatWidth": pw, "FormatHeight": ph, "ExportVideo": True, "ExportAudio": True}):

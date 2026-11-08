@@ -4,14 +4,13 @@ to another track. It lies above the B-roll, which therefore also shows inside th
 from __future__ import annotations
 
 import hashlib
-import subprocess
 from fractions import Fraction
 from pathlib import Path
 
 from PIL import Image
 
 from ..media import _bin
-from ..platforms import no_window
+from .. import platforms
 
 TRACK = 3
 
@@ -37,7 +36,7 @@ def render(cache_root: Path, W: int, H: int, win: tuple[int, int, int, int], col
     cmd = [_bin("ffmpeg"), "-y", "-nostdin", "-v", "error", "-loop", "1", "-framerate", f"{rate.numerator}/{rate.denominator}", "-i", str(png), "-frames:v", str(frames),
            "-c:v", "prores_ks", "-profile:v", "4", "-pix_fmt", "yuva444p10le", "-alpha_bits", "16", "-vendor", "apl0", "-colorspace", "bt709", "-color_primaries", "bt709",
            "-color_trc", "bt709", str(mov)]
-    r = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace", **no_window())
+    r = platforms.run(cmd, capture_output=True, text=True)
     if r.returncode != 0:
         raise RuntimeError(f"Hintergrundfläche: Encoding fehlgeschlagen: {r.stderr.strip()[-300:]}")
     return str(mov)

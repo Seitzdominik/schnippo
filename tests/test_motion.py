@@ -1,3 +1,4 @@
+from schnippo import platforms
 import io
 import os
 from pathlib import Path
@@ -11,7 +12,7 @@ from schnippo.profiles import make_profile
 
 from test_cutlist import CLIP, at  # noqa: F401
 
-BROWSERS = Path.home() / "Library/Caches/schnippo/playwright"
+BROWSERS = platforms.cache_dir() / "playwright"
 
 
 def tok():

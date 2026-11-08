@@ -32,7 +32,7 @@ def write_fcpxml(path: Path, name: str, num: int, den: int, width: int, height: 
     res = [f'<format id="{fmt}" frameDuration="{_t(1, num, den)}" width="{width}" height="{height}" '
            f'colorSpace="1-1-1 (Rec. 709)"/>']
     for aid, a in assets.items():
-        url = "file://" + quote(str(Path(a["path"]).resolve()))
+        url = Path(a["path"]).resolve().as_uri()
         res.append(f'<asset id="a_{aid}" name={quoteattr(a["name"])} start="{_t(a.get("tc_frames", 0), num, den)}" '
                    f'duration="{_t(a["frames"], num, den)}" hasVideo="1" hasAudio="1" format="{fmt}" audioSources="1" '
                    f'audioChannels="{a.get("audio_channels", 2)}" audioRate="48000">'

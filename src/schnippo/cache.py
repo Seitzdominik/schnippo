@@ -15,6 +15,7 @@ Layout::
 
 from __future__ import annotations
 
+from . import platforms
 import hashlib
 import json
 import os
@@ -58,4 +59,4 @@ class Cache:
     def write_json(p: Path, data) -> None:
         tmp = p.with_suffix(p.suffix + ".tmp")
         tmp.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
-        os.replace(tmp, p)
+        platforms.replace(tmp, p)

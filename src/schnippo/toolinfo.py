@@ -13,6 +13,6 @@ TOOLS = {
     "reel_sheet": ("Reel-Kontaktblatt", "w"), "resolve_status": ("Resolve-Status", "r"), "resume_job": ("Abgebrochenen Job fortsetzen", "d"), "revise": ("Änderungswünsche umsetzen", "d"),
     "run_qc": ("Qualität prüfen", "w"), "save_brand": ("Design-Profil speichern", "d"), "sense_check": ("Fertigen Schnitt gegenhören", "wn"), "set_clip_role": ("Clip einordnen", "w"),
     "set_format": ("Format festlegen", "w"), "set_glossary": ("Glossar ergänzen", "d"), "set_word_text": ("Wort korrigieren", "w"), "setup_design": ("Design einrichten", "r"),
-    "show_reel_candidates": ("Reel-Vorschläge zeigen", "w"), "show_review": ("Entscheidungen vorlegen", "w"), "store_api_key": ("API-Key im Schlüsselbund speichern", "d"),
+    "show_reel_candidates": ("Reel-Vorschläge zeigen", "w"), "show_review": ("Entscheidungen vorlegen", "w"), "store_api_key": ("API-Key sicher speichern", "d"),
     "submit_review": ("Entscheidungen übernehmen", "w"), "suggest_corrections": ("Korrekturen vorschlagen", "r"), "transcribe": ("Transkribieren", "wn"), "validate_cutlist": ("Cutlist prüfen", "r"),
 }

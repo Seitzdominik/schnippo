@@ -5,6 +5,7 @@ arrive as environment variables, also when nobody touched them, so "set" alone s
 
 from __future__ import annotations
 
+from . import platforms
 import json
 import os
 from pathlib import Path
@@ -37,7 +38,7 @@ def save(data: dict) -> None:
     p.parent.mkdir(parents=True, exist_ok=True)
     tmp = p.with_suffix(".tmp")
     tmp.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    os.replace(tmp, p)
+    platforms.replace(tmp, p)
 
 
 def apply(cfg, data: dict | None = None) -> None:

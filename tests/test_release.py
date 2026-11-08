@@ -1,6 +1,7 @@
 import asyncio
 import json
 import subprocess
+import sys
 from types import SimpleNamespace as NS
 
 import httpx
@@ -77,21 +78,43 @@ def test_network_trouble_stays_silent(tmp_path):
     assert updates.check("0.11.0", tmp_path / "u.json", client=gone) is None
 
 
-def test_keychain_key_never_on_the_command_line():
+def _fake_keyring(monkeypatch, store=None, fail=False):
+    store = {} if store is None else store
+
+    def get_password(service, account):
+        if fail:
+            raise RuntimeError("kein Speicher")
+        return store.get((service, account))
+
+    def set_password(service, account, key):
+        if fail:
+            raise RuntimeError("kein Speicher")
+        store[(service, account)] = key
+    monkeypatch.setitem(sys.modules, "keyring", NS(get_password=get_password, set_password=set_password))
+    return store
+
+
+def test_keychain_stores_under_one_service_name(monkeypatch):
+    store = _fake_keyring(monkeypatch)
+    assert keychain.write("gladia", 'a"b geheim') and store == {("schnippo", "gladia"): 'a"b geheim'}
+    assert keychain.read("gladia") == 'a"b geheim' and keychain.read("freesound") is None
+
+
+def test_keychain_without_a_store_counts_as_no_key(monkeypatch):
+    _fake_keyring(monkeypatch, fail=True)
+    assert keychain.read("gladia") is None and not keychain.write("gladia", "x")
+
+
+def test_key_dialog_per_platform_and_cancelled(monkeypatch):
     calls = []
 
     def run(cmd, **kw):
-        calls.append((cmd, kw))
-        return NS(returncode=0, stdout="")
-    assert keychain.write("gladia", "geheim123", run=run)
-    assert "geheim123" not in " ".join(calls[0][0]) and "geheim123" in calls[0][1]["input"]
-    assert not keychain.write("gladia", 'a"b', run=run)
-
-
-def test_keychain_read_and_cancelled_dialog(monkeypatch):
-    monkeypatch.setattr(keychain.sys, "platform", "darwin")
-    assert keychain.read("gladia", run=lambda *a, **k: NS(returncode=0, stdout="abc\n")) == "abc"
-    assert keychain.read("gladia", run=lambda *a, **k: NS(returncode=44, stdout="")) is None
+        calls.append(cmd)
+        return NS(returncode=0, stdout="abc\n")
+    monkeypatch.setattr(keychain.platforms, "is_windows", lambda: False)
+    assert keychain.ask("Gladia", run=run) == "abc" and calls[-1][0] == "osascript"
+    monkeypatch.setattr(keychain.platforms, "is_windows", lambda: True)
+    assert keychain.ask("Gladia", run=run) == "abc" and calls[-1][0] == "powershell"
     assert keychain.ask("Gladia", run=lambda *a, **k: NS(returncode=1, stdout="")) is None
 
 

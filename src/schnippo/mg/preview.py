@@ -3,6 +3,7 @@ of 05_motion_graphics: fits the safe zone, max lines, face free, contrast."""
 
 from __future__ import annotations
 
+from .. import platforms
 import io
 import subprocess
 
@@ -17,7 +18,7 @@ THUMB = (270, 480)
 
 def video_frame(clip, idx: int, w: int, h: int) -> Image.Image:
     fps = clip.resolve_fps or clip.fps
-    raw = subprocess.run([_bin("ffmpeg"), "-nostdin", "-v", "error", "-ss", f"{idx / fps:.6f}", "-i", clip.path, "-frames:v", "1",
+    raw = platforms.run([_bin("ffmpeg"), "-nostdin", "-v", "error", "-ss", f"{idx / fps:.6f}", "-i", clip.path, "-frames:v", "1",
                           "-vf", f"scale={w}:{h}", "-f", "image2pipe", "-vcodec", "png", "-"], capture_output=True).stdout
     try:
         return Image.open(io.BytesIO(raw)).convert("RGB")
@@ -63,10 +64,7 @@ def checks(meta: dict, bbox, fit, face, tok: dict) -> list[str]:
 
 def label(img: Image.Image, text: str) -> Image.Image:
     d = ImageDraw.Draw(img)
-    try:
-        f = ImageFont.truetype("/System/Library/Fonts/Supplemental/Arial.ttf", 15)
-    except OSError:
-        f = ImageFont.load_default()
+    f = platforms.ui_font(15)
     d.rectangle((0, img.height - 22, img.width, img.height), fill=(0, 0, 0))
     d.text((6, img.height - 19), text, fill=(255, 255, 0), font=f)
     return img
@@ -76,10 +74,7 @@ def sheet(rows: list[list[Image.Image]], title: str) -> bytes:
     cols = max(len(r) for r in rows)
     im = Image.new("RGB", (THUMB[0] * cols, THUMB[1] * len(rows) + 26), (24, 24, 24))
     d = ImageDraw.Draw(im)
-    try:
-        f = ImageFont.truetype("/System/Library/Fonts/Supplemental/Arial.ttf", 16)
-    except OSError:
-        f = ImageFont.load_default()
+    f = platforms.ui_font(16)
     d.text((8, 5), title, fill=(230, 230, 230), font=f)
     for y, row in enumerate(rows):
         for x, t in enumerate(row):
@@ -115,10 +110,7 @@ def debug_lines(img: Image.Image, sc: float, safe, head, bbox, min_gap, padding:
     """Helper lines on the preview: safe zone (cyan), head box of this frame (yellow), visible graphic (magenta),
     clearance between them (with px label), inner padding (green: text box; dashed-free thin line: required minimum)."""
     d = ImageDraw.Draw(img)
-    try:
-        f = ImageFont.truetype("/System/Library/Fonts/Supplemental/Arial.ttf", max(12, round(28 * sc)))
-    except OSError:
-        f = ImageFont.load_default()
+    f = platforms.ui_font(max(12, round(28 * sc)))
     if safe:
         d.rectangle([v * sc for v in safe], outline=(0, 220, 255, 255), width=2)
     if padding:

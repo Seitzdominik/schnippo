@@ -13,6 +13,8 @@ import json
 import os
 from pathlib import Path
 
+from ..platforms import config_dir
+
 ROOT = Path(__file__).resolve().parents[1] / "data"
 FONT_DIR = Path(__file__).parent / "fonts"
 # bundled OFL fonts: family → (file stem, weights available)
@@ -41,7 +43,7 @@ def tokens_path() -> Path:
 
 
 def brand_path() -> Path:
-    return Path(os.environ.get("SCHNIPPO_BRAND", Path.home() / ".config" / "schnippo" / "brand.json"))
+    return Path(os.environ.get("SCHNIPPO_BRAND", config_dir() / "brand.json"))
 
 
 def load_brands() -> dict:

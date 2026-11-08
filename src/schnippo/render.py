@@ -13,6 +13,7 @@ Pitfalls measured on 21.1.2 (see NOTES):
 
 from __future__ import annotations
 
+from . import platforms
 import json
 import subprocess
 import time
@@ -26,7 +27,7 @@ class RenderError(RuntimeError):
 
 
 def _streams(path: Path) -> list[str]:
-    out = subprocess.run([_bin("ffprobe"), "-v", "error", "-show_entries", "stream=codec_type", "-of", "json", str(path)],
+    out = platforms.run([_bin("ffprobe"), "-v", "error", "-show_entries", "stream=codec_type", "-of", "json", str(path)],
                          capture_output=True, text=True, encoding="utf-8").stdout
     return [s.get("codec_type") for s in json.loads(out or "{}").get("streams", [])]
 

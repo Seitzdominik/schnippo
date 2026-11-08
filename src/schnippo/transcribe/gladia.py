@@ -51,7 +51,7 @@ class GladiaProvider:
     def __init__(self, cfg, client: httpx.Client | None = None, filler_vocabulary: bool = False):
         if not cfg.gladia_api_key:
             raise TranscriptionError(
-                "GLADIA_API_KEY fehlt: als Umgebungsvariable setzen oder in ~/.config/schnippo/config.toml "
+                "GLADIA_API_KEY fehlt: als Umgebungsvariable setzen oder in config.toml im Einstellungsordner von Schnippo "
                 "unter [gladia] api_key = \"...\" eintragen.")
         self._key = cfg.gladia_api_key
         self.cfg = cfg

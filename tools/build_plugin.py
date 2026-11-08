@@ -93,7 +93,7 @@ def main():
                   "sfx": {"type": "string", "title": "Sound-Effekte", "description": "off, subtil oder normal.", "default": "subtil", "required": False}}}
     (OUT / ".claude-plugin" / "plugin.json").write_text(json.dumps(plugin, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     mcp = {"mcpServers": {b.SLUG: {"command": "uvx", "args": [f"schnippo@{version}"],
-                                   "env": {"GLADIA_API_KEY": "${user_config.gladia_api_key}", "SCHNIPPO_PROJECTS_FOLDER": "${user_config.projects_folder}", "SCHNIPPO_FORMAT": "${user_config.format}",
+                                   "env": {"PYTHONUTF8": "1", "GLADIA_API_KEY": "${user_config.gladia_api_key}", "SCHNIPPO_PROJECTS_FOLDER": "${user_config.projects_folder}", "SCHNIPPO_FORMAT": "${user_config.format}",
                                            "SCHNIPPO_SFX_MODE": "${user_config.sfx}"}}}}
     (OUT / ".mcp.json").write_text(json.dumps(mcp, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     (OUT / "README.md").write_text(README.format(tagline=b.TAGLINE, version=version, repo=b.REPOSITORY, privacy=b.PRIVACY_URL, author=b.AUTHOR, author_url=b.AUTHOR_URL), encoding="utf-8")

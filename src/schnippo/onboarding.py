@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from . import prefs
+from . import platforms, prefs
 from .branding import DISPLAY_NAME
 
-HOW_PATH = "Pfad kopieren am Mac: Rechtsklick auf den Ordner, Wahltaste (⌥) halten, „… als Pfadname kopieren“ (oder ⌥⌘C im Finder)."
+HOW_PATH = platforms.how_to_copy_path()
 
 
 def instruction(state: dict) -> str:

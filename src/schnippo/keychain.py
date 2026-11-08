@@ -1,35 +1,38 @@
-"""API keys in the macOS keychain, for hosts where the settings cannot ask for them. The key goes from a system dialog straight into the keychain; it never passes through the chat or a command line."""
+"""API keys in the system's credential store (macOS keychain, Windows Credential Manager), through keyring, for hosts where the settings cannot ask for them. The key goes from a system
+dialog straight into the store; it never passes through the chat or a log."""
 
 from __future__ import annotations
 
-import subprocess
-import sys
-
+from . import platforms
 from .branding import SLUG
 
 SERVICES = {"gladia": "Gladia", "freesound": "Freesound", "elevenlabs": "ElevenLabs"}
 
 
-def read(account: str, run=subprocess.run) -> str | None:
-    if sys.platform != "darwin":
-        return None
+def read(account: str) -> str | None:
     try:
-        r = run(["security", "find-generic-password", "-s", SLUG, "-a", account, "-w"], capture_output=True, text=True, timeout=5)
-    except (OSError, subprocess.TimeoutExpired):
+        import keyring
+        return keyring.get_password(SLUG, account) or None
+    except Exception:  # no store on this machine, locked, or refused: same as no key
         return None
-    return (r.stdout or "").strip() or None if r.returncode == 0 else None
 
 
-def ask(label: str, run=subprocess.run) -> str | None:
+def ask(label: str, run=platforms.run) -> str | None:
     """Hidden input in a system dialog. None if cancelled."""
-    script = f'display dialog "{label}-API-Key einfügen. Er wird im Schlüsselbund gespeichert." default answer "" with hidden answer buttons {{"Abbrechen", "Speichern"}} default button "Speichern" with title "{SLUG.capitalize()}"\ntext returned of result'
-    r = run(["osascript", "-e", script], capture_output=True, text=True, timeout=300)
+    if platforms.is_windows():
+        script = (f"$c = Get-Credential -UserName '{label}' -Message '{label}-API-Key als Kennwort einfügen. Er wird in der Windows-Anmeldeinformationsverwaltung gespeichert.'; "
+                  "if ($c) { [Console]::OutputEncoding = [Text.Encoding]::UTF8; $c.GetNetworkCredential().Password }")
+        r = run(["powershell", "-NoProfile", "-Command", script], capture_output=True, text=True, timeout=300)
+    else:
+        script = f'display dialog "{label}-API-Key einfügen. Er wird im Schlüsselbund gespeichert." default answer "" with hidden answer buttons {{"Abbrechen", "Speichern"}} default button "Speichern" with title "{SLUG.capitalize()}"\ntext returned of result'
+        r = run(["osascript", "-e", script], capture_output=True, text=True, timeout=300)
     return (r.stdout or "").strip() or None if r.returncode == 0 else None
 
 
-def write(account: str, key: str, run=subprocess.run) -> bool:
-    """Through security's own command prompt: an argument would show up in the process list."""
-    if any(c in key for c in '"\\\n'):
+def write(account: str, key: str) -> bool:
+    try:
+        import keyring
+        keyring.set_password(SLUG, account, key)
+    except Exception:
         return False
-    line = f'add-generic-password -U -s {SLUG} -a {account} -w "{key}"\n'
-    return run(["security", "-i"], input=line, capture_output=True, text=True, timeout=10).returncode == 0
+    return True

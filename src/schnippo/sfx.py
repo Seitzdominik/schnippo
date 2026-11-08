@@ -3,6 +3,7 @@ Every effect carries hit_offset_ms: where its transient lies. The transient is a
 
 from __future__ import annotations
 
+from . import platforms
 import hashlib
 import json
 import math
@@ -58,7 +59,7 @@ def measure(x: np.ndarray, sr: int = SR) -> dict:
 
 
 def decode(path: Path) -> np.ndarray:
-    raw = subprocess.run([_bin("ffmpeg"), "-nostdin", "-v", "error", "-i", str(path), "-ac", "2", "-ar", str(SR), "-f", "f32le", "-"],
+    raw = platforms.run([_bin("ffmpeg"), "-nostdin", "-v", "error", "-i", str(path), "-ac", "2", "-ar", str(SR), "-f", "f32le", "-"],
                          capture_output=True).stdout
     return np.frombuffer(raw, np.float32).reshape(-1, 2).astype(np.float64)
 
@@ -75,7 +76,7 @@ def scan_user_folder(folder: Path, cache_file: Path) -> list[dict]:
     """Own sounds: category from folder/file name, transient measured (cached by size + time). The licence is the user's."""
     from .guard import real
     folder = real(folder)
-    known = json.loads(cache_file.read_text()) if cache_file.exists() else {}
+    known = json.loads(cache_file.read_text(encoding="utf-8")) if cache_file.exists() else {}
     out = []
     for p in sorted(folder.rglob("*")):
         if p.suffix.lower() not in AUDIO_EXTS or p.name.startswith(".") or not p.is_file() or folder not in real(p).parents:
@@ -92,7 +93,7 @@ def scan_user_folder(folder: Path, cache_file: Path) -> list[dict]:
         out.append({"id": "user:" + p.stem, "file": str(p), "category": cat, "intensity": 2, "styles": [], "license": info.get("license", "Nutzer"), "credit": info.get("credit", ""),
                     "type": TYPE_OF.get(cat or "", "oneshot"), "event_align": align, **m})
     cache_file.parent.mkdir(parents=True, exist_ok=True)
-    cache_file.write_text(json.dumps(known))
+    cache_file.write_text(json.dumps(known), encoding="utf-8")
     return out
 
 
@@ -353,7 +354,7 @@ def fit_length(x: np.ndarray, seconds: float, fade_s: float, overlap_s: float = 
 
 def write_wav(path: Path, x: np.ndarray) -> None:
     raw = (np.clip(x, -1, 1) * (2 ** 31 - 1)).astype("<i4").tobytes()
-    subprocess.run([_bin("ffmpeg"), "-y", "-nostdin", "-v", "error", "-f", "s32le", "-ar", str(SR), "-ac", "2", "-i", "-", "-c:a", "pcm_s24le", str(path)], input=raw, check=True)
+    platforms.run([_bin("ffmpeg"), "-y", "-nostdin", "-v", "error", "-f", "s32le", "-ar", str(SR), "-ac", "2", "-i", "-", "-c:a", "pcm_s24le", str(path)], input=raw, check=True)
 
 
 def stage_files(placed: list, folder: Path) -> dict[int, str]:
@@ -373,7 +374,7 @@ def stage_files(placed: list, folder: Path) -> dict[int, str]:
             dst = Path(folder) / "sfx" / f"{src.stem}_{hashlib.sha256(src.read_bytes()).hexdigest()[:8]}.wav"
             if not dst.exists():
                 dst.parent.mkdir(parents=True, exist_ok=True)
-                shutil.copy2(src, dst)
+                platforms.copy(src, dst)
             out[s.index] = str(dst)
         else:
             out[s.index] = s.file

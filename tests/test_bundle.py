@@ -24,7 +24,7 @@ def test_ffmpeg_lookup_order(monkeypatch):
     media.find_tool.cache_clear()
     monkeypatch.setattr(media, "_bundled", lambda n: f"/bundle/{n}")
     monkeypatch.setattr(media.shutil, "which", lambda n: None)
-    monkeypatch.setattr(media, "SYSTEM_DIRS", ())
+    monkeypatch.setattr(media.platforms, "tool_dirs", lambda: ())
     assert media.find_tool("ffprobe") == ("/bundle/ffprobe", "mitgeliefert")
     media.find_tool.cache_clear()
     monkeypatch.setattr(media.shutil, "which", lambda n: f"/usr/local/bin/{n}")
@@ -41,7 +41,8 @@ def test_manifest_template_matches_server_entry():
     assert m["server"]["entry_point"] in m["server"]["mcp_config"]["args"]
     env = m["server"]["mcp_config"]["env"]
     assert set(env) == {"GLADIA_API_KEY", "SCHNIPPO_LANGUAGE", "SCHNIPPO_FORMAT", "SCHNIPPO_EXPORT_FOLDER", "SCHNIPPO_SFX_MODE",
-                        "SCHNIPPO_SFX_FOLDER", "FREESOUND_API_KEY", "ELEVENLABS_API_KEY", "SCHNIPPO_PROJECTS_FOLDER", "SCHNIPPO_UPDATE_CHECK"}
+                        "SCHNIPPO_SFX_FOLDER", "FREESOUND_API_KEY", "ELEVENLABS_API_KEY", "SCHNIPPO_PROJECTS_FOLDER", "SCHNIPPO_UPDATE_CHECK", "PYTHONUTF8"}
+    assert env["PYTHONUTF8"] == "1" and m["compatibility"]["platforms"] == ["darwin", "win32"]
     assert m["user_config"]["gladia_api_key"]["sensitive"] is True
     assert m["user_config"]["language"]["default"] == "de" and m["user_config"]["format"]["default"] == "auto"
     assert (ROOT / "packaging" / m["icon"]).exists()

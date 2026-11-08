@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 PKG = ROOT / "packaging"
 BUILD = PKG / "build" / "schnippo"
 DIST = ROOT / "dist"
-MCPB = ["npx", "-y", "@anthropic-ai/mcpb@2.1.2"]
+MCPB = [shutil.which("npx") or "npx", "-y", "@anthropic-ai/mcpb@2.1.2"]
 
 
 def main() -> None:

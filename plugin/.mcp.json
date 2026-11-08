@@ -6,6 +6,7 @@
         "schnippo@0.11.0"
       ],
       "env": {
+        "PYTHONUTF8": "1",
         "GLADIA_API_KEY": "${user_config.gladia_api_key}",
         "SCHNIPPO_PROJECTS_FOLDER": "${user_config.projects_folder}",
         "SCHNIPPO_FORMAT": "${user_config.format}",

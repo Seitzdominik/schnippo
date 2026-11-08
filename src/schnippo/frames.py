@@ -7,6 +7,7 @@ Resolve (see NOTES), honours rotation (autorotate) and edit lists, ~0.1 s per fr
 
 from __future__ import annotations
 
+from . import platforms
 import io
 import math
 import re
@@ -65,7 +66,7 @@ class FrameCache:
         out = self.path(idx)
         if not out.exists():
             tmp = out.with_suffix(".tmp.jpg")
-            subprocess.run([_bin("ffmpeg"), "-nostdin", "-v", "error", "-y", "-ss", f"{idx / self.fps:.6f}", "-i", self.clip.path,
+            platforms.run([_bin("ffmpeg"), "-nostdin", "-v", "error", "-y", "-ss", f"{idx / self.fps:.6f}", "-i", self.clip.path,
                             "-frames:v", "1", "-vf", f"scale={self.tw}:{self.th}", "-q:v", "3", str(tmp)], check=True)
             tmp.replace(out)
         return out
@@ -85,7 +86,7 @@ def motion_energy(cache_dir: Path, clip: Clip) -> np.ndarray:
     w, h = display_size(clip)
     mh = round(MOTION_W * h / w)
     mh -= mh % 2
-    proc = subprocess.Popen([_bin("ffmpeg"), "-nostdin", "-v", "error", "-i", clip.path, "-an",
+    proc = platforms.popen([_bin("ffmpeg"), "-nostdin", "-v", "error", "-i", clip.path, "-an",
                              "-vf", f"fps={clip.resolve_fps or clip.fps},scale={MOTION_W}:{mh},format=gray",
                              "-f", "rawvideo", "-"], stdout=subprocess.PIPE)
     size = MOTION_W * mh
@@ -170,7 +171,7 @@ def still_tile(st: Still, long_edge: int = THUMB_LONG) -> Image.Image:
 def scene_frames(clip: Clip, threshold: float = 0.3, max_frames: int = 64) -> list[int]:
     """Frame indices of scene changes (ffmpeg scene score), always including frame 0."""
     fps = clip.resolve_fps or clip.fps
-    err = subprocess.run([_bin("ffmpeg"), "-nostdin", "-v", "info", "-i", clip.path, "-an", "-vf",
+    err = platforms.run([_bin("ffmpeg"), "-nostdin", "-v", "info", "-i", clip.path, "-an", "-vf",
                           f"scale=160:-2,select='gt(scene,{threshold})',showinfo", "-f", "null", "-"],
                          capture_output=True, text=True, encoding="utf-8", errors="replace").stderr
     pts = [float(x) for x in re.findall(r"pts_time:([\d.]+)", err)]
@@ -204,7 +205,7 @@ def person_analysis(cache_dir: Path, clip: Clip, detect_every: int = 2) -> dict:
     H = round(PERSON_W * h / w)
     H -= H % 2
     det = _face_detector()
-    proc = subprocess.Popen([_bin("ffmpeg"), "-nostdin", "-v", "error", "-i", clip.path, "-an",
+    proc = platforms.popen([_bin("ffmpeg"), "-nostdin", "-v", "error", "-i", clip.path, "-an",
                              "-vf", f"fps={clip.resolve_fps or clip.fps},scale={PERSON_W}:{H},format=gray", "-f", "rawvideo", "-"],
                             stdout=subprocess.PIPE)
     size = PERSON_W * H

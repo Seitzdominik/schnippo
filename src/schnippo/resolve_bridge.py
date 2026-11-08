@@ -9,8 +9,34 @@ import os
 import sys
 from pathlib import Path
 
-MODULES = "/Library/Application Support/Blackmagic Design/DaVinci Resolve/Developer/Scripting/Modules"
-LIB = "/Applications/DaVinci Resolve/DaVinci Resolve.app/Contents/Libraries/Fusion/fusionscript.so"
+from . import platforms
+
+MODULES, LIB = platforms.resolve_paths()
+
+
+class PathKeyed(dict):
+    """Media Pool clips by file path. On Windows the same file may come back in another case."""
+
+    @staticmethod
+    def _k(p):
+        return os.path.normcase(str(p)) if p else p
+
+    def __init__(self, items=()):
+        super().__init__()
+        for k, v in items:
+            self[k] = v
+
+    def __setitem__(self, k, v):
+        super().__setitem__(self._k(k), v)
+
+    def __getitem__(self, k):
+        return super().__getitem__(self._k(k))
+
+    def __contains__(self, k):
+        return super().__contains__(self._k(k))
+
+    def get(self, k, default=None):
+        return super().get(self._k(k), default)
 
 
 class ResolveUnavailable(RuntimeError):
@@ -21,6 +47,8 @@ def _module():
     os.environ.setdefault("RESOLVE_SCRIPT_LIB", LIB)
     if MODULES not in sys.path:
         sys.path.append(MODULES)
+    if platforms.is_windows() and Path(LIB).parent.is_dir():  # since Python 3.8 the DLLs next to fusionscript.dll are not found otherwise
+        os.add_dll_directory(str(Path(LIB).parent))
     try:
         import DaVinciResolveScript  # type: ignore
 
@@ -44,7 +72,7 @@ class ResolveBridge:
         if r is None:
             raise ResolveUnavailable(
                 "Resolve not reachable. Is DaVinci Resolve Studio running and "
-                "Preferences > System > General > External scripting = Local?")
+                "Preferences > System > General > External scripting using = Local?")
         self._resolve = r
         return r
 
@@ -77,7 +105,7 @@ class ResolveBridge:
         """Import files into bin (idempotent by file path). Returns {path: resolve clip props}."""
         mp = self.project().GetMediaPool()
         # anywhere in the Media Pool (also the user's own bins): reuse, never import a second copy, never move it
-        existing = {c.GetClipProperty("File Path"): c for c in _all_clips(mp.GetRootFolder())}
+        existing = _pool_by_path(mp)
         todo = [str(p) for p in paths if str(p) not in existing]
         if todo:
             folder = self._ensure_bin(mp, bin_name)
@@ -101,6 +129,10 @@ class ResolveBridge:
                 "start_tc": props.get("Start TC"),
             }
         return out
+
+
+def _pool_by_path(mp) -> PathKeyed:
+    return PathKeyed((c.GetClipProperty("File Path"), c) for c in _all_clips(mp.GetRootFolder()))
 
 
 def tool_bin(sub: str) -> str:
@@ -251,11 +283,11 @@ def build_timeline(bridge: "ResolveBridge", cl, pieces: list, clips: dict, alter
     notes: list[str] = []
 
     mp = p.GetMediaPool()
-    by_path = {c.GetClipProperty("File Path"): c for c in _all_clips(mp.GetRootFolder())}
+    by_path = _pool_by_path(mp)
     missing = [clips[c].path for c in used if clips[c].path not in by_path]
     if missing:
         bridge.import_clips([Path(m) for m in missing], bin_name)
-        by_path = {c.GetClipProperty("File Path"): c for c in _all_clips(mp.GetRootFolder())}
+        by_path = _pool_by_path(mp)
     mpi = {cid: by_path.get(clips[cid].path) for cid in used}
     if any(v is None for v in mpi.values()):
         raise BuildError(f"Clips nicht im Media Pool: {[k for k, v in mpi.items() if v is None]}. Nichts gebaut.")
@@ -561,10 +593,10 @@ def place_overlays(bridge, r, p, tl, overlays: list, stills: dict, bin_name: str
             tl.AddTrack("video")
         render = ov.fit == "fill" and needs_render(ov.motion, ov.focus)
         path = ahead[ov.index]
-        by_path = {c.GetClipProperty("File Path"): c for c in _all_clips(mp.GetRootFolder())}
+        by_path = _pool_by_path(mp)
         if str(path) not in by_path:
             bridge.import_clips([path], tool_bin("Standbilder"))
-            by_path = {c.GetClipProperty("File Path"): c for c in _all_clips(mp.GetRootFolder())}
+            by_path = _pool_by_path(mp)
         item = by_path.get(str(path))
         if item is None:
             results.append({"index": ov.index, "media": ov.media, "verified": False, "errors": [f"O{ov.index}: Import von {path.name} fehlgeschlagen"]})
@@ -617,10 +649,10 @@ def _place_video_overlay(bridge, p, mp, tl, ov, clip, bin_name: str, t0: int) ->
     if clip is None:
         errs.append(f"O{ov.index}: Clip {ov.media} unbekannt")
         return res
-    by_path = {c.GetClipProperty("File Path"): c for c in _all_clips(mp.GetRootFolder())}
+    by_path = _pool_by_path(mp)
     if clip.path not in by_path:
         bridge.import_clips([_P(clip.path)], bin_name)
-        by_path = {c.GetClipProperty("File Path"): c for c in _all_clips(mp.GetRootFolder())}
+        by_path = _pool_by_path(mp)
     item = by_path.get(clip.path)
     if item is None:
         errs.append(f"O{ov.index}: Import von {_P(clip.path).name} fehlgeschlagen")
@@ -703,7 +735,7 @@ def apply_audio(r, p, tl, opts, spectrum: dict | None, out_dir, render=None, mea
     from .render import render_timeline
 
     for old in Path(out_dir).glob("audio_*.mov") if Path(out_dir).exists() else []:  # left by an interrupted build
-        old.unlink(missing_ok=True)
+        platforms.unlink(old)
     render = render or (lambda tag, preset=None: render_timeline(p, tl, out_dir, tag, video=False, audio=True, preset=preset))
     _render, made = render, []
 
@@ -719,7 +751,7 @@ def apply_audio(r, p, tl, opts, spectrum: dict | None, out_dir, render=None, mea
         if not keep_renders:  # check renders only serve the measurement (they piled up to 128 GB in Phase 8)
             for f in made:
                 try:
-                    Path(str(f)).unlink(missing_ok=True)
+                    platforms.unlink(Path(str(f)))
                 except (OSError, TypeError):
                     pass
 
@@ -832,11 +864,11 @@ def place_graphics(bridge, p, tl, graphics: list[dict], bin_name: str) -> list[d
 
     mp = p.GetMediaPool()
     paths = [g["mov"] for g in graphics]
-    by = {c.GetClipProperty("File Path"): c for c in _all_clips(mp.GetRootFolder())}
+    by = _pool_by_path(mp)
     missing = [_P(x) for x in paths if x not in by]
     if missing:
         bridge.import_clips(missing, tool_bin("Grafiken"))
-        by = {c.GetClipProperty("File Path"): c for c in _all_clips(mp.GetRootFolder())}
+        by = _pool_by_path(mp)
     t0 = tl.GetStartFrame()
     out = []
     for g in graphics:
@@ -906,11 +938,11 @@ def place_sfx(bridge, p, tl, cues: list[dict]) -> list[dict]:
     from pathlib import Path as _P
 
     mp = p.GetMediaPool()
-    by = {c.GetClipProperty("File Path"): c for c in _all_clips(mp.GetRootFolder())}
+    by = _pool_by_path(mp)
     missing = sorted({c["file"] for c in cues if c["file"] not in by})
     if missing:
         bridge.import_clips([_P(x) for x in missing], tool_bin("SFX"))
-        by = {c.GetClipProperty("File Path"): c for c in _all_clips(mp.GetRootFolder())}
+        by = _pool_by_path(mp)
     plan = []
     for k, lane in enumerate(lanes(cues), 1):
         if not tl.AddTrack("audio", "stereo"):
@@ -952,7 +984,7 @@ def remap_channels(tl, mpi: dict, plans: dict) -> dict:
     Measured on 21.1.2: a mono mapping on the stereo track A1 plays equally loud on L and R."""
     import json as _json
 
-    by_path = {m.GetClipProperty("File Path"): cid for cid, m in mpi.items() if m is not None}
+    by_path = PathKeyed((m.GetClipProperty("File Path"), cid) for cid, m in mpi.items() if m is not None)
     todo = {cid: pl for cid, pl in plans.items() if pl and pl.get("class") in ("identisch", "unausgewogen", "verschieden",
                                                                                "je Sprecher") and pl.get("best")}
     info = {"plans": {cid: {k: pl.get(k) for k in ("class", "best", "reason", "by_speaker")} for cid, pl in plans.items() if pl},
@@ -1078,4 +1110,4 @@ def measure_timeline_audio(bridge: "ResolveBridge", name: str | None, out_dir) -
     try:
         return ebur128(["-i", str(f)])
     finally:
-        Path(str(f)).unlink(missing_ok=True)  # only needed for the measurement
+        platforms.unlink(Path(str(f)))  # only needed for the measurement

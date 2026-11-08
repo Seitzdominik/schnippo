@@ -5,10 +5,11 @@ from __future__ import annotations
 
 import os
 import shutil
-import subprocess
+import sys
 import tempfile
 from dataclasses import asdict, dataclass
 
+from . import platforms
 from .branding import DISPLAY_NAME, SUPPORT_URL
 from pathlib import Path
 
@@ -21,7 +22,7 @@ RESTART_CLAUDE = ("Falls du den Key gerade eingetragen hast: Claude vollständig
 KEY_MISSING = ("Den Gladia-API-Key in den Einstellungen der Erweiterung eintragen und SPEICHERN (Claude → Einstellungen → "
                "Erweiterungen → " + DISPLAY_NAME + " → Konfigurieren). Key gibt es unter app.gladia.io → API Keys. "
                "Ohne Speichern kommt der Key nicht an – ein Neustart allein hilft nicht. "
-               "Gibt es keine Einstellungen (Plugin, andere Programme): store_api_key öffnet ein Fenster und legt den Key im Schlüsselbund ab.")
+               "Gibt es keine Einstellungen (Plugin, andere Programme): store_api_key öffnet ein Fenster und legt den Key sicher im System ab (Schlüsselbund bzw. Anmeldeinformationsverwaltung).")
 
 
 @dataclass
@@ -37,11 +38,7 @@ class Check:
 
 
 def _resolve_running() -> bool:
-    try:
-        out = subprocess.run(["pgrep", "-f", "DaVinci Resolve.app/Contents/MacOS/Resolve"], capture_output=True, text=True)
-        return out.returncode == 0 and bool(out.stdout.strip())
-    except FileNotFoundError:  # pragma: no cover
-        return False
+    return platforms.resolve_running()
 
 
 def _gladia(key: str | None, timeout: float = 8.0) -> tuple[bool | None, str]:
@@ -71,7 +68,7 @@ def run(cfg, bridge=None, gladia=None, running=None, which=None, material: Path 
     out: list[Check] = []
     installed = Path(LIB).exists() and Path(MODULES).exists()
     out.append(Check("installed", "DaVinci Resolve installiert", installed,
-                     "Scripting-Modul gefunden" if installed else "nicht im Programme-Ordner gefunden",
+                     "Scripting-Modul gefunden" if installed else f"nicht gefunden unter {LIB}",
                      "" if installed else "DaVinci Resolve Studio 21.1 oder neuer installieren (blackmagicdesign.com)."))
     is_running = installed and running()
     out.append(Check("running", "Resolve läuft", is_running if installed else None,
@@ -86,8 +83,7 @@ def run(cfg, bridge=None, gladia=None, running=None, which=None, material: Path 
     if is_running:
         out.append(Check("scripting", "Verbindung zu Resolve (External scripting = Local)", r is not None,
                          "verbunden" if r is not None else "Resolve läuft, lässt aber keine Verbindung zu",
-                         "" if r is not None else "In Resolve: DaVinci Resolve → Einstellungen → System → Allgemein → "
-                         f"„External scripting using“ auf „Local“ stellen, {RESTART}."))
+                         "" if r is not None else f"{platforms.resolve_scripting_steps()}, {RESTART}."))
     else:
         out.append(Check("scripting", "Verbindung zu Resolve (External scripting = Local)", None,
                          "wird geprüft, sobald Resolve läuft"))
@@ -125,11 +121,15 @@ def run(cfg, bridge=None, gladia=None, running=None, which=None, material: Path 
     out.append(Check("gladia", "Gladia-Key gültig", ok_k, detail, "" if ok_k else fix))
     for problem in getattr(cfg, "setting_problems", []):
         out.append(Check("settings", "Einstellung prüfen", False, problem, "In den Einstellungen der Erweiterung korrigieren und Claude neu starten."))
+    if platforms.is_windows():
+        import struct
+        bits = struct.calcsize("P") * 8
+        out.append(Check("python", "Python für fusionscript.dll", bits == 64, f"Python {sys.version_info.major}.{sys.version_info.minor}, {bits} bit",
+                         "" if bits == 64 else "Resolve braucht ein 64-bit-Python. uv installiert es automatisch, die Erweiterung neu installieren."))
     for tool in ("ffmpeg", "ffprobe"):
         path, source = which(tool)
         out.append(Check(tool, f"{tool} gefunden", bool(path), f"{source}: {path}" if path else "nicht gefunden",
-                         "" if path else "Die Erweiterung neu installieren (ffmpeg ist eigentlich enthalten) oder ffmpeg "
-                         "installieren (brew install ffmpeg)."))
+                         "" if path else platforms.install_ffmpeg_hint()))
     cache = Path(cfg.cache_dir)
     try:
         cache.mkdir(parents=True, exist_ok=True)
@@ -150,13 +150,16 @@ def run(cfg, bridge=None, gladia=None, running=None, which=None, material: Path 
         ok = free >= FREE_WARN_GB
         out.append(Check(f"disk_{label.lower()}", f"Freier Speicher ({label})", True if ok else (None if free >= FREE_FAIL_GB else False),
                          f"{free:.0f} GB frei auf {_volume(path)}",
-                         "" if ok else "Platz schaffen: Prüf-Renders und Frames liegen im Cache (~/Library/Caches/schnippo), "
+                         "" if ok else f"Platz schaffen: Prüf-Renders und Frames liegen im Cache ({cfg.cache_dir}), "
                          "sie dürfen gelöscht werden."))
     return out
 
 
 def _volume(p: Path) -> str:
-    parts = Path(p).resolve().parts
+    resolved = Path(p).resolve()
+    if platforms.is_windows():
+        return f"Laufwerk {resolved.anchor}"
+    parts = resolved.parts
     return f"/Volumes/{parts[2]}" if len(parts) > 2 and parts[1] == "Volumes" else "dem Startvolume"
 
 

@@ -3,6 +3,7 @@ material or exports. Transcripts cost money and graphic/B-roll renders are used 
 
 from __future__ import annotations
 
+from . import platforms
 import shutil
 import time
 from pathlib import Path
@@ -86,9 +87,9 @@ def clear(root: Path, older_than_days: float = 30.0, include_transcripts: bool =
                 continue
             sz = _size(p)
             if p.is_dir():
-                shutil.rmtree(p, ignore_errors=True)
+                platforms.rmtree(p)
             else:
-                p.unlink(missing_ok=True)
+                platforms.unlink(p)
             freed += sz
     lines.append(f"Gelöscht: {gb(freed)}. Material und Exporte unberührt.")
     return "\n".join(lines), freed

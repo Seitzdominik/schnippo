@@ -5,6 +5,7 @@ plan or read back from a Resolve timeline); corrections (set_word_text / cutlist
 
 from __future__ import annotations
 
+from . import platforms
 import re
 from pathlib import Path
 
@@ -121,6 +122,7 @@ def export(name: str, pieces: list, analyzed: dict, fps: float, corrections: dic
     """Write <out_dir>/<name>.srt, .txt (+ _kapitel.txt for youtube or given chapters). Returns paths + previews."""
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
+    name = platforms.safe_filename(name)
     total = total_frames if total_frames is not None else (
         (recs[-1] + pieces[-1].frames) if recs else sum(pc.frames for pc in pieces))
     blocks: list[Block] = blocks_for_plan(pieces, analyzed, fps, corrections, max_words, max_line_chars, recs=recs,

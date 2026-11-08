@@ -11,7 +11,11 @@ permissions:
   contents: write
 
 jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+
   bundle:
+    needs: ci
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v7
@@ -31,10 +35,6 @@ jobs:
         run: |
           uv run --frozen python tools/build_plugin.py
           git diff --exit-code plugin/ || { echo "plugin/ ist nicht aktuell: tools/build_plugin.py laufen lassen"; exit 1; }
-      - name: ffmpeg für die Tests (das Bundle bringt sein eigenes mit)
-        run: brew install ffmpeg
-      - name: Tests (ohne Resolve, ohne Gladia-Key; Chromium-Tests werden übersprungen)
-        run: uv run --frozen pytest -q
       - name: Bundle bauen
         run: uv run --frozen python packaging/build_mcpb.py
       - name: Python-Paket bauen

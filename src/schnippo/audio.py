@@ -4,6 +4,7 @@ spectral profile compared to a neutral long-term speech spectrum. Recommendation
 
 from __future__ import annotations
 
+from . import platforms
 import re
 import subprocess
 from pathlib import Path
@@ -28,7 +29,7 @@ def ebur128(input_args: list[str], filter_complex: str | None = None) -> dict:
         cmd += ["-filter_complex", filter_complex + ",ebur128=peak=true[out]", "-map", "[out]"]
     else:
         cmd += ["-map", "0:a:0", "-af", "ebur128=peak=true"]
-    err = subprocess.run(cmd + ["-f", "null", "-"], capture_output=True, text=True, encoding="utf-8", errors="replace").stderr
+    err = platforms.run(cmd + ["-f", "null", "-"], capture_output=True, text=True, encoding="utf-8", errors="replace").stderr
     summ = err[err.rfind("Summary:"):]
     get = lambda pat: float(m.group(1)) if (m := re.search(pat, summ, re.S)) else None
     return {"lufs": get(r"I:\s+(-?[\d.]+) LUFS"), "lra": get(r"LRA:\s+(-?[\d.]+) LU"), "true_peak": get(r"Peak:\s+(-?[\d.inf]+) dBFS")}
@@ -41,7 +42,7 @@ def program_filter(pieces: list[tuple[float, float]]) -> str:
 
 
 def read_pcm(path: Path) -> np.ndarray:
-    raw = subprocess.run([_bin("ffmpeg"), "-nostdin", "-v", "error", "-i", str(path), "-map", "0:a:0", "-ac", "1", "-ar", str(SR),
+    raw = platforms.run([_bin("ffmpeg"), "-nostdin", "-v", "error", "-i", str(path), "-map", "0:a:0", "-ac", "1", "-ar", str(SR),
                           "-f", "s16le", "-"], capture_output=True, check=True).stdout
     return np.frombuffer(raw, np.int16).astype(np.float64) / 32768.0
 
@@ -104,11 +105,11 @@ def identical_audio_streams(path: str, seconds: float = 30.0) -> bool | None:
     Phones/apps often record the same mic twice; Resolve then puts both on A1/A2 and the programme is doubled."""
     import json as _json
 
-    info = _json.loads(subprocess.run([_bin("ffprobe"), "-v", "error", "-select_streams", "a", "-show_entries", "stream=index",
+    info = _json.loads(platforms.run([_bin("ffprobe"), "-v", "error", "-select_streams", "a", "-show_entries", "stream=index",
                                        "-of", "json", path], capture_output=True, text=True).stdout or "{}")
     if len(info.get("streams", [])) < 2:
         return None
-    err = subprocess.run([_bin("ffmpeg"), "-nostdin", "-v", "info", "-t", str(seconds), "-i", path, "-filter_complex",
+    err = platforms.run([_bin("ffmpeg"), "-nostdin", "-v", "info", "-t", str(seconds), "-i", path, "-filter_complex",
                           "[0:a:0][0:a:1]amerge=inputs=2,pan=mono|c0=c0-c1,volumedetect", "-f", "null", "-"],
                          capture_output=True, text=True, encoding="utf-8", errors="replace").stderr
     m = re.search(r"max_volume: (-?[\d.inf]+) dB", err)
@@ -126,13 +127,13 @@ def source_channels(path: str) -> list[tuple[int, int]]:
     (embedded_audio_channels counts across streams, measured on 21.1.2 with 2 mono AAC streams)."""
     import json as _json
 
-    info = _json.loads(subprocess.run([_bin("ffprobe"), "-v", "error", "-select_streams", "a", "-show_entries",
+    info = _json.loads(platforms.run([_bin("ffprobe"), "-v", "error", "-select_streams", "a", "-show_entries",
                                        "stream=index,channels", "-of", "json", path], capture_output=True, text=True).stdout or "{}")
     return [(s, c) for s, st in enumerate(info.get("streams", [])) for c in range(int(st.get("channels") or 1))]
 
 
 def _channel_pcm(path: str, stream: int, ch: int, seconds: float) -> np.ndarray:
-    raw = subprocess.run([_bin("ffmpeg"), "-nostdin", "-v", "error", "-t", str(seconds), "-i", path, "-map", f"0:a:{stream}",
+    raw = platforms.run([_bin("ffmpeg"), "-nostdin", "-v", "error", "-t", str(seconds), "-i", path, "-map", f"0:a:{stream}",
                           "-af", f"pan=mono|c0=c{ch}", "-ar", str(CH_SR), "-f", "s16le", "-"], capture_output=True).stdout
     return np.frombuffer(raw, np.int16).astype(np.float64) / 32768.0
 
@@ -260,7 +261,7 @@ def louder_channels(path: str, spans: list[tuple[float, float]], min_gap_db: flo
 
 def channel_balance(path: Path) -> dict:
     """RMS per output channel of a render (dB) → verification that both speakers play equally loud."""
-    err = subprocess.run([_bin("ffmpeg"), "-nostdin", "-nostats", "-v", "info", "-i", str(path), "-map", "0:a:0", "-af",
+    err = platforms.run([_bin("ffmpeg"), "-nostdin", "-nostats", "-v", "info", "-i", str(path), "-map", "0:a:0", "-af",
                           "astats=measure_perchannel=RMS_level:measure_overall=none", "-f", "null", "-"],
                          capture_output=True, text=True, encoding="utf-8", errors="replace").stderr
     vals = [float(v) for v in re.findall(r"RMS level dB: (-?[\d.inf]+)", err) if v not in ("-inf", "inf")]

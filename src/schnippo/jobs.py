@@ -3,6 +3,7 @@ marked "läuft" that no thread of this server process runs anymore was interrupt
 
 from __future__ import annotations
 
+from . import platforms
 import json
 import os
 import time
@@ -24,7 +25,7 @@ class Jobs:
         job["updated"] = time.time()
         tmp = self._file(job["id"]).with_suffix(".tmp")
         tmp.write_text(json.dumps(job, ensure_ascii=False, indent=1), encoding="utf-8")
-        os.replace(tmp, self._file(job["id"]))
+        platforms.replace(tmp, self._file(job["id"]))
 
     def start(self, kind: str, request: dict, label: str, folder: str | None) -> dict:
         job = {"id": time.strftime("%Y%m%d-%H%M%S-") + uuid.uuid4().hex[:4], "kind": kind, "label": label,

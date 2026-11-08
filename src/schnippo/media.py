@@ -5,6 +5,7 @@ Original media is only ever read. All derived files go to the cache.
 
 from __future__ import annotations
 
+from . import platforms
 import functools
 import json
 import os
@@ -23,7 +24,6 @@ class MediaError(RuntimeError):
     pass
 
 
-SYSTEM_DIRS = ("/opt/homebrew/bin", "/usr/local/bin", "/usr/bin")  # Claude Desktop starts servers with a minimal PATH
 
 
 def _bundled(name: str) -> str | None:
@@ -42,7 +42,7 @@ def find_tool(name: str) -> tuple[str | None, str | None]:
     if os.environ.get("SCHNIPPO_FFMPEG") == "bundled":
         b = _bundled(name)
         return (b, "mitgeliefert") if b else (None, None)
-    p = shutil.which(name) or next((f"{d}/{name}" for d in SYSTEM_DIRS if Path(f"{d}/{name}").exists()), None)
+    p = shutil.which(name) or next((f"{d}/{name}" for d in platforms.tool_dirs() if Path(f"{d}/{name}").exists()), None)
     if p:
         return p, "System"
     b = _bundled(name)
@@ -52,12 +52,14 @@ def find_tool(name: str) -> tuple[str | None, str | None]:
 def _bin(name: str) -> str:
     p, _ = find_tool(name)
     if not p:
-        raise MediaError(f"{name} nicht gefunden (Erweiterung neu installieren oder brew install ffmpeg)")
+        raise MediaError(f"{name} nicht gefunden. {platforms.install_ffmpeg_hint()}")
     return p
 
 
 def _run(cmd: list[str], **kw) -> subprocess.CompletedProcess:
-    res = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace", **kw)
+    res = platforms.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace", **kw)
+    if res.returncode != 0 and platforms.is_windows() and "Permission denied" in res.stderr:
+        raise MediaError("Eine Datei ist noch geöffnet oder schreibgeschützt. Bitte in DaVinci Resolve oder im Player schließen und erneut versuchen.")
     if res.returncode != 0:
         raise MediaError(f"{Path(cmd[0]).name} failed: {res.stderr.strip()[-400:]}")
     return res

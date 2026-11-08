@@ -7,6 +7,7 @@ via the API have no effect in the render; Pan units are not documented). Output 
 
 from __future__ import annotations
 
+from . import platforms
 import hashlib
 import subprocess
 from pathlib import Path
@@ -48,7 +49,7 @@ def render_still(src: Path, out_dir: Path, width: int, height: int, fps_num: int
           f"zoompan=z='{zoom}':x='{x}':y='{y}':d={frames}:s={width}x{height}:fps={fps_num}/{fps_den},"
           f"format=yuv422p10le")
     tmp = out.with_suffix(".tmp.mov")
-    subprocess.run([_bin("ffmpeg"), "-nostdin", "-v", "error", "-y", "-loop", "1", "-i", str(src), "-vf", vf,
+    platforms.run([_bin("ffmpeg"), "-nostdin", "-v", "error", "-y", "-loop", "1", "-i", str(src), "-vf", vf,
                     "-frames:v", str(frames), "-c:v", "prores_ks", "-profile:v", "2", "-an", str(tmp)], check=True)
     tmp.replace(out)
     return out

@@ -20,6 +20,7 @@
       "command": "uv",
       "args": ["run", "--directory", "${__dirname}", "--frozen", "--no-dev", "bundle_main.py"],
       "env": {
+        "PYTHONUTF8": "1",
         "GLADIA_API_KEY": "${user_config.gladia_api_key}",
         "SCHNIPPO_LANGUAGE": "${user_config.language}",
         "SCHNIPPO_FORMAT": "${user_config.format}",
@@ -37,7 +38,7 @@
     "gladia_api_key": {
       "type": "string",
       "title": "Gladia-API-Key",
-      "description": "Für die Transkription (app.gladia.io → API Keys). Wird im Schlüsselbund gespeichert.",
+      "description": "Für die Transkription (app.gladia.io → API Keys). Wird sicher im System gespeichert.",
       "sensitive": true,
       "required": true
     },
@@ -107,7 +108,7 @@
   "privacy_policies": ["__PRIVACY_URL__", "https://www.gladia.io/privacy-policy"],
   "compatibility": {
     "claude_desktop": ">=1.0.0",
-    "platforms": ["darwin"],
+    "platforms": ["darwin", "win32"],
     "runtimes": { "python": ">=3.14,<3.16" }
   }
 }

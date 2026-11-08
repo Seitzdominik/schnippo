@@ -10,12 +10,13 @@ import shutil
 from pathlib import Path
 
 from .branding import LEGACY_SLUG, SLUG
+from . import platforms
 
 _log = logging.getLogger("schnippo")
 
 
 def run(home: Path | None = None) -> list[str]:
-    if home is None and os.environ.get("SCHNIPPO_NO_MIGRATE"):
+    if platforms.is_windows() or (home is None and os.environ.get("SCHNIPPO_NO_MIGRATE")):  # the old name never ran on Windows
         return []
     home = Path(home or Path.home())
     done = []

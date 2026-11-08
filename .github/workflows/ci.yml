@@ -1,0 +1,51 @@
+# Tests, bundle and the uvx start on macOS and Windows, without Resolve and without a Gladia key.
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_call:
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+      - name: Prüfskript (Pflicht)
+        if: runner.os == 'macOS'
+        run: uv run --frozen python tools/check_public.py --all
+      - name: ffmpeg für die Tests (macOS, Windows nimmt das mitgelieferte)
+        if: runner.os == 'macOS'
+        run: brew install ffmpeg
+      - name: ffmpeg aus dem Paket auf den Pfad (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          dir=$(uv run --frozen python -c "from pathlib import Path; from schnippo import ffmpeg_dist; print(Path(ffmpeg_dist.path('ffmpeg')).parent)")
+          cygpath -u "$dir" >> "$GITHUB_PATH"
+      - name: Chromium für die Grafik-Tests (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          dir=$(uv run --frozen python -c "from schnippo.config import Config; from pathlib import Path; print(Path(Config().cache_dir) / 'playwright')")
+          PLAYWRIGHT_BROWSERS_PATH="$dir" uv run --frozen --extra motion python -m playwright install chromium-headless-shell
+      - name: Tests
+        run: uv run --frozen --extra motion pytest -q
+      - name: Bundle bauen
+        run: uv run --frozen python packaging/build_mcpb.py
+      - name: Python-Paket bauen und über uvx starten
+        run: |
+          uv build
+          uv run --frozen python tools/smoke_uvx.py dist/schnippo-*-py3-none-any.whl
+      - name: Größe
+        run: ls -l dist

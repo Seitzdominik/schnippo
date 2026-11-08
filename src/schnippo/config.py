@@ -2,7 +2,7 @@
 
 Sources, later wins:
   1. built-in defaults
-  2. ``~/.config/schnippo/config.toml`` (or ``$SCHNIPPO_CONFIG``)
+  2. ``config.toml`` in ``~/.config/schnippo`` or ``%APPDATA%\\schnippo`` (or ``$SCHNIPPO_CONFIG``)
   3. environment variables (``GLADIA_API_KEY``, ``SCHNIPPO_CACHE``, ``SCHNIPPO_LANGUAGE``,
      ``SCHNIPPO_EXPORT_FOLDER``, ``SCHNIPPO_FORMAT``, ``SCHNIPPO_STYLE``; set by the .mcpb bundle)
   4. onboarding answers (preferences.json next to the config), see prefs.apply
@@ -16,6 +16,8 @@ import os
 import tomllib
 from dataclasses import dataclass, field
 from pathlib import Path
+
+from .platforms import cache_dir, config_dir, key_store
 
 DEFAULT_HARD_FILLERS = [  # German hesitations; NOT "um"/"eh" – real German words ("um zu", "eh schon"), Phase 8 interview
     "äh", "ähm", "öh", "öhm", "hm", "hmm", "mhm", "ehm", "äm", "ähh", "ähmm",
@@ -31,7 +33,7 @@ DEFAULT_SOFT_FILLERS = [
 class Config:
     gladia_api_key: str | None = None
     language: str = "de"
-    cache_dir: Path = field(default_factory=lambda: Path.home() / "Library" / "Caches" / "schnippo")
+    cache_dir: Path = field(default_factory=cache_dir)
     pause_threshold_s: float = 0.4
     long_pause_s: float = 1.5
     hard_fillers: list[str] = field(default_factory=lambda: list(DEFAULT_HARD_FILLERS))
@@ -82,7 +84,7 @@ class Config:
 
 
 def config_path() -> Path:
-    return Path(os.environ.get("SCHNIPPO_CONFIG", Path.home() / ".config" / "schnippo" / "config.toml"))
+    return Path(os.environ.get("SCHNIPPO_CONFIG", config_dir() / "config.toml"))
 
 
 def load_config() -> Config:
@@ -171,7 +173,7 @@ def load_config() -> Config:
     if not cfg.gladia_api_key:
         from .keychain import read
         cfg.gladia_api_key = read("gladia")
-        cfg.gladia_key_source = "Schlüsselbund" if cfg.gladia_api_key else cfg.gladia_key_source
+        cfg.gladia_key_source = key_store() if cfg.gladia_api_key else cfg.gladia_key_source
     cfg.freesound_api_key = cfg.freesound_api_key or _keychain("freesound")
     cfg.elevenlabs_api_key = cfg.elevenlabs_api_key or _keychain("elevenlabs")
     return cfg

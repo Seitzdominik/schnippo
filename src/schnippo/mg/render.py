@@ -10,6 +10,7 @@ Playwright and chromium-headless-shell are installed on first use (motion_setup)
 
 from __future__ import annotations
 
+from .. import platforms
 import hashlib
 import logging
 import os
@@ -65,12 +66,11 @@ def ensure(cache_root: Path, progress=None) -> dict:
     t0 = time.time()
     lib, browsers = _dirs(cache_root)
     if not st["package"]:
-        uv = os.environ.get("UV") or shutil.which("uv") or next((p for p in ("/opt/homebrew/bin/uv", "/usr/local/bin/uv",
-                                                                            str(Path.home() / ".local/bin/uv")) if Path(p).exists()), None)
+        uv = platforms.find_uv()
         say(f"Motion Graphics: lade Playwright {PLAYWRIGHT_VERSION} (einmalig) …")
         cmd = ([uv, "pip", "install", "--quiet", "--target", str(lib), "--python", sys.executable, f"playwright=={PLAYWRIGHT_VERSION}"]
                if uv else [sys.executable, "-m", "pip", "install", "--quiet", "--target", str(lib), f"playwright=={PLAYWRIGHT_VERSION}"])
-        r = subprocess.run(cmd, capture_output=True, text=True)
+        r = platforms.run(cmd, capture_output=True, text=True)
         if r.returncode != 0:
             raise MotionUnavailable(f"Playwright-Installation fehlgeschlagen: {r.stderr.strip()[-400:]}")
         info["installed"].append(f"Playwright {PLAYWRIGHT_VERSION} ({_du(lib):.0f} MB)")
@@ -79,7 +79,7 @@ def ensure(cache_root: Path, progress=None) -> dict:
     if not st["browser"]:
         say("Motion Graphics: lade Chromium (Headless Shell, einmalig, ~90 MB) …")
         env = {**os.environ, "PYTHONPATH": os.pathsep.join([str(lib)] + sys.path)}
-        r = subprocess.run([sys.executable, "-m", "playwright", "install", "chromium-headless-shell"], capture_output=True,
+        r = platforms.run([sys.executable, "-m", "playwright", "install", "chromium-headless-shell"], capture_output=True,
                            text=True, env=env)
         if r.returncode != 0:
             raise MotionUnavailable(f"Chromium-Download fehlgeschlagen: {(r.stderr or r.stdout).strip()[-400:]}")
@@ -162,7 +162,7 @@ def encode_prores4444(frames_dir: Path, fps: float, out: Path) -> Path:
            str(frames_dir / "f_%05d.png"), "-c:v", "prores_ks", "-profile:v", "4", "-pix_fmt", "yuva444p10le",
            "-alpha_bits", "16", "-vendor", "apl0", "-colorspace", "bt709", "-color_primaries", "bt709", "-color_trc", "bt709",
            str(out)]
-    r = subprocess.run(cmd, capture_output=True, text=True)
+    r = platforms.run(cmd, capture_output=True, text=True)
     if r.returncode != 0:
         raise RuntimeError(f"ProRes-4444-Encoding fehlgeschlagen: {r.stderr.strip()[-300:]}")
     return out

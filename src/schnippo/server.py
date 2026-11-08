@@ -5,6 +5,7 @@ Note: the brief says FastMCP; in mcp>=2 the class was renamed to MCPServer (same
 
 from __future__ import annotations
 
+from . import platforms
 import functools
 import logging
 import sys
@@ -267,22 +268,20 @@ def create_project(name: str) -> str:
 
 @tool
 def store_api_key(service: str = "gladia") -> str:
-    """Saves an API key in the macOS keychain for hosts without a settings form (plugin, other MCP programs). A system window asks for it: never ask for a key in the chat, it must not reach the model.
+    """Saves an API key in the system's credential store (macOS keychain, Windows Credential Manager) for hosts without a settings form (plugin, other MCP programs). A system window asks for it: never ask for a key in the chat, it must not reach the model.
     service: gladia | freesound | elevenlabs."""
     from . import keychain
     if service not in keychain.SERVICES:
         raise ValueError("service: gladia | freesound | elevenlabs")
-    if sys.platform != "darwin":
-        raise ValueError("Der Schlüsselbund ist nur auf dem Mac verfügbar. Sonst den Key als Umgebungsvariable setzen.")
     key = keychain.ask(keychain.SERVICES[service])
     if not key:
         return "Abgebrochen, es wurde nichts gespeichert."
     if not keychain.write(service, key):
-        return "Der Key ließ sich nicht im Schlüsselbund speichern."
+        return f"Der Key ließ sich nicht in der {platforms.key_store()} speichern." if platforms.is_windows() else "Der Key ließ sich nicht im Schlüsselbund speichern."
     setattr(_cfg, {"gladia": "gladia_api_key", "freesound": "freesound_api_key", "elevenlabs": "elevenlabs_api_key"}[service], key)
     if service == "gladia":
-        _cfg.gladia_key_source = "Schlüsselbund"
-    return f"{keychain.SERVICES[service]}-Key im Schlüsselbund gespeichert."
+        _cfg.gladia_key_source = platforms.key_store()
+    return f"{keychain.SERVICES[service]}-Key in {platforms.key_store_place()} gespeichert."
 
 
 @tool
@@ -531,7 +530,7 @@ def design_preview(profile: dict, templates: list[str] | None = None) -> CallToo
 
 @tool
 def save_brand(name: str, profile: dict) -> str:
-    """Save a brand profile for motion graphics in the user config (~/.config/schnippo/brand.json, never the repo) and
+    """Save a brand profile for motion graphics in the user config (brand.json in the settings folder, never the repo) and
     make it active. profile: style (minimal|bold|soft|tech), font_family, accent, text, text_dark, surface, radius_px."""
     from . import design
     path, warn = design.save(name, profile)
@@ -754,14 +753,14 @@ def _hear(timeline: str):
         if current is not None:
             p.SetCurrentTimeline(current)
     wav = extract_audio(mov, work / "cut16k.wav")
-    Path(mov).unlink(missing_ok=True)
+    platforms.unlink(mov)
 
     def transcribe(wav_path, regions):
         """Cut the regions out of the wav, join them, transcribe once, map the words back to timeline seconds."""
         joined = work / "regions.wav"
         filt = "".join(f"[0:a]atrim={a:.3f}:{b:.3f},asetpts=PTS-STARTPTS[r{k}];" for k, (a, b) in enumerate(regions))
         filt += "".join(f"[r{k}]" for k in range(len(regions))) + f"concat=n={len(regions)}:v=0:a=1[o]"
-        subprocess.run([_bin("ffmpeg"), "-nostdin", "-y", "-v", "error", "-i", str(wav_path), "-filter_complex", filt, "-map", "[o]",
+        platforms.run([_bin("ffmpeg"), "-nostdin", "-y", "-v", "error", "-i", str(wav_path), "-filter_complex", filt, "-map", "[o]",
                         "-ac", "1", "-ar", "16000", "-c:a", "pcm_s16le", str(joined)], check=True)
         raw = get_provider("gladia", _cfg).transcribe(joined, _cfg.language, raw_out=work / "raw.json")
         out, offs, acc = [], [], 0.0
@@ -837,7 +836,7 @@ def export_final(timeline: str, preset: str = "auto", with_transcript: bool = Tr
     fmt = (built.format if built and built.format else None) or _ws.effective_format()[0]
     res = _export(r, p, tl, preset, _ws.export_dir(), timeline, fmt, progress=say)
     f = Path(res["file"])
-    probe = _json.loads(subprocess.run([_bin("ffprobe"), "-v", "error", "-show_entries",
+    probe = _json.loads(platforms.run([_bin("ffprobe"), "-v", "error", "-show_entries",
                                         "stream=codec_type,codec_name,width,height,sample_rate:format=duration", "-of", "json",
                                         str(f)], capture_output=True, text=True).stdout or "{}")
     v = next((s for s in probe.get("streams", []) if s.get("codec_type") == "video"), {})
@@ -929,7 +928,7 @@ def reel_sheet(timeline: str) -> list:
         frames = []
         for t, label in marks:
             png = work / f"{t}.png"
-            subprocess.run([_bin("ffmpeg"), "-y", "-v", "error", "-ss", f"{t / fps:.3f}", "-i", str(f), "-frames:v", "1", str(png)], check=True)
+            platforms.run([_bin("ffmpeg"), "-y", "-v", "error", "-ss", f"{t / fps:.3f}", "-i", str(f), "-frames:v", "1", str(png)], check=True)
             frames.append((t, f"{label} {ts(t / fps)}", PImage.open(png).copy()))
     finally:
         shutil.rmtree(work, ignore_errors=True)
@@ -974,7 +973,7 @@ def export_reels(reel_timelines: list[str], captions: dict | None = None, ctx: C
         tl = find_timeline(p, timeline)
         res = _export(r, p, tl, "reel", target, name, "reel", progress=say)
         f = Path(res["file"])
-        probe = _json.loads(subprocess.run([_bin("ffprobe"), "-v", "error", "-show_entries", "stream=codec_type,codec_name,width,height:format=duration", "-of", "json", str(f)],
+        probe = _json.loads(platforms.run([_bin("ffprobe"), "-v", "error", "-show_entries", "stream=codec_type,codec_name,width,height:format=duration", "-of", "json", str(f)],
                                            capture_output=True, text=True).stdout or "{}")
         v = next((s for s in probe.get("streams", []) if s.get("codec_type") == "video"), {})
         dur = float(probe.get("format", {}).get("duration") or 0)
@@ -983,7 +982,7 @@ def export_reels(reel_timelines: list[str], captions: dict | None = None, ctx: C
         tr = _ws.export_transcript(timeline=read_timeline(_bridge, timeline, _ws.clips))
         srt = next((Path(x) for x in (tr.get("files") or []) if str(x).endswith(".srt")), None) or (Path(str(tr["srt"])) if tr.get("srt") else None)
         if srt and srt.exists():
-            shutil.copy2(srt, target / f"{name}.srt")
+            platforms.copy(srt, target / f"{name}.srt")
         if cap:
             (target / f"{name}.txt").write_text("\n\n".join(x for x in (cap.get("title"), cap.get("hook"), cap.get("text")) if x) + "\n", encoding="utf-8")
         row = f"{'✅' if ok else '❌'} {f.name} · {f.stat().st_size / 1e6:.1f} MB · {ts(dur)} · {v.get('width')}×{v.get('height')} {v.get('codec_name')} · {loud.get('lufs')} LUFS / {loud.get('true_peak')} dBTP"
@@ -1391,6 +1390,8 @@ def guide_resource(name: str) -> str:
 
 
 def main() -> None:
+    if platforms.is_windows() and hasattr(sys.stderr, "reconfigure"):  # the log, with umlauts; stdout belongs to the MCP protocol and the SDK writes UTF-8 there itself
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
     # diagnostics for the Claude log (never the key): does a restart after changing the extension settings deliver it?
     logging.getLogger("schnippo").info(
         "Start %s · Gladia-Key: %s · Format: %s · Python %s", _version(),
