@@ -416,3 +416,13 @@ def test_nothing_is_fetched_when_it_is_there(monkeypatch):
     from schnippo import deps
     monkeypatch.setattr(deps, "available", lambda k: True)
     assert deps.ensure("ffmpeg") is False
+
+
+def test_an_invalid_cutlist_is_not_heard_with_pieces_missing(monkeypatch):
+    from schnippo.config import Config
+    from schnippo.workspace import Workspace
+    ws = Workspace.__new__(Workspace)
+    monkeypatch.setattr(ws, "prepare", lambda c: (c, []), raising=False)
+    monkeypatch.setattr(ws, "plan", lambda c: (Plan(errors=["#10: start_frame schneidet das erste Wort an"]), {}, {}), raising=False)
+    with pytest.raises(ValueError, match="nichts gehört"):
+        ws._sense_target(None, Cutlist())

@@ -54,7 +54,7 @@ Kennzeichnung: **[E]** belegt · **[P]** Profi-Praxis · **[V]** Anbieter-Meinun
 2. Template wählen und Parameter setzen; freie Gestaltung nur im Sandbox-Modus.
 3. **Kontaktblatt prüfen** (5–6 Standbilder je Grafik, über dem echten Frame, Hilfslinien Kopfbox/Abstand/sichere Zone):
    sichere Zone, Lesbarkeit, Abstand zum Kopf, wirkt es hochwertig?
-4. Erst dann rendern und als `<Name>_V5_Motion` bauen.
+4. Erst dann rendern. Im Komplett-Schnitt gehören die Grafiken in die eine Cutlist, auf einer fertigen Timeline nimmst du `add_graphics`.
 
 ## Innenabstand (alle Boxen, Tokens unter `spacing`)
 - Seitlich ≥ 0,9–1,2 × Versalhöhe, oben/unten ≥ 0,5–0,7 × Versalhöhe; Abstand Name ↔ Rolle 0,25–0,35 × Namensgröße; Akzentlinie mit eigenem Abstand zum Text. Alles relativ zur Schrift, skaliert also mit 1080p/4K.

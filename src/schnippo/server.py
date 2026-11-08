@@ -810,13 +810,13 @@ def sense_check(timeline: str | None = None, confirm: bool = False, ctx: Context
         lines.append(f"  ⚠ {ts(h['t'])} (Schnitt {ts(h['cut'])}, #{h['item'] or 0:02d}) {h['kind']}: erwartet „{h['expected']}“, "
                      f"gehört „{h['heard']}“")
     lines += ["", "Gehörter Text – lies ihn wie ein Zuschauer (Satzbrüche, Bezüge ohne Bezugswort, unvollendete Gedanken, "
-              "Themensprünge, Widersprüche) und melde je Fund Zeit + Vorschlag; beheben mit revise:"] + res["sections"]
+              "Themensprünge, Widersprüche) und melde je Fund Zeit + Vorschlag; im Komplett-Schnitt in der Cutlist beheben, auf einer fertigen Timeline mit revise:"] + res["sections"]
     return "\n".join(lines)
 
 
 @tool
 def export_final(timeline: str, preset: str = "auto", with_transcript: bool = True, ctx: Context | None = None) -> str:
-    """Render the finished timeline (normally <Name>_V4_Polish or _V5_Motion) into the export folder: preset "reel"
+    """Render the finished timeline (normally <Name>_Schnippo) into the export folder: preset "reel"
     (1080×1920 H.264), "youtube_1080" (1920×1080 H.264), "youtube_4k" (3840×2160, only from 4K timelines) or "auto"
     (portrait → reel, landscape → YouTube 1080p). AAC 48 kHz, loudness as set in the polish pass (no extra
     normalization). Checks the file (resolution, codec, duration, LUFS/true peak) and writes SRT/TXT (+ chapters) next to

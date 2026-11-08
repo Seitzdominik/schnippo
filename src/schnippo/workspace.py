@@ -1418,6 +1418,8 @@ class Workspace:
             return self._built(timeline)
         eff, _ = self.prepare(cl)
         plan, analyzed, _segs = self.plan(eff)
+        if not plan.ok:  # never hear a cut with items silently missing
+            raise ValueError("Cutlist ungültig, nichts gehört:\n" + "\n".join(plan.errors))
         return eff, plan, analyzed, self.clips[first_piece(plan).clip].resolve_fps or self.clips[first_piece(plan).clip].fps
 
     def plan_sound(self, cl: Cutlist, out: Path) -> Path:

@@ -15,13 +15,17 @@ Arbeite die Leitfäden der Reihe nach ab, aber baue keine Zwischenstände in Res
 1. **Rough Cut:** Inhalt, Reihenfolge, Take-Wahl, Laufzeit (Leitfaden 01).
 2. **Fine Cut:** Pausen, Wortenden, Kernaussagen als `beats`, `punch_in` (Leitfaden 02).
 3. **Gegenhören:** `sense_check(cutlist=…)` hört die geplante Fassung ab, ohne dass etwas in Resolve liegt. Nähte und Sinnfehler direkt in der Cutlist beheben, dann erneut (nur Geändertes kostet).
-4. **B-Roll und Overlays** (Leitfaden 03), **Zooms**, **Grafiken** (Leitfaden 05), **Sound-Effekte** (Leitfaden 06).
+4. Vor dem Ton einmal `analyze_audio`. **B-Roll und Overlays** (Leitfaden 03), **Zooms**, **Grafiken** (Leitfaden 05), **Sound-Effekte** (Leitfaden 06).
 5. **Eine** Cutlist mit allem: `items`, `rejected`, `beats`, `punch_in`, `overlays`, `graphics`, `sfx`, `audio`. Ohne `pass`. `validate_cutlist` muss GÜLTIG sagen.
 6. `complete_cut(cutlist, borderline=[…], open_questions=[…])` baut die Timeline, sichert sie, misst den Ton, prüft und gibt den Bericht.
 
 Wünsche pro Auftrag kommen als Satz: „ohne Grafiken“ → `skip=["graphics"]`, „ohne Sound-Effekte“ → `skip=["sfx"]`, „ohne B-Roll“ → `skip=["overlays"]`, „ohne Zooms“ → `skip=["zooms"]`, „ohne Ton-Mastering“ → `skip=["audio"]`, „nur Rohschnitt“ → `skip=["rough"]`.
 
 Kapitel gehören nicht in die Cutlist: Beim Export `export_transcript(timeline=…, chapters=[…])`. Die Abschnitte „Technik“ weiter unten beschreiben auch den Durchgangs-Modus; `build_timeline` und `base_cutlist` brauchst du im Komplett-Schnitt nicht.
+
+Cold Open: Der Satz wandert nach vorn und steht an seiner alten Stelle nicht noch einmal; dort bleibt höchstens ein kurzer Rückbezug.
+
+`ingest_folder` kündigt eine Bestätigung von A- und B-Roll an, wenn der Ordner unsortiert ist. Bei „nur wenn nötig“ und „keine“ entscheidest du selbst und nennst die Einordnung im Bericht.
 
 ## Rückfragen
 Die Einstellung steht in der ersten Zeile von `get_edit_context`.

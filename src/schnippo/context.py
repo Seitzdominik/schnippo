@@ -86,7 +86,7 @@ def render_overview(clips: list[tuple], script, stills_lines: list[str], folder:
     out = [f"ÜBERSICHT | {folder} | {len(clips)} Clip(s), {ts(total_raw)} Rohmaterial, {n_seg} Segmente, {len(pages)} Seite(n) | "
            + (f"Skript: {len(script)} Zeilen" if script else "ohne Skript → Reihenfolge der Aufnahme ist maßgeblich"),
            "Ablauf: erst diese Übersicht, dann get_edit_context(page=N) Seite für Seite; pro Seite Items/Rejected festlegen, "
-           "am Ende merge_cutlists → validate_cutlist → build_timeline."]
+           "am Ende merge_cutlists → validate_cutlist → complete_cut."]
     out.append("Clips:")
     for clip, segs, edges, groups in clips:
         out.append(f"  {clip.id} {clip.name} | {ts(clip.duration_s)} | {clip.fps:g}fps | {display_res(clip)} | {len(segs)} Segmente, "
