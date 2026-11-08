@@ -12,7 +12,7 @@ Status: ✅ erfüllt, ⚠️ offen, 👤 muss der Nutzer tun. Die Tests stehen i
 |---|---|---|
 | `plugin/.claude-plugin/plugin.json`, nur das Manifest in diesem Ordner | ✅ | Test `test_only_the_manifest_lives_in_claude_plugin` |
 | Keine Symlinks, LFS, `.gitattributes`, Systemdateien | ✅ | Test `test_directory_file_rules`, `git ls-files` |
-| Repository unter 50 MiB als Archiv, unter 10.000 Dateien | ✅ | 16,6 MB, 275 Dateien |
+| Repository unter 50 MiB als Archiv, unter 10.000 Dateien | ✅ | 16,6 MB, 274 Dateien |
 | Dateien im Plugin unter 256 KiB, nur Text und Bilder | ✅ | Test, Ordner 128 KB |
 | Repository öffentlich | ✅ | https://github.com/Seitzdominik/schnippo |
 | Verfolgter Branch `stable` | ✅ | `.github/workflows/release.yml`, `docs/RELEASE.md` |
