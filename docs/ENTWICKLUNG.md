@@ -296,6 +296,7 @@ Auswertung über `logs/LogArchive/ResolveDebug_C*.txt` im Resolve-Protokollordne
 - Zwei Personen in einem Bild: `reframe.speaker_x` ist nur logisch geprüft, `stacked` ist nicht gebaut.
 - Szenen ohne Sprache stehen nur als Overlays oder im Nachlauf (`tail`), ein Item ganz ohne Wörter gibt es nicht.
 - Die Ursache von `std::out_of_range: vector` ist offen.
+- Phase 14: Kaltstart des Plugins sicher unter 30 s. Fast die ganze Zeit ist Installation durch uv, der erste Import kostet 1,8 s. OpenCV, ffmpeg und Playwright werden schon bei Bedarf geladen. Hebel wären numpy, pillow und python-docx (lxml) über `deps.py` nachzuladen. Das fasst viele Module an und ist deshalb nicht in 0.13.1. Ein Fehlstart bleibt bei langsamer Leitung möglich, weil Claude Code nach 30 s abbricht und uvx erst nach der Installation antwortet.
 
 ## Plattformen: macOS-Annahmen und ihre Lösung (Phase 12)
 

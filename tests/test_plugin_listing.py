@@ -124,6 +124,20 @@ def test_readme_meets_the_listing_rules():
     assert len(prompts) >= 3
 
 
+def test_first_start_note_is_at_the_top():
+    head = _readme().split("## English summary")[0]
+    assert '"Failed to connect", click "Reconnect" once' in head and "„Failed to connect“" in head
+
+
+def test_start_stays_lean():
+    """uvx installs all of this before the server can answer, and Claude Code gives up after 30 s."""
+    project = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["project"]
+    deps = " ".join(project["dependencies"])
+    assert "[" not in deps and not re.search(r"opencv|ffmpeg|playwright", deps)
+    for p in (ROOT / "src" / "schnippo").rglob("*.py"):
+        assert not re.search(r"^\s*(from|import) (typer|rich|dotenv)\b", p.read_text(encoding="utf-8"), flags=re.M), p
+
+
 def test_readme_names_every_network_destination():
     hosts = set()
     for p in (ROOT / "src" / "schnippo").rglob("*.py"):

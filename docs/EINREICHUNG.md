@@ -44,6 +44,7 @@ Status: ✅ erfüllt, ⚠️ offen, 👤 muss der Nutzer tun. Die Tests stehen i
 | Tool-Titel und Hinweise, Einstufung geprüft | ✅ | `src/schnippo/toolinfo.py`, vier Tests |
 | Cache löschen nur mit Bestätigung | ✅ | `clear_cache(confirm=false)`, Test |
 | Abhängigkeiten aktuell (Policy 5.G) | ✅ | `uv tree --outdated`: OpenCV 4.14 statt 5.0 bewusst, sonst aktuell bis auf ein Patch-Release von pydantic |
+| Hinweis zum ersten Start ganz oben im README | ✅ | Test `test_first_start_note_is_at_the_top` |
 | Installation aus dem GitHub-Repo in frischer Umgebung | ✅ | Abschnitt „Installationstest“ |
 | Start aus PyPI mit genau dieser Version | ⚠️ | erst nach dem Tag möglich, siehe Abschnitt 2 |
 
@@ -78,7 +79,7 @@ Status: ✅ erfüllt, ⚠️ offen, 👤 muss der Nutzer tun. Die Tests stehen i
 Getestet am 8. November 2026 auf macOS mit eigenem `HOME`, eigener Claude-Konfiguration und leerem uv-Cache. Weil 0.13.1 erst mit dem Tag auf PyPI liegt, kam nur das Paket Schnippo aus einem lokalen Wheel (`UV_FIND_LINKS`), alle Abhängigkeiten aus PyPI.
 
 - `claude plugin marketplace add Seitzdominik/schnippo` und `claude plugin install schnippo@schnippo`: ok, vier Skills und ein Server.
-- Kaltstart bis zur ersten Antwort: 23,8 und 32,6 s in zwei Läufen, danach 0,4 s. Claude Code bricht bei 30 s ab und zeigt „Failed to connect“, beim zweiten Versuch verbindet es. Ein Limit lässt sich im Plugin nicht setzen, nur mit `MCP_TIMEOUT`. Das README beschreibt „Reconnect“.
+- Kaltstart bis zur ersten Antwort: zuletzt 19,2 s mit 43 Paketen, vorher mit dem CLI-Extra von `mcp` 23,8 und 32,6 s, danach 0,4 s. Reine Installation auf Vergleichsläufen mit leerem Cache: Median 18,4 s vorher, 15,9 s nachher. Die Leitung streut stark, einzelne Läufe brauchten bis 66 s. Claude Code bricht bei 30 s ab und zeigt „Failed to connect“, beim zweiten Versuch verbindet es. Ein Limit lässt sich im Plugin nicht setzen, nur mit `MCP_TIMEOUT`. Das README beschreibt „Reconnect“.
 - `check_setup`: läuft, 56 Tools, nennt den fehlenden Key. Das Plugin bietet sechs Einstellungen.
 - Einstellungen: leere Felder kommen leer an, `format` und `projects_folder` kommen im Server an. `sfx_folder` läuft über denselben Weg, belegt durch Tests von Manifest und Konfiguration.
 
@@ -110,6 +111,10 @@ Nicht getestet: ein echter sensibler Wert, weil Claude Code ihn in den echten Sc
 7. 👤 Listing details prüfen, Data handling und Compliance mit den Antworten aus Abschnitt 3, unter „How new versions reach the directory“ den GitHub push webhook lassen, Submit for review.
 
 ## 3. Antworten zum Kopieren
+
+**Hinweis an die Prüfer** (steht auch ganz oben im README; wenn das Formular ein Feld für Hinweise hat, hier eintragen)
+
+> First start installs dependencies and takes about 30 s. If you see "Failed to connect", click "Reconnect" once. Later starts take under a second.
 
 **Data handling: personal data**
 

@@ -36,6 +36,11 @@ Die Leitfäden liefert `get_edit_context(pass=…)`. Referenziere Material nur �
 README = """# Schnippo
 
 {tagline_en}: tell Claude which folder to cut and get a non-destructive timeline in DaVinci Resolve Studio. Your original files are never changed.
+
+> First start installs dependencies and takes about 30 s. If you see "Failed to connect", click "Reconnect" once. Later starts take under a second.
+>
+> Der erste Start installiert die Abhängigkeiten und dauert etwa 30 s. Falls „Failed to connect“ erscheint, klicke einmal auf „Reconnect“. Spätere Starts dauern unter einer Sekunde.
+
 Start with the [English summary](#english-summary), die deutsche Anleitung steht [weiter unten](#deutsch).
 
 ## English summary
@@ -79,7 +84,7 @@ Schnippo places sound effects automatically from its built-in library. Tip: buil
 
 ### Troubleshooting
 
-- **The first start times out:** the download continues on the next try. Open `/mcp` and choose Reconnect, or start Claude Code once with `MCP_TIMEOUT=300000`.
+- **The first start times out:** the download continues on the next try. Open `/mcp` and choose Reconnect. On a slow connection it can take more than one try, or start Claude Code once with `MCP_TIMEOUT=300000`.
 - **The server does not start:** check that `uv --version` works, then look at `/mcp`.
 - **Resolve is not reachable:** start DaVinci Resolve Studio, open a project and set External scripting to Local. The free version has no scripting.
 - **A cut went wrong:** say "Restore the previous version". Backups are in the bin `Schnippo/Versionen`.
