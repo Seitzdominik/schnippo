@@ -6,7 +6,7 @@ TOOLS = {
     "list_versions": ("Sicherungen auflisten", "r"), "restore_version": ("Sicherung wiederherstellen", "d"), "set_checkpoints": ("Rückfragen einstellen", "w"),
     "analyze_audio": ("Ton analysieren", "r"), "build_timeline": ("Timeline bauen", "d"), "check_setup": ("Einrichtung prüfen", "rn"), "clear_cache": ("Cache aufräumen", "d"),
     "create_project": ("Projekt anlegen", "d"), "design_preview": ("Design-Vorschau", "r"), "detect_format": ("Format erkennen", "r"), "export_final": ("Video exportieren", "d"),
-    "export_reels": ("Reels exportieren", "d"), "export_transcript": ("Untertitel exportieren", "w"), "fetch_sfx": ("Sound von Freesound laden", "dn"),
+    "export_reels": ("Reels exportieren", "d"), "export_transcript": ("Untertitel exportieren", "d"), "fetch_sfx": ("Sound von Freesound laden", "dn"),
     "find_reel_candidates": ("Reel-Stellen finden", "r"), "find_sfx": ("Sounds auf Freesound suchen", "rn"), "generate_sfx": ("Sound mit ElevenLabs erzeugen", "dn"),
     "get_edit_context": ("Schnitt-Kontext lesen", "r"), "get_frames": ("Kontaktabzug ansehen", "r"), "get_take_frames": ("Takes vergleichen", "r"), "get_transcript": ("Transkript lesen", "r"),
     "ingest_folder": ("Ordner einlesen", "w"), "list_clips": ("Clips auflisten", "r"), "list_sfx": ("Sound-Effekte auflisten", "r"), "load_script": ("Skript laden", "w"), "locate": ("Stelle finden", "r"),

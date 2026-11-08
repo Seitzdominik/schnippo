@@ -10,7 +10,8 @@
         "GLADIA_API_KEY": "${user_config.gladia_api_key}",
         "SCHNIPPO_PROJECTS_FOLDER": "${user_config.projects_folder}",
         "SCHNIPPO_FORMAT": "${user_config.format}",
-        "SCHNIPPO_SFX_MODE": "${user_config.sfx}"
+        "SCHNIPPO_SFX_MODE": "${user_config.sfx}",
+        "SCHNIPPO_UPDATE_CHECK": "${user_config.update_check}"
       }
     }
   }

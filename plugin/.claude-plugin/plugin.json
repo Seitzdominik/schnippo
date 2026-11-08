@@ -28,13 +28,15 @@
       "title": "Gladia API key",
       "description": "Used for transcription. Get one at app.gladia.io.",
       "sensitive": true,
-      "required": false
+      "required": false,
+      "default": ""
     },
     "projects_folder": {
       "type": "directory",
       "title": "Default projects folder",
       "description": "Lets you use just the project name in chat.",
-      "required": false
+      "required": false,
+      "default": ""
     },
     "format": {
       "type": "string",
@@ -48,6 +50,13 @@
       "title": "Sound effects",
       "description": "off, subtil or normal.",
       "default": "subtil",
+      "required": false
+    },
+    "update_check": {
+      "type": "boolean",
+      "title": "Check for new versions",
+      "description": "One request a day to GitHub, without your data.",
+      "default": true,
       "required": false
     }
   }

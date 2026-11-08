@@ -2,7 +2,7 @@
 
 Maßgeblich ist die Fassung auf der Website: https://schnippo.com/datenschutz/ (Deutsch) und https://schnippo.com/en/privacy/ (English). Dieses Dokument fasst sie für das Repository zusammen.
 
-Stand: 7. November 2026. Gilt für Schnippo ab Version 0.11.0.
+Stand: 8. November 2026. Gilt für Schnippo ab Version 0.11.0.
 
 Schnippo ist eine lokale Software. Herausgeber ist Seitz Dominik Visuals, https://sdv.design. Der Herausgeber betreibt keinen Server für Schnippo und erhält keine Daten von dir.
 
@@ -17,13 +17,13 @@ Alles bleibt lokal, außer es steht im nächsten Abschnitt.
 - Cache: `~/Library/Caches/schnippo`, unter Windows `%LOCALAPPDATA%\\schnippo\\Cache`
 - Einstellungen, Glossare, Marken-Angaben: `~/.config/schnippo`, unter Windows `%APPDATA%\\schnippo`
 - Exporte: Ordner `schnippo-export/` neben deinem Material
-- Keys: Einstellungen der Erweiterung in Claude Desktop, macOS-Schlüsselbund, Windows-Anmeldeinformationsverwaltung, Umgebungsvariable oder deine `config.toml`. Keys werden nie protokolliert.
+- Keys: Einstellungen der Erweiterung in Claude Desktop, Plugin-Einstellungen in Claude Code, macOS-Schlüsselbund, Windows-Anmeldeinformationsverwaltung, Umgebungsvariable oder deine `config.toml`. Keys werden nie protokolliert.
 
 ## Weitergabe an Dritte
 
 | Empfänger | Daten | Wann | Grund |
 |---|---|---|---|
-| Gladia (`api.gladia.io`) | Tonspur, 16 kHz mono, ohne Metadaten, und deine Glossar-Begriffe | beim Transkribieren, mit deinem Key | dein Auftrag, dein Gladia-Konto |
+| Gladia (`api.gladia.io`) | Tonspur, 16 kHz mono, ohne Metadaten, und deine Glossar-Begriffe | beim Transkribieren und beim Gegenhören des fertigen Schnitts, mit deinem Key | dein Auftrag, dein Gladia-Konto |
 | Dein KI-Anbieter, zum Beispiel Anthropic (Claude) | Transkripte, Schnittkontext, Dateinamen, Einzelbilder und Kontaktabzüge | während des Schnitts im Chat | dein Konto beim Anbieter |
 | Freesound (`freesound.org`) | Suchbegriffe | nur auf Wunsch, mit deinem Key | dein Auftrag |
 | ElevenLabs (`api.elevenlabs.io`) | Beschreibung eines Effekts | nur auf Wunsch, mit deinem Key | dein Auftrag |

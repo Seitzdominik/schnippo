@@ -147,10 +147,11 @@ Keine Telemetrie, kein Schnippo-Server. Schnippo läuft auf deinem Rechner.
 | Daten | Wohin | Wann |
 |---|---|---|
 | Originalmedien, Cache, Einstellungen | bleiben lokal | immer |
-| Tonspur (16 kHz, mono, ohne Metadaten) | Gladia, `api.gladia.io` | beim Transkribieren |
+| Tonspur (16 kHz, mono, ohne Metadaten) und Glossar | Gladia, `api.gladia.io` | beim Transkribieren und beim Gegenhören des fertigen Schnitts |
 | Transkripte, Schnittkontext, Einzelbilder und Kontaktabzüge | das KI-Modell deines Chats, zum Beispiel Claude | während des Schnitts |
 | Suchbegriff oder Beschreibung | Freesound, ElevenLabs | nur mit eigenem Key und auf Wunsch |
 | Keine Daten, nur die Abfrage der neuesten Version | GitHub, `api.github.com` | höchstens einmal am Tag, abschaltbar |
+| Keine Inhalte, nur Downloads von Abhängigkeiten | PyPI, GitHub, Playwright-CDN | bei der Installation, beim ersten Einlesen, bei der Grafik-Einrichtung |
 
 Nutze Schnippo nur mit Material, das du diesen Diensten geben darfst.
 

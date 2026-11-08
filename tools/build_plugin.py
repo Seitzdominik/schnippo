@@ -136,14 +136,15 @@ def main():
               "author": {"name": b.AUTHOR, "url": b.AUTHOR_URL}, "homepage": b.HOMEPAGE, "repository": b.REPOSITORY, "license": "MIT", "icon": "icon.png", "keywords": ["video-editing", "davinci-resolve", "rough-cut", "transcript", "reels", "mcp"],
               "documentationUrl": b.DOCS_URL, "supportUrl": b.SUPPORT_URL, "privacyPolicyUrl": b.PRIVACY_URL,
               "userConfig": {
-                  "gladia_api_key": {"type": "string", "title": "Gladia API key", "description": "Used for transcription. Get one at app.gladia.io.", "sensitive": True, "required": False},
-                  "projects_folder": {"type": "directory", "title": "Default projects folder", "description": "Lets you use just the project name in chat.", "required": False},
+                  "gladia_api_key": {"type": "string", "title": "Gladia API key", "description": "Used for transcription. Get one at app.gladia.io.", "sensitive": True, "required": False, "default": ""},
+                  "projects_folder": {"type": "directory", "title": "Default projects folder", "description": "Lets you use just the project name in chat.", "required": False, "default": ""},
                   "format": {"type": "string", "title": "Format", "description": "auto, reel, youtube, course or commercial.", "default": "auto", "required": False},
-                  "sfx": {"type": "string", "title": "Sound effects", "description": "off, subtil or normal.", "default": "subtil", "required": False}}}
+                  "sfx": {"type": "string", "title": "Sound effects", "description": "off, subtil or normal.", "default": "subtil", "required": False},
+                  "update_check": {"type": "boolean", "title": "Check for new versions", "description": "One request a day to GitHub, without your data.", "default": True, "required": False}}}
     (OUT / ".claude-plugin" / "plugin.json").write_text(json.dumps(plugin, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     mcp = {"mcpServers": {b.SLUG: {"command": "uvx", "args": [f"schnippo=={version}"],
                                    "env": {"PYTHONUTF8": "1", "GLADIA_API_KEY": "${user_config.gladia_api_key}", "SCHNIPPO_PROJECTS_FOLDER": "${user_config.projects_folder}", "SCHNIPPO_FORMAT": "${user_config.format}",
-                                           "SCHNIPPO_SFX_MODE": "${user_config.sfx}"}}}}
+                                           "SCHNIPPO_SFX_MODE": "${user_config.sfx}", "SCHNIPPO_UPDATE_CHECK": "${user_config.update_check}"}}}}
     (OUT / ".mcp.json").write_text(json.dumps(mcp, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     (OUT / "README.md").write_text(README.format(tagline=b.TAGLINE, tagline_en=TAGLINE_EN, version=version, repo=b.REPOSITORY, privacy=b.PRIVACY_URL, privacy_de=b.PRIVACY_URL_DE, author=b.AUTHOR, contact=CONTACT), encoding="utf-8")
     shutil.copy2(REPO / "LICENSE", OUT / "LICENSE")
