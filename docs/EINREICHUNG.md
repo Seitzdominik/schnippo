@@ -55,7 +55,7 @@ Status: ✅ erfüllt, ⚠️ offen, 👤 muss der Nutzer tun. Die Tests stehen i
 | Abschnitt „Privacy Policy“ mit beiden URLs | ✅ | `README.md`, `plugin/README.md`, Test |
 | `privacyPolicyUrl`, `privacy_policies` | ✅ | `plugin.json`, `packaging/manifest.template.json` |
 | Erhebung, Nutzung, Dritte, Aufbewahrung, Kontakt | ✅ | `plugin/README.md`, `docs/PRIVACY.md` |
-| Website stimmt mit dem Verhalten überein | ⚠️ | Abweichungen unten, Website-Chat |
+| Website stimmt mit dem Verhalten überein | ✅ | live geprüft, siehe unten |
 
 ### Entscheidungen und Punkte für das Review
 
@@ -91,21 +91,16 @@ Getestet am 8. November 2026 auf macOS mit eigenem `HOME`, eigener Claude-Konfig
 
 Nicht getestet: ein echter sensibler Wert, weil Claude Code ihn in den echten Schlüsselbund schreibt, und das echte Eingabefenster von `store_api_key`. Die Speicherlogik ist mit Unit-Tests abgedeckt. 👤 Einmal prüfen: Plugin installieren, Key eintragen, `check_setup` meldet ihn als gültig.
 
-### Abweichungen auf der Website (nicht geändert)
+### Website
 
-1. Freesound und ElevenLabs stehen noch auf beiden Datenschutzseiten (`/datenschutz/`, `/en/privacy/`): je zwei Tabellenzeilen und die beiden Links im Satz zu den Bestimmungen der Dienste. Sie müssen raus.
-2. Es fehlt der Satz, dass Schnippo nicht für Personen unter 18 gedacht ist. Das Formular fragt danach.
-3. Downloads von PyPI passieren auch beim ersten Einlesen, die Seiten nennen nur Installation und ersten Grafik-Render.
-4. Gladia bekommt auch beim Gegenhören des fertigen Schnitts Ton, die Seiten nennen nur das Transkribieren.
-5. Als Speicherort der Keys fehlen die Plugin-Einstellungen in Claude Code. „Deinstallieren der Erweiterung“ gilt auch für das Plugin.
-6. Der Abschnitt „Kontaktaufnahme“ fehlt in der englischen Fassung.
+Die Abweichungen sind behoben, am 8. November 2026 auf `/datenschutz/` und `/en/privacy/` geprüft: Freesound und ElevenLabs sind weg, der Satz zu unter 18, das erste Einlesen, das Gegenhören, die Plugin-Einstellungen und der Kontakt stehen in beiden Sprachen.
 
 ## 2. Was du noch tun musst, in dieser Reihenfolge
 
 1. ✅ Repository öffentlich schalten: erledigt.
 2. ✅ Tag `v0.13.1`: gesetzt, auf PyPI veröffentlicht, `stable` ist nachgerückt.
 3. 👤 Key im Plugin einmal prüfen, siehe oben.
-4. 👤 Website-Abweichungen an den Website-Chat geben, zuerst Punkt 1 und 2.
+4. ✅ Website-Abweichungen: behoben.
 5. 👤 Auf claude.ai GitHub verbinden, in derselben Organisation, mit Schreibrechten auf das Repository.
 6. 👤 Portal https://claude.ai/directory/manage → Submit new → **Plugin bundle**: Repository `Seitzdominik/schnippo`, Plugin path `plugin`, Branch or tag `stable`. Dann Validate.
 7. 👤 Listing details prüfen, Data handling und Compliance mit den Antworten aus Abschnitt 3, unter „How new versions reach the directory“ den GitHub push webhook lassen, Submit for review.
