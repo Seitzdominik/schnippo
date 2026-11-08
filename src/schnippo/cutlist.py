@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import math
 import re
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
@@ -152,6 +153,8 @@ class Reframe(BaseModel):
     source_timeline: str | None = None
     number: int = 1
     title: str = ""
+    layout: Literal["full", "framed"] = "full"  # full: fills 9:16 | framed: video as 1:1 or 4:5 in the middle on a calm plate, never scaled above 1.0
+    aspect: Literal["1:1", "4:5"] = "1:1"  # framed only
     two_speaker_layout: str = "follow"  # follow | stacked (stacked is not implemented, see NOTES)
     speaker_x: dict[str, float] = Field(default_factory=dict)  # two people in one picture: speaker → horizontal position 0–1
     min_s: float = 10.0

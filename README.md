@@ -54,7 +54,7 @@ Jeder Durchgang bekommt eine eigene Timeline. Schnippo überschreibt nichts und 
 
 ## Aufnahme-Tipps
 
-- **Für Reels in 4K filmen:** Dann bleibt beim Zuschnitt von 16:9 auf 9:16 genug Auflösung.
+- **Für Reels in 4K filmen:** Dann bleibt beim Zuschnitt von 16:9 auf 9:16 genug Auflösung. Aus HD wird das Vollbild weich, dann schlägt Schnippo das Layout `framed` vor: das Video als Quadrat mittig auf ruhiger Fläche, ohne Hochskalieren.
 - **Versprecher:** Kurz stoppen, deutlich „nochmal“ sagen oder einmal klatschen und den ganzen Satz neu beginnen.
 - **Bild:** Vor dem Sprechen 1 Sekunde ruhig in die Kamera schauen. Alle Takes mit derselben Framerate. B-Roll gern mit doppelter Rate, dann ist Zeitlupe möglich.
 - **Ton:** Ruhiger Raum, 2–3 Sekunden Raumton am Anfang. Im Interview ein Mikro pro Person auf eigenem Kanal.

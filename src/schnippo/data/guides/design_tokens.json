@@ -6,7 +6,7 @@
       600,
       800
     ],
-    "accent": "#FF5A36",
+    "plate": "#17181C", "accent": "#FF5A36",
     "text": "#FFFFFF",
     "text_dark": "#111111",
     "surface": "rgba(17,17,17,0.55)",
@@ -46,7 +46,7 @@
       "tracking_em": -0.015,
       "max_lines": 2,
       "hook_max_words": 8,
-      "min_cap_height_px": 48
+      "min_cap_height_px": 48, "plate_min_cap_height_px": 36
     },
     "youtube": {
       "lower_third_name_px": 52,

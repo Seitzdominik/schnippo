@@ -108,6 +108,11 @@ def layout(template: str, fmt: str, w: int, h: int, head: tuple[float, float, fl
     hx, hy, hw, hh = head if head else (w * 0.27, h * 0.25, w * 0.46, h * 0.35)
     if template == "underline_arrow":
         return {"left": x0, "right": w - x1, "top": y0, "align": "left", "side": "frei", "safe": safe, "fit_box": safe, "stage": "free"}
+    if template == "hook_text" and stage == "above" and tok.get("framed_window"):  # the band above the video of a framed reel
+        top_of_video = tok["framed_window"][1]
+        bottom = top_of_video - 12 * s if top_of_video - y0 >= 100 * s else y0 + 150 * s  # 4:5 leaves no band: then over the top of the picture
+        return {"left": x0, "right": w - x1, "bottom": h - bottom, "align": "center", "side": "über dem Bild", "safe": safe,
+                "fit_box": (x0, y0, x1, bottom), "stage": "above"}
     if stage == "above":
         bottom = min(y1, hy - clr)
         if bottom - y0 < 90 * s:
@@ -150,6 +155,9 @@ def build(template: str, params: dict, tok: dict, fmt: str, w: int, h: int, fps:
     if lay is None:
         raise LookupError(f"kein Platz {STAGE_LABEL.get(stage, stage)}")
     bg, fg, extra = _surface(tok, s)
+    on_plate = template == "hook_text" and fmt == "reel" and lay.get("side") == "über dem Bild"  # on a calm surface the text needs no box behind it
+    if on_plate:
+        bg, fg, extra = "transparent", b["text"], ""
     sp = spacing(tok)
     scale = tok["style"].get("stagger_scale", 1.0)
     enter = m["easing"]["enter_expressive" if expressive else "enter"]
@@ -168,7 +176,7 @@ def build(template: str, params: dict, tok: dict, fmt: str, w: int, h: int, fps:
     js_extra = ""
     rad = round(b["radius_px"] * s)  # token at 1080/1920 px width, scaled like everything else
     # inner padding in em of the box (the box always has a font size, so it scales with the text and the resolution)
-    pad_y, pad_x = sp["pad_y_cap"] * CAP_RATIO, sp["pad_x_cap"] * CAP_RATIO
+    pad_y, pad_x = (0, 0) if on_plate else (sp["pad_y_cap"] * CAP_RATIO, sp["pad_x_cap"] * CAP_RATIO)
 
     def box_anim(sel=".box", delay=0):
         anim.append({"sel": sel, "kf": [{"clipPath": f"inset(0 100% 0 0 round {rad}px)"},
@@ -271,7 +279,8 @@ def build(template: str, params: dict, tok: dict, fmt: str, w: int, h: int, fps:
     fx0, fy0, fx1, fy1 = lay.get("fit_box", lay.get("safe", (0, 0, w, h)))
     cap = {"hook_text": ty.get("hook_cap_height_px", 84), "callout": ty.get("callout_cap_height_px", 64),
            "counter": ty.get("callout_cap_height_px", 64), "list_steps": ty.get("callout_cap_height_px", 64) * 0.72}.get(template, 64)
-    min_scale = min(1.0, ty.get("min_cap_height_px", 48) / cap) if fmt == "reel" else 0.6
+    min_cap = ty.get("plate_min_cap_height_px", 36) if on_plate else ty.get("min_cap_height_px", 48)
+    min_scale = min(1.0, min_cap / cap) if fmt == "reel" else 0.6
     fit = {"top": fy0, "bottom": fy1, "left": fx0, "right": fx1,
            "maxLines": int(ty.get("max_lines", 2)) if template in ("hook_text", "callout") else 99,
            "min": round(min_scale, 3) if allow_scale else 1.0}

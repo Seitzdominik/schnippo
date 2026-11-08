@@ -17,6 +17,7 @@ EYES_Y = 1 / 3  # eyes in the upper third
 MIN_PIECE_S = 1.0
 HEAD = {"up": 0.35, "side": 0.08, "down": 0.05}  # the crop must hold the face with a little room; the box around hair and ears (graphics) is wider and may touch the edge
 SOFT_LIMIT = 1.25  # above this many output px per source px a picture looks soft
+FRAMED_RATIO = {"1:1": 1.0, "4:5": 1.25}  # height / width of the window of the framed layout
 
 
 def display(clip) -> tuple[int, int]:
@@ -27,6 +28,21 @@ def scale(clip, W: int, H: int) -> float:
     """Output px per source px at Scaling = Fill, zoom 1."""
     sw, sh = display(clip)
     return max(W / sw, H / sh)
+
+
+def upscales(clip, W: int, H: int) -> bool:
+    """Would the full 9:16 picture need more pixels than the source has? Then the framed layout is the better offer."""
+    return scale(clip, W, H) > 1.0
+
+
+def framed_height(clips: list, W: int, ratio: float) -> int:
+    """Height of the window: the ratio asks for it, no source may be enlarged to reach it."""
+    return min([round(W * ratio)] + [display(c)[1] for c in clips])
+
+
+def window(height: int, W: int, H: int) -> tuple[int, int, int, int]:
+    """x, y, width, height of the video in the frame."""
+    return 0, (H - height) // 2, W, height
 
 
 def pan_unit(clip, W: int, H: int) -> float:
@@ -154,14 +170,20 @@ def apply(cl, plan, clips: dict, analyzed: dict, faces: dict, opts: dict | None 
     speakers = (opts.get("speakers") or (lambda p: [None] * len(p)))(plan.pieces)
     new, notes, splits, seen, no_face = [], [], 0, {}, 0
     last_speaker = {}
+    framed = rf.layout == "framed"
+    box_h = framed_height([clips[p.clip] for p in plan.pieces], W, FRAMED_RATIO[rf.aspect]) if framed else H
     for pc, spk in zip(plan.pieces, speakers):
         clip = clips[pc.clip]
         fps = clip.resolve_fps or clip.fps
         by_id = {e.id: e for e in analyzed[pc.clip].entries} if pc.clip in analyzed else {}
-        lim = punch_limit(clip, W, H)
-        over = bool(0 < pc.item <= len(cl.items) and cl.items[pc.item - 1].zoom)
-        if pc.zoom > lim and not over:
-            pc.zoom = round(lim, 3)
+        if framed:  # output px per source px: never above 1.0, a punch-in only uses what the source has to spare
+            s = box_h / display(clip)[1]
+            pc.zoom = round(s / scale(clip, W, H) * min(pc.zoom or 1.0, 1.0 / s), 4)
+        else:
+            lim = punch_limit(clip, W, H)
+            over = bool(0 < pc.item <= len(cl.items) and cl.items[pc.item - 1].zoom)
+            if pc.zoom > lim and not over:
+                pc.zoom = round(lim, 3)
         heads = _heads(pc, faces, clip)
         target = None
         if rf.speaker_x and spk is not None:
@@ -188,9 +210,16 @@ def apply(cl, plan, clips: dict, analyzed: dict, faces: dict, opts: dict | None 
     c0 = clips[new[0].clip]
     vis = (round(W / base), round(H / base))
     plan.reframe = {"size": (W, H), "splits": splits, "pieces": len(new), "no_face": no_face, "base_scale": round(base, 2), "worst_scale": round(worst, 2),
-                    "visible_source_px": vis, "source": display(c0), "report": report(plan, clips, faces, W, H)}
+                    "visible_source_px": vis, "source": display(c0), "report": report(plan, clips, faces, W, H), "layout": rf.layout}
+    if framed:
+        s0 = box_h / display(c0)[1]
+        plan.reframe.update({"window": window(box_h, W, H), "scale": round(s0, 3), "visible_source_px": (round(W / s0), display(c0)[1]), "base_scale": round(s0, 2)})
+        if round(W * FRAMED_RATIO[rf.aspect]) > box_h:
+            plan.warnings.append(f"{rf.aspect} würde die Quelle hochskalieren: Das Bild ist {W}×{box_h} groß und bleibt bei höchstens 1,0.")
+        if any(display(clips[p.clip])[0] * box_h / display(clips[p.clip])[1] < W for p in new):
+            plan.warnings.append("Eine Quelle ist schmaler als das Fenster: An den Seiten bleibt die Hintergrundfläche sichtbar.")
     r = plan.reframe["report"]
-    if worst > SOFT_LIMIT:
+    if worst > SOFT_LIMIT and not framed:
         plan.warnings.append(f"Bildschärfe: Quelle {display(c0)[0]}×{display(c0)[1]}, im Reel sichtbar {vis[0]}×{vis[1]} Quellpixel, hochskaliert bis {worst:.2f}×: wird weich")
     if r["out"]:
         plan.warnings.append(f"Gesicht in {r['out']} von {r['checked']} geprüften Frames nicht ganz im Ausschnitt")
@@ -268,7 +297,8 @@ def qc_lines(tl: dict, plan, clips: dict, analyzed: dict, rf, faces_first=None) 
         sw = display(clip)[0]
         s = scale(clip, W, H) * it["zoom"]
         room = (sw * s - W) / 2
-        if it.get("scaling") != tl.get("scale_fill") or abs(it.get("pan", 0)) * pan_unit(clip, W, H) > room + 1 or abs(it.get("tilt", 0)) > (it["zoom"] - 1) * H / 2 + 1:
+        tilt_room = max(0.0, (it["zoom"] - 1) * H / 2)
+        if it.get("scaling") != tl.get("scale_fill") or abs(it.get("pan", 0)) * pan_unit(clip, W, H) > room + 1 or abs(it.get("tilt", 0)) > tilt_room + 1:
             edges.append(k + 1)
     out.append((not bad and len(tl["v1"]) == len(plan.pieces), f"Ausschnitt jedes Stücks wie geplant ({len(tl['v1'])} Stücke)" + (f" – abweichend: {bad[:8]}" if bad else "")))
     ov_bad = [u["rec"] for u in tl.get("upper_props", []) if u.get("overlay") and u.get("scaling") != tl.get("scale_fill")]

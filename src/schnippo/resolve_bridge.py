@@ -396,7 +396,7 @@ def build_timeline(bridge: "ResolveBridge", cl, pieces: list, clips: dict, alter
                 got_p = {key: it.GetProperty(key) for key in want_p}
                 if any(abs(float(got_p[key] or 0) - v) > 0.01 for key, v in want_p.items()):
                     errors.append(f"Stück {k + 1}: Punch-in {want_p} ≠ gelesen {got_p}")
-                n_zoom += pc.zoom != 1.0
+                n_zoom += pc.zoom > 1.0
         tl_frames = tl.GetEndFrame() - t0 if items else 0
         tl_seconds = tl_frames / tl_play if tl_play else 0.0
         if tl_frames != rec:

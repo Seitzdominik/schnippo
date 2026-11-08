@@ -1079,7 +1079,22 @@ class Workspace:
         clip0 = self.clips[plan.pieces[0].clip]
         w, h = (cl.reframe.width, cl.reframe.height) if cl.reframe else display_size(clip0)
         fps = clip0.resolve_fps or clip0.fps
+        if cl.reframe and cl.reframe.layout == "framed" and plan.reframe.get("window"):
+            tok = {**tok, "framed_window": plan.reframe["window"]}
         return info, tok, prof, w, h, fps
+
+    def framed_plate(self, cl: Cutlist, plan: Plan) -> dict | None:
+        """The calm surface around the video of a framed reel, one rendered picture with a window, on its own track above the B-roll and below the graphics."""
+        if not (cl.reframe and cl.reframe.layout == "framed" and plan.reframe.get("window")):
+            return None
+        from .mg import plate as _plate
+        from .mg import tokens as _tokens
+        clip0 = self.clips[plan.pieces[0].clip]
+        fps = clip0.resolve_fps or clip0.fps
+        tok = _tokens.load(cl.brand)
+        frames = sum(pc.frames for pc in plan.pieces)
+        return {"index": 0, "template": "framed_plate", "track": _plate.TRACK, "tl_start": 0, "frames": frames,
+                "mov": _plate.render(self.cache.root, cl.reframe.width, cl.reframe.height, tuple(plan.reframe["window"]), tok["brand"]["plate"], fps, frames)}
 
     def _graphic_html(self, g, tok, prof, w, h, fps, stage: str = "above", drop_label: bool = False,
                       allow_scale: bool = True) -> tuple[str, dict]:
@@ -1098,7 +1113,7 @@ class Workspace:
     def _place(self, r, g, tok, prof, w, h, fps) -> dict:
         """Stage search (above → beside → below → not placed) with clearance to every head box of the span."""
         from .mg.place import place
-        from .mg.templates import spacing
+        from .mg.templates import ATTEMPTS, spacing
         clearance = tok["layout"].get("head_clearance_px", 48) * w / (1080 if prof.layout == "reel" else 1920)
         sp = spacing(tok)
         min_pad = (sp["min_pad_x_cap"], sp["min_pad_y_cap"])
@@ -1108,8 +1123,9 @@ class Workspace:
             res = place(r, lambda st, dr, sc: (html, meta), g.heads, clearance, attempts=((fixed, False, True),), min_pad=min_pad)
         else:
             has_label = any(g.params.get(k) for k in ("label", "title"))
-            res = place(r, lambda st, dr, sc: self._graphic_html(g, tok, prof, w, h, fps, st, dr, sc), g.heads, clearance,
-                        has_label=has_label, min_pad=min_pad)
+            on_plate = bool(tok.get("framed_window")) and g.template == "hook_text"  # on the surface above the picture: no head can be near it
+            res = place(r, lambda st, dr, sc: self._graphic_html(g, tok, prof, w, h, fps, st, dr, sc), [] if on_plate else g.heads, clearance,
+                        attempts=(("above", False, True),) + ATTEMPTS if on_plate else ATTEMPTS, has_label=has_label, min_pad=min_pad)
         res["clearance"] = round(clearance, 1)
         if res.get("ok") and g.heads:
             res["motion_ratio"] = self._region_motion(g, res["bbox"], w, h)
@@ -1413,7 +1429,8 @@ class Workspace:
         sents = sentences(words, spk, src, energy, fps, plan.beats)
         return {"sentences": sents, "blocks": blocks(sents, min_s, max_s), "fps": fps, "total_s": plan.total_seconds(self.clips), "format": cl.format}
 
-    def reel_cutlist(self, timeline: str, from_word: str, to_word: str, number: int = 1, title: str = "", remove: list | None = None, cold_open: dict | None = None) -> tuple[dict, list[str]]:
+    def reel_cutlist(self, timeline: str, from_word: str, to_word: str, number: int = 1, title: str = "", remove: list | None = None, cold_open: dict | None = None,
+                     layout: str = "full", aspect: str = "1:1") -> tuple[dict, list[str]]:
         """Cutlist of a reel: the items of the long version between two words, smaller cuts and a cold open applied. Only ever from one passage."""
         from .reels import spans_between
         cl, plan, analyzed, fps = self._built(timeline)
@@ -1421,12 +1438,18 @@ class Workspace:
         base = cl.name or timeline
         items = [{"clip": c, "from_word": f"w{a:04d}", "to_word": f"w{b:04d}", "note": n} for c, a, b, n in spans]
         inside = lambda ref: any(c == ref.split(":")[0].lower() and a <= int(ref.split(":w")[1]) <= b for c, a, b, _ in spans)
-        out = {"format": "reel", "timeline_name": f"{base}_Reel_{number:02d}", "reframe": {"source_timeline": timeline, "number": number, "title": title}, "items": items,
+        out = {"format": "reel", "timeline_name": f"{base}_Reel_{number:02d}", "reframe": {"source_timeline": timeline, "number": number, "title": title, "layout": layout, "aspect": aspect}, "items": items,
                "punch_in": {"mode": "alternate"}, "audio": cl.audio.model_dump(exclude_none=True) if cl.audio else {"target_lufs": -14},
                "corrections": [c.model_dump() for c in cl.corrections if inside(c.word)],
                "overlays": [o.model_dump(exclude_none=True) for o in cl.overlays if ":" in o.from_word and inside(o.from_word) and (not o.to_word or inside(o.to_word))]}
         if cl.brand:
             out["brand"] = cl.brand
+        from .reframe import display, scale, upscales
+        small = [self.clips[c] for c in {c for c, *_ in spans} if upscales(self.clips[c], 1080, 1920)]
+        if layout == "full" and small:
+            c = small[0]
+            notes.append(f"Vollbild 9:16 skaliert die Quelle ({display(c)[0]}×{display(c)[1]}) auf {scale(c, 1080, 1920):.2f}× hoch. Schlage dem Nutzer layout=\"framed\" vor: "
+                         "Video als 1:1 mittig auf ruhiger Fläche, nie über 1,0, Hook-Text darüber. Vollbild bleibt die Wahl, wenn er es lieber groß hat.")
         for g in cl.graphics:
             if inside(g.from_word):
                 notes.append(f"In der langen Fassung liegt hier eine Grafik ({g.template}, {g.params}): für das Reel neu entscheiden, sie wird nicht übernommen")

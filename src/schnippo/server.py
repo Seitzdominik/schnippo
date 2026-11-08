@@ -894,10 +894,12 @@ def show_reel_candidates(timeline: str, candidates: list[dict]) -> list:
 
 
 @tool
-def reel_cutlist(timeline: str, from_word: str, to_word: str, number: int = 1, title: str = "", remove: list[str] | None = None, cold_open: dict | None = None) -> str:
+def reel_cutlist(timeline: str, from_word: str, to_word: str, number: int = 1, title: str = "", remove: list[str] | None = None, cold_open: dict | None = None,
+                 layout: str = "full", aspect: str = "1:1") -> str:
     """Cutlist of a reel from one passage of the long version, for validate_cutlist and build_timeline: format reel, 1080×1920, punch-ins, polish level, B-roll of the passage. remove: smaller
-    cuts inside the passage ("c01:w0100-w0112"); cold_open: {"from_word", "to_word"} pulls the strongest sentence of the passage to the front. Add graphics and sfx before building."""
-    cl, notes = _ws.reel_cutlist(timeline, from_word, to_word, number, title, remove, cold_open)
+    cuts inside the passage ("c01:w0100-w0112"); cold_open: {"from_word", "to_word"} pulls the strongest sentence of the passage to the front. layout: full (fills 9:16, the standard from 4K) | framed (video as aspect 1:1 or 4:5 in the
+    middle on a calm plate, never enlarged, hook_text above it); a note says when framed should be offered. Add graphics and sfx before building."""
+    cl, notes = _ws.reel_cutlist(timeline, from_word, to_word, number, title, remove, cold_open, layout, aspect)
     return "\n".join([json.dumps(cl, ensure_ascii=False)] + [f"Hinweis: {n}" for n in notes])
 
 
@@ -1142,6 +1144,10 @@ def _build_timeline(request, say, job) -> str:
     if plan.graphics:
         say(f"Grafiken rendern ({len(plan.graphics)})")
         rendered, mg_info = _ws.render_graphics(cl, plan)
+    plate = _ws.framed_plate(cl, plan)
+    if plate:
+        say("Hintergrundfläche rendern")
+        rendered = [plate] + [{**g, "track": g["track"] + 1} for g in rendered or []]
     alts = _ws.alternates(cl, plan, analyzed, segs) if cl.alternates else None
     used = {pc.clip for pc in plan.pieces} | {pc.clip for pc, _ in (alts or [])}
     master = _ws.master_clip(used)

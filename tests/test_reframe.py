@@ -151,3 +151,72 @@ def test_sentences_carry_signals_and_blocks_skip_the_question():
 
 def test_slug():
     assert reels.slug("Mut zur Lücke: Über Größe!") == "mut-zur-luecke-ueber-groesse"
+
+
+# ---------- framed layout ----------
+def _framed(clip, box=(120, 30, 30, 30), aspect="1:1", zoom=1.0):
+    cl, plan, _, an, faces = _plan([box] * 250, zoom=zoom)
+    cl.reframe = Reframe(layout="framed", aspect=aspect)
+    clips = {"c01": clip}
+    rf.apply(cl, plan, clips, an, faces)
+    return cl, plan, clips
+
+
+def test_upscaling_decides_the_offer():
+    assert rf.upscales(HD, W, H) and not rf.upscales(UHD, W, H)
+
+
+def test_framed_hd_is_square_at_exactly_one():
+    _, plan, _ = _framed(HD)
+    pc = plan.pieces[0]
+    assert plan.reframe["window"] == (0, 420, 1080, 1080) and plan.reframe["scale"] == 1.0
+    assert abs(rf.scale(HD, W, H) * pc.zoom - 1.0) < 0.001 and pc.tilt == 0 and pc.fill
+
+
+def test_framed_never_scales_above_one_even_with_a_punch_in():
+    _, plan, _ = _framed(HD, zoom=1.25)
+    assert rf.scale(HD, W, H) * plan.pieces[0].zoom <= 1.0005
+    _, plan, _ = _framed(UHD, zoom=1.25)
+    assert abs(rf.scale(UHD, W, H) * plan.pieces[0].zoom - 0.625) < 0.001  # 4K has pixels to spare, the punch-in is real
+
+
+def test_four_to_five_needs_4k():
+    _, plan, _ = _framed(UHD, aspect="4:5")
+    assert plan.reframe["window"] == (0, 285, 1080, 1350) and not any("hochskalieren" in w for w in plan.warnings)
+    _, plan, _ = _framed(HD, aspect="4:5")
+    assert plan.reframe["window"] == (0, 420, 1080, 1080) and any("hochskalieren" in w for w in plan.warnings)
+
+
+def test_framed_head_stays_in_the_window_and_the_picture_covers_its_width():
+    _, plan, clips = _framed(HD)
+    pc = plan.pieces[0]
+    room = (1920 * rf.scale(HD, W, H) * pc.zoom - W) / 2
+    assert abs(pc.pan) * rf.pan_unit(HD, W, H) <= room + 0.1 and plan.reframe["report"]["out"] == 0
+
+
+def test_plate_has_an_opaque_surface_and_a_clear_window(tmp_path):
+    from PIL import Image
+
+    from schnippo.mg import plate
+    f = plate.picture(tmp_path / "p.png", W, H, (0, 420, 1080, 1080), "#17181C")
+    im = Image.open(f).convert("RGBA")
+    assert im.getpixel((10, 10)) == (23, 24, 28, 255) and im.getpixel((10, 1600)) == (23, 24, 28, 255)
+    assert im.getpixel((540, 960))[3] == 0 and im.getpixel((0, 420))[3] == 0 and im.getpixel((0, 419))[3] == 255
+
+
+def test_hook_sits_above_the_window_inside_the_safe_zone():
+    import json
+    from pathlib import Path
+
+    from schnippo.mg import templates
+    import schnippo
+    tok = json.loads((Path(schnippo.__file__).parent / "data/guides/design_tokens.json").read_text(encoding="utf-8"))
+    lay = templates.layout("hook_text", "reel", W, H, (300, 500, 400, 400), {**tok, "framed_window": (0, 420, 1080, 1080)}, "above")
+    assert lay["fit_box"][3] == 408
+    assert lay["fit_box"][1] == 290
+
+
+def test_reframe_rejects_unknown_layouts():
+    import pytest
+    with pytest.raises(ValueError):
+        Reframe(layout="stacked")

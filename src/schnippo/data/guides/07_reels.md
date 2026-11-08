@@ -19,6 +19,7 @@ Dem Nutzer zeigst du mit `show_reel_candidates` eine nummerierte Liste mit Titel
 ## Bauen
 `reel_cutlist` → ergänzen → `validate_cutlist` → `build_timeline` → `reel_sheet` → `run_qc(audio=true)` → `sense_check` → `export_reels`.
 
+- **Layout:** `full` füllt 9:16 und ist bei 4K der Standard. Würde das volle Hochformat hochskalieren (HD-Quelle, Hinweis von `reel_cutlist`), schlägst du `layout="framed"` vor: Video als 1:1 mittig auf ruhiger Fläche aus den Design-Tokens, Skalierung nie über 1,0, Hook-Text (`hook_text`) oben in der Safe Zone. `aspect="4:5"` nur aus 4K, der Hook liegt dann auf dem oberen Bildrand. Der Nutzer entscheidet.
 - **Ausschnitt:** rechnet der Server aus der Kopfbox. Bei wandernder Person teilt er an einer Wortlücke. Mehrere Personen in einem Bild: `reframe.speaker_x` setzen, zum Beispiel `{"0": 0.3, "1": 0.7}`, der Wechsel kommt am Satzanfang.
 - **B-Roll:** Die Überlagerungen aus der langen Fassung werden übernommen. Prüfe den Ausschnitt in `reel_sheet`, korrigiere mit `focus_x` (0–1). Im Hook und im letzten Satz Gesicht statt B-Roll.
 - **Grafiken:** nie aus der langen Fassung übernehmen, neu setzen. Eine Bauchbinde wird zum kurzen Namens-Callout oder entfällt; im Reel kennt niemand den Sprecher, wichtig ist er nur, wenn der Name zur Aussage gehört. `hook_text` nur, wenn das Reel ihn braucht: eine Zeile, ab Frame 1.

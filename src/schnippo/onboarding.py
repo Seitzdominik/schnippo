@@ -78,7 +78,8 @@ def tips() -> str:
             "1. Vor und nach jedem Take 1 Sekunde ruhig in die Kamera schauen\n"
             "2. Bei einem Versprecher den ganzen Satz neu sprechen\n"
             "3. Das Wort „nochmal“ sagen, dann findet das Tool den Neuanfang\n"
-            "4. Ansteckmikro nutzen · 5. Ruhiger Raum, Fenster zu\n\n"
+            "4. Ansteckmikro nutzen · 5. Ruhiger Raum, Fenster zu\n"
+            "6. Für Reels in 4K filmen: Dann bleibt beim Zuschnitt auf Hochformat genug Schärfe\n\n"
             "[Für Claude: weiter mit step=\"test\".]")
 
 
