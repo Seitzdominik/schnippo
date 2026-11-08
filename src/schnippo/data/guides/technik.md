@@ -10,9 +10,10 @@ und den Abschnitt des aktuellen Durchgangs an.
 - Material nur über IDs referenzieren: Wörter `c01:w0120`, Segmente `c01:s012`, Gruppen `c01:G03`, Frames `c01:f0114`,
   Standbilder `i03`. Nie Timecodes ausrechnen.
 - Flags (Füllwort, Pause, Wiederholung, Neuanfang) und Retake-Gruppen sind Hinweise des Servers, keine Entscheidungen.
-- Jede Cutlist hat `name` (Projektname, z. B. `"Schlaf_Reel"`) und `pass`. Die Timeline heißt dann automatisch
-  `<name>_V1_Rough`, `_V2_Fine`, `_V3_BRoll`, `_V4_Polish`; bestehende Timelines werden nie überschrieben.
-- Ab dem Fine Cut `"base_cutlist": "<Timeline des vorigen Durchgangs>"` angeben. Der Server übernimmt alles daraus und
+- Jede Cutlist hat `name` (Projektname, z. B. `"Schlaf_Reel"`). Die Timeline heißt `<name>_Schnippo`. Baut Schnippo sie erneut, liegt der alte Stand als Sicherung in `Schnippo/Versionen` und die Handänderungen werden wieder eingesetzt. Eine zusätzliche Timeline nur mit `"new_timeline": true`, wenn der Nutzer das ausdrücklich verlangt.
+- Timelines, die Schnippo nicht gebaut hat, werden nie ersetzt.
+- `pass` nur im Durchgangs-Modus (Rückfragen „nach jedem Schritt“).
+- Ab dem Fine Cut `"base_cutlist": "<name>_Schnippo"` angeben. Der Server übernimmt alles daraus und
   wendet nur die Felder an, die der aktuelle Durchgang ändern darf; andere Felder werden mit Warnung ignoriert.
 - Immer erst `validate_cutlist`, dann `build_timeline`.
 - Bilder (Kontaktabzüge, ≈ 500–1 200 Token) nur bei Bedarf anfordern, nicht zur Kontrolle jedes Segments.
@@ -43,7 +44,7 @@ und den Abschnitt des aktuellen Durchgangs an.
   Wann gewechselt wird, hängt vom Stil ab (`ruhig`: nur an Satzanfängen; `dicht`: an jedem Jump-Cut).
 - Änderungen an `items` sind erlaubt, werden aber als Take-/Inhaltsänderung gegenüber dem Rough Cut gemeldet.
 ```json
-{"name": "Schlaf_Reel", "pass": "fine", "base_cutlist": "Schlaf_Reel_V1_Rough",
+{"name": "Schlaf_Reel", "pass": "fine", "base_cutlist": "Schlaf_Reel_Schnippo",
  "punch_in": {"mode": "alternate"}, "item_changes": [{"index": 12, "zoom": 1.3, "pause_after_ms": 500}]}
 ```
 `item_changes` ändert einzelne Items der Basis (1-basiert) ohne die ganze Liste zu wiederholen
@@ -64,7 +65,7 @@ und den Abschnitt des aktuellen Durchgangs an.
 - Nach `build_timeline`: `run_qc(timeline)` und `export_transcript(timeline=…)` (SRT, TXT, bei YouTube Kapitel).
 - Schnittänderungen nur, wenn die QC einen Fehler findet (`item_changes` mit `note: "QC: …"`).
 ```json
-{"name": "Schlaf_Reel", "pass": "polish", "base_cutlist": "Schlaf_Reel_V3_BRoll", "audio": {"target_lufs": -14}}
+{"name": "Schlaf_Reel", "pass": "polish", "base_cutlist": "Schlaf_Reel_Schnippo", "audio": {"target_lufs": -14}}
 ```
 
 ## motion
@@ -78,7 +79,7 @@ und den Abschnitt des aktuellen Durchgangs an.
 - **Erst `preview_graphic(cutlist)` ansehen** (6 Standbilder über dem echten Frame + Prüfungen), dann `build_timeline`.
 - Marke: `"brand": "<Profil>"`; ohne Angabe das aktive Profil (Design einrichten: `setup_design`).
 ```json
-{"name": "Schlaf_Reel", "pass": "motion", "base_cutlist": "Schlaf_Reel_V4_Polish",
+{"name": "Schlaf_Reel", "pass": "motion", "base_cutlist": "Schlaf_Reel_Schnippo",
  "graphics": [{"template": "counter", "params": {"from": 0, "to": 90, "suffix": "Tage"}, "from_word": "c01:w0078",
                "to_word": "c01:w0083", "note": "Kernzahl"}]}
 ```

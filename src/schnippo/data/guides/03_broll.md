@@ -8,7 +8,7 @@ Kennzeichnung: **[E]** belegt · **[P]** Profi-Praxis · **[V]** Anbieter-Meinun
 1. `get_frames(stills)` für Standbilder, `get_frames("broll")` für die Szenen der B-Roll-Clips (Frame-IDs `c05:f0123`).
 2. Pro Bild/Clip die passende Textstelle suchen (Regeln unten).
 3. Overlays in die Cutlist, `validate_cutlist` prüfen.
-4. Bauen als `<Name>_V3_BRoll`.
+4. Im Komplett-Schnitt weiter, nichts bauen. Auf einer fertigen Timeline: `add_overlays`.
 
 ## Video-B-Roll
 - Clips ohne Sprache erkennt der Server als B-Roll (Liste in `get_edit_context`). Falsch erkannt? `set_clip_role`.

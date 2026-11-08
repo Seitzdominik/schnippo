@@ -10,7 +10,7 @@ Kennzeichnung: **[E]** belegt · **[P]** Profi-Praxis · **[S]** Default/Synthes
 3. Pro Gruppe genau einen Versuch wählen (Regeln unten).
 4. Hook und Ende festlegen.
 5. `validate_cutlist` → den gesprochenen Endtext laut „mitlesen": Ist jeder Satz nötig? Ist der rote Faden klar?
-6. Bauen als `<Name>_V1_Rough`.
+6. Im Komplett-Schnitt weiter mit dem Fine Cut, nichts bauen. Im Durchgangs-Modus: `build_timeline` baut `<Name>_Schnippo`.
 
 ## Eigennamen zuerst klären
 Namen von Personen, Firmen, Marken, Orten und Adressen nie raten. Liegt ein `glossar.txt` im Material-Ordner, gilt es; sonst kurz fragen, wenn `transcribe` „Eigennamen unsicher“ meldet (nur echte Namen, Fachwörter und Beugungen in der Liste übergehen), und `set_glossary` aufrufen. `suggest_corrections` zeigt dann die Stellen. Bauchbinden werden erst mit bestätigtem Namen gerendert.

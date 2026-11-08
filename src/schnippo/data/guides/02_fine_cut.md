@@ -10,7 +10,7 @@ Kennzeichnung: **[E]** belegt · **[P]** Profi-Praxis · **[S]** Default/Synthes
 3. `validate_cutlist` → auffällige Schnitte (Bewegungswert) → `preview_cuts` ansehen.
 4. Problematische Schnitte per `start_frame`/`end_frame` oder Take-Wechsel korrigieren.
 5. Punch-ins setzen.
-6. Bauen als `<Name>_V2_Fine`.
+6. Im Komplett-Schnitt weiter, nichts bauen. Im Durchgangs-Modus: `build_timeline` auf `<Name>_Schnippo`.
 
 ## Schnittpunkte
 - **Nie in einem Wort schneiden** [P]. Vorlauf vor dem Wort 2–4 Frames, Nachlauf 3–6 Frames [S] (Server-Default: 80/120 ms).

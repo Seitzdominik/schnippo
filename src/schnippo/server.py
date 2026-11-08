@@ -571,8 +571,9 @@ def _format_line() -> str:
     line = f"Format: {fmt} ({src}) · Inhalt: {ct} ({ct_src})"
     if ct == "interview":
         line += " · Interview-Regeln gelten auch im Reel: Fragen je nach Fassung raus oder kurz behalten, Vorgespräch raus, beim Sprecherwechsel an der Satzgrenze schneiden"
+    line += f" · Rückfragen: {_cfg.checkpoints}"
     if not _cfg.graphics:
-        line += " · Grafiken sind aus: Durchgang 5 nur auf Wunsch"
+        line += " · Grafiken sind aus: nur auf Wunsch"
     if src.startswith("erkannt"):
         d = _ws.detect_format()
         line += f" – {d.text()}"
@@ -1418,6 +1419,94 @@ def add_sfx(timeline: str, sfx: list[dict]) -> str:
     return _add(timeline, "vor Sound-Effekten", "sfx", [SfxCue(**c) for c in sfx])
 
 
+SKIPS = {"graphics": "Grafiken", "sfx": "Sound-Effekte", "overlays": "B-Roll", "zooms": "Zooms", "audio": "Ton-Mastering", "rough": "alles außer dem Rohschnitt"}
+
+
+def eta_seconds(seconds_cut: float, graphics: int, audio: bool) -> float:
+    """Rough wall time of the Resolve part: per graphic a render, per check render (four on average) about a twelfth of the length; measured in Phase 13."""
+    return 8.0 + graphics * 6.0 + (4 * (seconds_cut / 12.0 + 2.0) if audio else 0.0)
+
+
+def _report(name: str, cl, plan, rc: dict, qc_text: str, seconds: float, borderline: list[dict], questions: list[str], skip: set[str], backup: str | None) -> str:
+    t = rc["timeline"]
+    total = t["seconds"]
+    raw = sum(c.duration_s for cid, c in _ws.clips.items() if cid in {p.clip for p in plan.pieces if not p.manual})
+    m, s = divmod(int(round(seconds)), 60)
+    out = [f"Komplett-Schnitt fertig: Timeline „{name}“ in {m}:{s:02d} min gebaut und geprüft.",
+           f"Laufzeit: {ts(total)} (aus {ts(raw)} Material, {100 - total / raw * 100:.0f} % entfernt)" if raw else f"Laufzeit: {ts(total)}"]
+    if cl.rejected:
+        out.append(f"Entfernt: {len(cl.rejected)} Abschnitte, z. B. " + "; ".join(f"{r.segment} ({r.reason})" if r.reason else r.segment for r in cl.rejected[:6]))
+    if borderline:
+        out.append("Grenzfälle, die ich entschieden habe:")
+        out += [f"  {b.get('at', '–')}: {b.get('what', b)}" for b in borderline]
+    out.append(f"Im Bild: {len(plan.overlays)} B-Roll, {len(t.get('graphics', []))} Grafiken, {t.get('punch_ins', 0)} Zooms · im Ton: {len(t.get('sfx', []))} Effekte")
+    if t.get("audio"):
+        a = t["audio"]["after"]
+        out.append(f"Lautheit: {a.get('lufs')} LUFS, True Peak {a.get('true_peak')} dBTP ({'Ziel erreicht' if t['audio']['lufs_ok'] and t['audio']['tp_ok'] else 'NICHT im Ziel'})")
+    if skip:
+        out.append("Weggelassen: " + ", ".join(SKIPS[x] for x in sorted(skip)))
+    if t["errors"]:
+        out += [f"FEHLER beim Bau: {e}" for e in t["errors"]]
+    head = qc_text.splitlines()[0] if qc_text else ""
+    bad = [ln for ln in qc_text.splitlines()[1:] if ln.startswith(("❌", "⚠"))]
+    out += [f"Prüfung: {head}"] + [f"  {ln}" for ln in bad[:8]]
+    if questions:
+        out.append("Offene Fragen:")
+        out += [f"  {q}" for q in questions]
+    out.append("Korrekturen laufen direkt auf dieser Timeline, von Hand Geändertes bleibt erhalten." + (f" Stand davor: {backup}." if backup else ""))
+    return "\n".join(out)
+
+
+@tool
+def complete_cut(cutlist: dict | str, skip: list[str] | None = None, borderline: list[dict] | None = None, open_questions: list[str] | None = None, ctx: Context | None = None) -> str:
+    """The complete cut (guides/00_komplett.md): one cutlist with everything (items, rejected, beats, punch_in, overlays, graphics, sfx, audio; no "pass") becomes exactly one timeline <Name>_Schnippo, with backup, sound mastering and QC,
+    and a short report for the user: running time, what was removed, borderline cases with time stamps (borderline=[{"at": "1:12", "what": "…"}]), graphics/overlays/effects, loudness, open questions. skip: graphics | sfx | overlays | zooms | audio | rough ("nur Rohschnitt").
+    Check first with validate_cutlist and sense_check(cutlist=…): nothing lands in Resolve before this call."""
+    import time as _time
+    started = _time.monotonic()
+    say = _progress(ctx, "Komplett-Schnitt")
+    data = json.loads(cutlist) if isinstance(cutlist, str) else dict(cutlist)
+    data.pop("pass", None)
+    data.pop("base_cutlist", None)
+    skip_set = {str(x).strip().lower() for x in skip or []}
+    unknown = skip_set - set(SKIPS)
+    if unknown:
+        raise ValueError(f"skip kennt {', '.join(sorted(unknown))} nicht; möglich: {', '.join(SKIPS)}")
+    if "rough" in skip_set:
+        data["pass"] = "rough"
+    else:
+        for key, field in (("graphics", "graphics"), ("overlays", "overlays")):
+            if key in skip_set:
+                data[field] = []
+        if "sfx" in skip_set:
+            data["sfx"], data["sfx_mode"] = [], "off"
+        if "zooms" in skip_set:
+            data.pop("punch_in", None)
+            data["items"] = [{k: v for k, v in i.items() if k not in ("zoom", "pan", "tilt")} for i in data.get("items", [])]
+        if "audio" in skip_set:
+            data.pop("audio", None)
+        else:
+            data.setdefault("audio", {})
+    req = _cutlist(data)
+    eff, _ = _ws.prepare(req)
+    plan = _ws.plan(eff)[0]
+    if not plan.ok:
+        raise ValueError("Cutlist ungültig, nichts gebaut:\n" + "\n".join(plan.errors))
+    secs = plan.total_seconds(_ws.clips)
+    eta = eta_seconds(secs, len(plan.graphics), eff.audio is not None)
+    say(f"Schnitt steht: {ts(secs)}, {len(plan.pieces)} Stücke. Resolve-Teil dauert etwa {max(1, round(eta / 60))} min")
+    built = build_timeline(data, ctx)
+    name, rc, cl_, plan_ = _last_build["cl"].timeline_name, _last_build["receipt"], _last_build["cl"], _last_build["plan"]
+    name = rc["timeline"]["name"]
+    say("Bau fertig, Qualitätsprüfung läuft")
+    try:
+        qc_text = run_qc(name, audio=False)
+    except Exception as e:  # the timeline stands, the report says what could not be checked
+        qc_text = f"Prüfung nicht gelaufen: {type(e).__name__}: {e}"
+    backup_line = next((ln.split(": ", 1)[1] for ln in built.splitlines() if ln.startswith("Sicherung: ")), None)
+    return _report(name, cl_, plan_, rc, qc_text, _time.monotonic() - started, borderline or [], open_questions or [], skip_set, backup_line)
+
+
 @tool
 def list_versions(timeline: str) -> str:
     """The backups of a working timeline in the bin Schnippo/Versionen, newest first."""
@@ -1764,15 +1853,13 @@ def hilfe_prompt() -> str:
 
 
 @mcp.prompt(name="rohschnitt", title="Rohschnitt starten",
-            description="Video in vier Durchgängen schneiden (Rough → Fine → B-Roll → Polish → Export, optional Motion Graphics)")
+            description="Video in einem Rutsch schneiden: eine Timeline, ein kurzer Bericht, danach Korrekturen direkt darauf")
 def rohschnitt_prompt(folder: str = "", name: str = "") -> str:
     from .guides import guide as _guide
     from .profiles import profile_text
     head = f"Schneide das Material aus dem Ordner {folder or '(bitte nachfragen)'}"
     head += f" unter dem Namen „{name}“." if name else ". Frage nach einem kurzen Projektnamen für die Timelines."
-    return "\n\n".join([head, f"Profil: {profile_text(_ws.profile())}", WORKFLOW,
-                         "Leitfaden für den ersten Durchgang (die weiteren liefert get_edit_context(pass=…)):",
-                         _guide(_cfg.guides_dir, "rough")])
+    return "\n\n".join([head, f"Profil: {profile_text(_ws.profile())}", f"Rückfragen: {_cfg.checkpoints}", WORKFLOW, _guide(_cfg.guides_dir, "komplett")])
 
 
 @mcp.resource("schnippo://guides/{name}", name="guide", description="Schnitt-Leitfaden: rough | fine | broll | polish | technik",
