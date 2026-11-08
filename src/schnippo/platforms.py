@@ -167,6 +167,15 @@ def fs(path: str | Path) -> Path:
     return Path(extended(path)) if is_windows() and len(str(path)) >= LONG_PATH else Path(path)
 
 
+def read_text(path: Path) -> str:
+    """A text the user wrote: UTF-8 with or without the mark Notepad puts first, otherwise the old Windows encoding."""
+    data = Path(path).read_bytes()
+    try:
+        return data.decode("utf-8-sig")
+    except UnicodeDecodeError:
+        return data.decode("cp1252", errors="replace")
+
+
 def safe_filename(name: str) -> str:
     """A file name both systems accept."""
     out = re.sub(r'[<>:"/\\|?*\x00-\x1f]', "-", name).rstrip(" .") or "export"

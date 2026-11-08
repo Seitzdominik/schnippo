@@ -35,6 +35,8 @@ Installiert aus PyPI, nicht in diesem Repository enthalten.
 | pillow | 13.0.0 | MIT-CMU | https://github.com/python-pillow/Pillow |
 | python-docx | 1.2.0 | MIT | https://github.com/python-openxml/python-docx |
 | rapidfuzz | 3.14.6 | MIT | https://github.com/rapidfuzz/RapidFuzz |
+| psutil | 7.2.2 | BSD-3-Clause | https://github.com/giampaolo/psutil |
+| keyring | 25.7.0 | MIT | https://github.com/jaraco/keyring |
 | portable-ffmpeg-full | 0.5.0 | Wrapper MIT, Binärdateien GPL-3.0-or-later | siehe oben |
 
 Die vollständige Liste mit transitiven Abhängigkeiten steht in `uv.lock`.

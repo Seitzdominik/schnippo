@@ -1,6 +1,6 @@
 # Schnippo
 
-**KI-Rohschnitt für DaVinci Resolve.** Beta.
+**KI-Rohschnitt für DaVinci Resolve.** Beta für Mac, Windows als frische Beta: Rückmeldungen willkommen.
 
 <!-- Bild oder GIF mit freigegebenem Material folgt: docs/bilder/schnippo.gif -->
 
@@ -10,8 +10,8 @@ Schnippo baut per Chat aus deinen Takes einen Rohschnitt in DaVinci Resolve Stud
 
 ## Voraussetzungen
 
-- Mac mit Apple Silicon (Windows folgt)
-- DaVinci Resolve Studio 21.1 oder neuer, unter Preferences → System → General „External scripting using“ auf **Local** (die kostenlose Version kann kein externes Scripting)
+- Mac mit Apple Silicon oder Windows 10/11, 64 bit (Windows: Beta, Rückmeldungen willkommen)
+- DaVinci Resolve Studio 21.1 oder neuer, unter DaVinci Resolve → Preferences → System → General „External scripting using“ auf **Local** (die kostenlose Version kann kein externes Scripting)
 - Claude Desktop
 - Eigener [Gladia-Key](https://www.gladia.io) für die Transkription
 
@@ -22,7 +22,9 @@ Schnippo baut per Chat aus deinen Takes einen Rohschnitt in DaVinci Resolve Stud
 1. **Download:** Lade die neueste `schnippo-<version>.mcpb` von der [Releases-Seite](https://github.com/Seitzdominik/schnippo/releases).
 2. **Doppelklick:** Die Datei öffnet sich in Claude Desktop. Bestätige die Installation.
 3. **Key:** Trage deinen Gladia-Key in den Einstellungen der Erweiterung ein.
-4. **Claude vollständig neu starten:** Beende Claude über die Menüleiste (Claude → Beenden). Das Fenster zu schließen reicht nicht.
+4. **Claude vollständig neu starten:** Das Fenster zu schließen reicht nicht. Mac: Menüleiste → Claude → Beenden. Windows: unten rechts im Infobereich (System Tray) Rechtsklick auf Claude → Beenden.
+
+Pfad eines Ordners kopieren: am Mac Rechtsklick, Wahltaste halten, „als Pfadname kopieren“. Unter Windows im Explorer Umschalt halten, Rechtsklick, „Als Pfad kopieren“. Die Anführungszeichen dürfen mit in den Chat.
 
 Neue Versionen installierst du genauso. Schnippo weist dich darauf hin und aktualisiert sich nie selbst.
 
@@ -64,7 +66,7 @@ Mehr dazu in der [Referenz](docs/REFERENZ.md#so-nimmst-du-für-schnippo-auf), ei
 
 ## Bekannte Grenzen
 
-- **Nur Mac.** Windows folgt.
+- **Windows ist Beta:** Automatische Tests laufen auf Windows, mit echtem Resolve ist es noch nicht bestätigt. Rückmeldungen bitte als [Issue](https://github.com/Seitzdominik/schnippo/issues/new/choose). Material gehört lokal auf die Platte, Dateien, die nur in OneDrive liegen, überspringt Schnippo mit Hinweis.
 - **Karten in Claude Desktop:** Claude Desktop zeigt die interaktiven Karten lokaler Erweiterungen derzeit nicht an. Schnippo fragt deshalb als Text im Chat.
 - **Gemischte Framerates in der A-Roll:** Die Timeline übernimmt die Rate des Hauptmaterials, Takes mit anderer Rate sind nicht erprobt. B-Roll darf abweichen.
 - **Lange Videos und kleine Claude-Abos:** Ein Interview mit gut 10 Minuten Sprache braucht etwa 9.200 Token für den ganzen Text, die Übersicht etwa 620. Hochgerechnet sind das bei einer Stunde Sprache rund 50.000 Token je Durchgang, dazu kommen Kontaktabzüge. Schnippo liest lange Takes deshalb seitenweise. Bei kleinen Abos kann die Nutzungsgrenze trotzdem mitten im Schnitt erreicht werden. Die Token sind gemessen, wie schnell ein bestimmtes Abo an seine Grenze kommt, ist nicht gemessen.
@@ -106,7 +108,7 @@ env = { GLADIA_API_KEY = "dein-key" }
 }
 ```
 
-Den Key kannst du stattdessen im macOS-Schlüsselbund ablegen: Sag im Chat „Speichere meinen Gladia-Key“, dann öffnet sich ein Eingabefenster und der Key läuft nicht durch den Chat. Plugin für Claude: [plugin/](plugin/).
+Den Key kannst du stattdessen sicher im System ablegen (macOS-Schlüsselbund, Windows-Anmeldeinformationsverwaltung): Sag im Chat „Speichere meinen Gladia-Key“, dann öffnet sich ein Eingabefenster und der Key läuft nicht durch den Chat. Plugin für Claude: [plugin/](plugin/).
 
 ## FAQ
 
@@ -139,7 +141,7 @@ Nutze Schnippo nur mit Material, das du diesen Diensten geben darfst.
 Vollständige Fassung: [docs/PRIVACY.md](docs/PRIVACY.md), online unter https://schnippo.com/privacy.
 
 - **Datenerhebung:** Schnippo erhebt keine Daten und betreibt keinen eigenen Server.
-- **Nutzung und Speicherung:** Transkripte, Analysen und Einstellungen liegen lokal in `~/Library/Caches/schnippo` und `~/.config/schnippo`.
+- **Nutzung und Speicherung:** Transkripte, Analysen und Einstellungen liegen lokal, am Mac in `~/Library/Caches/schnippo` und `~/.config/schnippo`, unter Windows in `%LOCALAPPDATA%\\schnippo\\Cache` und `%APPDATA%\\schnippo`.
 - **Weitergabe an Dritte:** nur an die Dienste aus der Tabelle, mit deinem eigenen Konto.
 - **Aufbewahrung:** Lokale Daten löschst du jederzeit mit `clear_cache` oder im Finder. Bei Gladia und deinem KI-Anbieter gelten deren Bedingungen.
 - **Kontakt:** Seitz Dominik Visuals, https://sdv.design
@@ -168,9 +170,9 @@ Der Hook startet `tools/check_public.py`. Technische Erkenntnisse stehen in [doc
 
 **Schnippo** is an AI rough-cut assistant for DaVinci Resolve Studio. Tell Claude which folder to cut and get a non-destructive timeline built from your original clips, with optional B-roll, punch-ins, graphics, sound effects and reels. The interface and guides are in German; English footage works too.
 
-**Requirements:** Apple Silicon Mac, DaVinci Resolve Studio 21.1+ with external scripting set to Local, Claude Desktop, your own Gladia key (roughly USD 0.61 per hour of audio).
+**Requirements:** Apple Silicon Mac or 64-bit Windows 10/11 (Windows is a fresh beta), DaVinci Resolve Studio 21.1+ with external scripting set to Local, Claude Desktop, your own Gladia key (roughly USD 0.61 per hour of audio).
 
-**Install:** download the `.mcpb` from [Releases](https://github.com/Seitzdominik/schnippo/releases), double-click it, enter your key, then fully quit and reopen Claude from the menu bar. Say „Richte mich ein“ in a new chat. Other MCP clients can run `uvx schnippo` with `GLADIA_API_KEY` set.
+**Install:** download the `.mcpb` from [Releases](https://github.com/Seitzdominik/schnippo/releases), double-click it, enter your key, then fully quit and reopen Claude from the menu bar (Windows: system tray). Say „Richte mich ein“ in a new chat. Other MCP clients can run `uvx schnippo` with `GLADIA_API_KEY` set.
 
 **Privacy:** no telemetry and no Schnippo server. Audio goes to Gladia, transcripts and frames go to your AI model, and the update check asks GitHub once a day (optional). See [docs/PRIVACY.md](docs/PRIVACY.md).
 

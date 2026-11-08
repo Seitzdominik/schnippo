@@ -1,8 +1,16 @@
 import json
 
+import pytest
+
 from schnippo import migrate
 from schnippo.branding import brand_file
 from schnippo.guard import EXPORT_DIRNAME, LEGACY_EXPORT_DIRNAME, media_files
+
+
+@pytest.fixture(autouse=True)
+def mac(monkeypatch):
+    """The old name only ever ran on the Mac."""
+    monkeypatch.setattr(migrate.platforms, "is_windows", lambda: False)
 
 
 def _old(home):

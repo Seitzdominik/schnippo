@@ -31,7 +31,7 @@ Schnippo geht als **Plugin** ins Verzeichnis, nicht als `.mcpb`. Der Ordner [`pl
 | `github.com` | Python-Laufzeit über uv, Download-Links | Installation | keine |
 | Playwright-CDN | Chromium für Grafiken | `motion_setup` | keine |
 
-Das Rendern von Grafiken läuft ohne Netzwerkzugriff. Lokal spricht Schnippo mit DaVinci Resolve über dessen Scripting-Schnittstelle. Es startet als Unterprozesse `ffmpeg`, `ffprobe`, `security` (Schlüsselbund) und `osascript` (Eingabefenster für Keys). Telemetrie gibt es nicht.
+Das Rendern von Grafiken läuft ohne Netzwerkzugriff. Lokal spricht Schnippo mit DaVinci Resolve über dessen Scripting-Schnittstelle. Es startet als Unterprozesse `ffmpeg`, `ffprobe`, sowie für das Eingabefenster von Keys `osascript` (Mac) bzw. `powershell` (Windows). Keys speichert `keyring` im System. Telemetrie gibt es nicht.
 
 ## Key und Einstellungen im Plugin
 

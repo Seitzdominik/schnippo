@@ -1,3 +1,4 @@
+from schnippo import platforms
 import datetime
 
 import pytest
@@ -54,7 +55,7 @@ def test_messages_stay_short(text):
 
 
 def test_cheat_sheet_uses_the_name_with_a_projects_folder():
-    assert "der Name reicht" in onb.cheat_sheet("/x") and "den Ordner" in onb.cheat_sheet() and "⌥" in onb.cheat_sheet()
+    assert "der Name reicht" in onb.cheat_sheet("/x") and "den Ordner" in onb.cheat_sheet() and platforms.how_to_copy_path() in onb.cheat_sheet()
 
 
 @pytest.mark.parametrize("name,role", [("A-Roll", "aroll"), ("ARoll", "aroll"), ("a_roll", "aroll"), ("Interview", "aroll"), ("B-Roll", "broll"), ("BRoll", "broll"), ("Footage", "broll"),

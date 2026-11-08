@@ -75,7 +75,8 @@ def test_key_ffmpeg_cache(cfg, installed, tmp_path):
     assert checks["gladia"].ok is False and "Erweiterungen" in checks["gladia"].fix
     assert checks["ffmpeg"].ok is False and checks["ffprobe"].ok is False
     assert checks["cache"].ok is True and "disk_cache" in checks
-    cfg.cache_dir = Path("/proc/does/not/exist")  # not creatable on macOS
+    (tmp_path / "datei").write_text("x")
+    cfg.cache_dir = tmp_path / "datei" / "cache"  # below a file: not creatable anywhere
     assert run(cfg)["cache"].ok is False
 
 

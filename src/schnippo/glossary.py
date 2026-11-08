@@ -13,6 +13,7 @@ words); (b) correction proposals for transcript, graphics and subtitle export; (
 
 from __future__ import annotations
 
+from .platforms import read_text
 import difflib
 import re
 from collections import Counter
@@ -58,7 +59,7 @@ def load(folder: Path | None, stored: list[str] | None = None) -> list[Term]:
     lines = list(stored or [])
     f = Path(folder) / FILE if folder else None
     if f is not None and f.is_file():
-        lines = f.read_text(encoding="utf-8").splitlines() + lines
+        lines = read_text(f).splitlines() + lines
     return parse(lines)
 
 

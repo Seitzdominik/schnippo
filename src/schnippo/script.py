@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from .platforms import read_text
 import re
 from pathlib import Path
 
@@ -32,7 +33,7 @@ def _paragraphs(path: Path) -> list[tuple[str, bool]]:
         return out
     if ext not in (".txt", ".md", ".markdown"):
         raise ValueError(f"Skriptformat {ext} nicht unterstützt (.docx, .txt, .md)")
-    for raw in path.read_text(encoding="utf-8").splitlines():
+    for raw in read_text(path).splitlines():
         t = raw.strip()
         if not t:
             continue

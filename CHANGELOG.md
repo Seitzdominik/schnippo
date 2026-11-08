@@ -2,6 +2,19 @@
 
 Format: neueste zuerst. Versionen vor 0.11.0 hießen intern „Resolve Cut“ und waren nicht öffentlich.
 
+## 0.12.0 – Windows (Beta) (Phase 12, 2026-11-08)
+
+Windows 10/11 (64 bit) ist neu. Automatisch getestet, mit echtem DaVinci Resolve auf Windows noch nicht bestätigt: Rückmeldungen willkommen.
+
+- **Windows:** Resolve wird über die Standardpfade, `RESOLVE_SCRIPT_API`, `RESOLVE_SCRIPT_LIB` und die Registry gefunden. Einstellungen in `%APPDATA%\\schnippo`, Cache in `%LOCALAPPDATA%\\schnippo\\Cache`.
+- **Pfade:** Laufwerke, Netzfreigaben, Pfade über 260 Zeichen, eingefügte Explorer-Pfade mit Anführungszeichen. Zu allgemeine und geschützte Ordner werden abgelehnt, Dateien nur in OneDrive mit Hinweis übersprungen.
+- **Geöffnete Dateien:** Windows sperrt sie. Schnippo versucht es mit Wartezeit erneut und sagt verständlich, was zu schließen ist.
+- **Keys:** `store_api_key` nutzt `keyring`: macOS-Schlüsselbund bzw. Windows-Anmeldeinformationsverwaltung.
+- **Reels:** Neues Layout `framed`: Video als 1:1 oder 4:5 mittig auf ruhiger Fläche, nie über 1,0 skaliert, Hook-Text darüber. Bei HD-Quellen schlägt Claude es vor.
+- **Inhaltstyp:** `content_type` (interview, course, commercial, talking_head) getrennt vom Format, auch über `set_format` und den Brief. Reihenfolge: Chat, Brief, Vorliebe, Erkennung.
+- Texte in Brief, Glossar und Skript dürfen auch aus älteren Windows-Editoren stammen.
+- CI auf macOS und Windows: Tests, Bundle, Start über `uvx`.
+
 ## 0.11.0 Beta – Schnippo (Phase 11, 2026-11-07)
 
 Erste öffentliche Version, neuer Name, neues Repository mit frischer Historie.

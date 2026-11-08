@@ -12,10 +12,10 @@ Schnippo verarbeitet auf deinem Rechner: Videos, Audio und Bilder aus den Ordner
 
 Alles bleibt lokal, außer es steht im nächsten Abschnitt.
 
-- Cache: `~/Library/Caches/schnippo`
-- Einstellungen, Glossare, Marken-Angaben: `~/.config/schnippo`
+- Cache: `~/Library/Caches/schnippo`, unter Windows `%LOCALAPPDATA%\\schnippo\\Cache`
+- Einstellungen, Glossare, Marken-Angaben: `~/.config/schnippo`, unter Windows `%APPDATA%\\schnippo`
 - Exporte: Ordner `schnippo-export/` neben deinem Material
-- Keys: Einstellungen der Erweiterung in Claude Desktop, macOS-Schlüsselbund, Umgebungsvariable oder deine `config.toml`. Keys werden nie protokolliert.
+- Keys: Einstellungen der Erweiterung in Claude Desktop, macOS-Schlüsselbund, Windows-Anmeldeinformationsverwaltung, Umgebungsvariable oder deine `config.toml`. Keys werden nie protokolliert.
 
 ## Weitergabe an Dritte
 
@@ -47,7 +47,7 @@ Seitz Dominik Visuals, https://sdv.design. Fragen auch unter https://github.com/
 Schnippo is local software from Seitz Dominik Visuals, who run no server for it and receive no data. There is no telemetry.
 
 - **Collection:** Schnippo processes your media, transcripts, settings and keys on your computer.
-- **Use and storage:** everything stays in `~/Library/Caches/schnippo` and `~/.config/schnippo`, unless listed below.
+- **Use and storage:** everything stays in `~/Library/Caches/schnippo` and `~/.config/schnippo` (Windows: `%LOCALAPPDATA%\\schnippo\\Cache` and `%APPDATA%\\schnippo`), unless listed below.
 - **Third parties:** audio goes to Gladia; transcripts, file names and frames go to your AI provider; search terms go to Freesound or ElevenLabs only on request and with your key; the update check calls GitHub at most daily and can be switched off.
 - **Retention:** local data stays until you delete it with `clear_cache` or in the Finder. Third-party retention follows their terms.
 - **Contact:** Seitz Dominik Visuals, https://sdv.design

@@ -4,7 +4,7 @@ KI-Rohschnitt für DaVinci Resolve. Schnippo baut aus deinen Takes per Chat eine
 
 ## Einrichtung
 
-Du brauchst einen Mac, DaVinci Resolve Studio 21.1 oder neuer mit „External scripting using = Local“, [uv](https://docs.astral.sh/uv/) und einen eigenen [Gladia-Key](https://app.gladia.io). Nach der Installation fragt das Plugin nach dem Key. Gibt es keine Abfrage, sag im Chat „Richte mich ein“: Das Tool `store_api_key` öffnet ein Systemfenster und legt den Key im Schlüsselbund ab. Der Key läuft nie durch den Chat.
+Du brauchst einen Mac oder Windows 10/11 (64 bit, Beta), DaVinci Resolve Studio 21.1 oder neuer mit „External scripting using = Local“, [uv](https://docs.astral.sh/uv/) und einen eigenen [Gladia-Key](https://app.gladia.io). Nach der Installation fragt das Plugin nach dem Key. Gibt es keine Abfrage, sag im Chat „Richte mich ein“: Das Tool `store_api_key` öffnet ein Systemfenster und legt den Key im Schlüsselbund ab. Der Key läuft nie durch den Chat.
 
 ## Installation
 
@@ -16,7 +16,7 @@ Sag zum Beispiel „Schneide den Ordner … als Reel“ oder „Mach aus dem Vid
 
 ## Was das Plugin startet und wohin es Daten schickt
 
-Das Plugin startet den lokalen MCP-Server mit `uvx schnippo@0.11.0` von PyPI. Quellcode: https://github.com/Seitzdominik/schnippo
+Das Plugin startet den lokalen MCP-Server mit `uvx schnippo@0.12.0` von PyPI. Quellcode: https://github.com/Seitzdominik/schnippo
 
 | Ziel | Wann | Was |
 |---|---|---|
@@ -32,7 +32,7 @@ Transkripte und Kontaktabzüge sieht das KI-Modell deines Claude-Kontos. Es gibt
 Vollständig unter https://schnippo.com/privacy.
 
 - **Datenerhebung:** Schnippo selbst erhebt keine Daten und betreibt keinen Server.
-- **Nutzung und Speicherung:** Transkripte, Analysen und Einstellungen bleiben lokal in `~/Library/Caches/schnippo` und `~/.config/schnippo`.
+- **Nutzung und Speicherung:** Transkripte, Analysen und Einstellungen bleiben lokal: am Mac in `~/Library/Caches/schnippo` und `~/.config/schnippo`, unter Windows in `%LOCALAPPDATA%\\schnippo\\Cache` und `%APPDATA%\\schnippo`.
 - **Weitergabe an Dritte:** nur an die Dienste aus der Tabelle oben, mit deinem eigenen Konto.
 - **Aufbewahrung:** Du löschst lokale Daten jederzeit mit `clear_cache` oder im Finder. Für Gladia gelten deren Bedingungen.
 - **Kontakt:** Seitz Dominik Visuals, https://sdv.design

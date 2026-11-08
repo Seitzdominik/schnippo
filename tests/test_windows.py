@@ -182,6 +182,14 @@ def test_on_the_mac_a_denied_file_is_not_waited_for(monkeypatch):
         platforms.retry_locked(fn, "x", sleep=lambda s: pytest.fail("kein Warten"))
 
 
+def test_texts_from_old_editors_still_read(tmp_path):
+    f = tmp_path / "brief.md"
+    f.write_bytes("Format: Prüfung".encode("cp1252"))
+    assert platforms.read_text(f) == "Format: Prüfung"
+    f.write_bytes(b"\xef\xbb\xbf" + "Format: Prüfung".encode())
+    assert platforms.read_text(f) == "Format: Prüfung"
+
+
 def test_cloud_placeholder_attribute():
     class P:
         def __init__(self, attrs):

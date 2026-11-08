@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from .platforms import read_text
 import datetime
 import re
 from pathlib import Path
@@ -74,7 +75,7 @@ def brief_text(root: Path) -> str | None:
     if not f.is_file():
         return None
     lines = []
-    for ln in f.read_text(encoding="utf-8").splitlines():
+    for ln in read_text(f).splitlines():
         s = ln.strip()
         if not s or s.startswith("#") or s.startswith("Alles ist optional"):
             continue

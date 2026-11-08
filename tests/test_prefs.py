@@ -1,4 +1,5 @@
 import json
+import sys
 import unicodedata
 
 import pytest
@@ -61,10 +62,12 @@ def test_pasted_paths(tmp_path, text):
 
 def test_home_and_shell_escapes(tmp_path, monkeypatch):
     monkeypatch.setenv("HOME", str(tmp_path))
+    monkeypatch.setenv("USERPROFILE", str(tmp_path))
     d = tmp_path / "Mein Projekt"
     d.mkdir()
     assert clean_path("~/Mein Projekt") == d
-    assert clean_path(str(d).replace(" ", "\\ ")) == d
+    if sys.platform != "win32":  # on Windows a backslash is the separator
+        assert clean_path(str(d).replace(" ", "\\ ")) == d
 
 
 def test_either_unicode_form(tmp_path):
