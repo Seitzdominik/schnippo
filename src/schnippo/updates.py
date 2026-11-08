@@ -22,8 +22,17 @@ def newer(latest: str, current: str) -> bool:
     return _parts(latest) > _parts(current)
 
 
+def _plain(line: str, limit: int = 120) -> str:
+    """One release-note bullet as plain text, shortened at a word boundary."""
+    text = re.sub(r"\[([^\]]*)\]\([^)]*\)", r"\1", line.strip(" -*\t"))
+    text = re.sub(r"\*\*|`", "", text).strip()
+    if len(text) <= limit:
+        return text
+    return text[:limit].rsplit(" ", 1)[0].rstrip(" ,;:–-") + " …"
+
+
 def notes(body: str, n: int = 4) -> list[str]:
-    return [ln.strip(" -*").strip()[:120] for ln in (body or "").splitlines() if ln.lstrip().startswith(("-", "*"))][:n]
+    return [_plain(ln) for ln in (body or "").splitlines() if ln.lstrip().startswith(("-", "*"))][:n]
 
 
 def check(current: str, cache_file: Path, force: bool = False, client=None, now=None) -> dict | None:

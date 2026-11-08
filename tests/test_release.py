@@ -56,6 +56,16 @@ def test_update_found_with_notes(tmp_path):
     assert "0.12.1" in updates.text(info)
 
 
+def test_update_notes_are_plain_text():
+    long = "- **Arbeits-Timeline:** " + "Ein langer Stichpunkt über `master_audio` und Sicherungen. " * 4
+    body = f"- **Keys:** `store_api_key` speichert, siehe [Referenz](docs/REFERENZ.md)\n* **Neu:** Reels\n{long}\n"
+    first, second, third = updates.notes(body)
+    assert first == "Keys: store_api_key speichert, siehe Referenz"
+    assert second == "Neu: Reels"
+    assert "*" not in third and "`" not in third
+    assert len(third) <= 122 and third.endswith(" …") and third[:-2].endswith(("Sicherungen.", "und", "über", "master_audio", "Stichpunkt", "langer", "Ein"))
+
+
 def test_same_version_says_nothing(tmp_path):
     assert updates.check("0.11.0", tmp_path / "u.json", client=_gh("0.11.0"), now=1000.0) is None
 
