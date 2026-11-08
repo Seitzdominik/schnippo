@@ -1,7 +1,7 @@
 {
   "name": "schnippo",
   "displayName": "Schnippo",
-  "version": "0.12.0",
+  "version": "0.13.0",
   "description": "KI-Rohschnitt für DaVinci Resolve: Rohschnitt per Chat, mit Ton, Zooms, B-Roll, Grafiken und Reels.",
   "author": {
     "name": "Seitz Dominik Visuals",
@@ -19,7 +19,7 @@
   ],
   "documentationUrl": "https://github.com/Seitzdominik/schnippo#readme",
   "supportUrl": "https://github.com/Seitzdominik/schnippo/issues",
-  "privacyPolicyUrl": "https://schnippo.com/privacy",
+  "privacyPolicyUrl": "https://schnippo.com/en/privacy/",
   "userConfig": {
     "gladia_api_key": {
       "type": "string",

@@ -97,6 +97,7 @@ def cheat_sheet(projects_folder=None) -> str:
     start = "„Schneide das Projekt … als Reel / YouTube-Video“ (der Name reicht)" if projects_folder else "„Schneide den Ordner … als Reel / YouTube-Video“"
     return ("So sprichst du mit mir:\n"
             f"• {start}\n"
+            "• „Nur Rohschnitt“ · „Ohne Grafiken“ · „Mach nur noch den Ton“\n"
             "• „Mach aus dem Video 3 Reels“\n"
             "• „Schnitt 5 ist zu früh“ · „Bei 0:23 den anderen Take“ · „Grafik bei 1:10 raus“\n"
             "• „Design ändern“ · „Richte mich ein“ · „Onboarding wiederholen“\n"

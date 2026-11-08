@@ -2,6 +2,18 @@
 
 Format: neueste zuerst. Versionen vor 0.11.0 hießen intern „Resolve Cut“ und waren nicht öffentlich.
 
+## 0.13.0 – Eine Arbeits-Timeline, Schnitt in einem Rutsch (Phase 13, 2026-11-08)
+
+- **Arbeits-Timeline:** Pro Projekt eine Timeline `<Name>_Schnippo`. Vor jeder Änderung liegt eine Sicherung in `Schnippo/Versionen` (die letzten 5). `list_versions`, `restore_version`. Eine zweite Timeline nur auf ausdrücklichen Wunsch.
+- **Handänderungen bleiben:** Auch Clips ohne gesprochene Wörter, fremde Clips und eigene Grafiken stehen jetzt in der Cutlist und kommen bei jedem Neubau exakt zurück.
+- **Direkt auf der Timeline:** `master_audio`, `apply_zooms`, `add_overlays`, `add_graphics`, `add_sfx` und `revise` arbeiten auf dem, was wirklich in der Timeline liegt, ohne Neubau.
+- **Komplett-Schnitt:** `complete_cut` macht aus einer Cutlist genau eine Timeline, sichert, misst den Ton, prüft und berichtet. `sense_check(cutlist=…)` hört schon vor dem Bau. Rückfragen über `set_checkpoints`. „Ohne Grafiken“, „Nur Rohschnitt“ und Ähnliches pro Auftrag.
+- **Erster Start:** ffmpeg und die Bildanalyse werden erst beim ersten Einlesen geladen, mit Fortschritt. Die Installation lädt unter Windows 44 statt 147 MB.
+- **Einstellungen:** kürzere Texte, optionale Keys nach unten.
+- **Marke:** Logo, Icon und Violett in Erweiterung, Plugin, README und Karten. Die MIT-Lizenz gilt für den Code, nicht für Name und Logo.
+- **Datenschutz:** Links auf https://schnippo.com/datenschutz/ und https://schnippo.com/en/privacy/.
+- Beispielmarke der Grafiken: Violett statt Orange (Kontrast zu Weiß 5,7:1 statt 3,1:1).
+
 ## 0.12.0 – Windows (Beta) (Phase 12, 2026-11-08)
 
 Windows 10/11 (64 bit) ist neu. Automatisch getestet, mit echtem DaVinci Resolve auf Windows noch nicht bestätigt: Rückmeldungen willkommen.

@@ -118,14 +118,14 @@ def ensure(key: str, say=None) -> bool:
             raise
         except Exception as e:  # uv has its own retries and mirrors: let it try
             log.info("Direkter Download von %s nicht möglich (%s), uv übernimmt", dist, type(e).__name__)
-        say(f"{label[0].upper()}{label[1:]} wird eingerichtet …")
+        say(f"Wird eingerichtet: {label} …")
         res = platforms.run([uv, "pip", "install", "--python", sys.executable, target], capture_output=True, text=True, encoding="utf-8", errors="replace")
     if res.returncode != 0:
-        raise SetupFailed(f"{label[0].upper()}{label[1:]} ließ sich nicht laden. Bitte Internetverbindung prüfen und noch einmal versuchen. ({res.stderr.strip()[-200:]})")
+        raise SetupFailed(f"Das Laden von {label} ist fehlgeschlagen. Bitte Internetverbindung prüfen und noch einmal versuchen. ({res.stderr.strip()[-200:]})")
     importlib.invalidate_caches()
     from .media import find_tool
     find_tool.cache_clear()
-    say(f"{label[0].upper()}{label[1:]} ist bereit ({time.monotonic() - started:.0f} s).")
+    say(f"Bereit: {label} ({time.monotonic() - started:.0f} s).")
     return True
 
 

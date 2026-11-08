@@ -350,3 +350,32 @@ Gemessen auf Resolve Studio 21.2.0.5 (Timeline mit Marker, Überblendungen, eige
 Abläufe: `versions.py` (Sichern, Aufräumen, Wiederherstellen), `resolve_bridge.edit_steps` und `apply_edit_steps` (Neuschnitt direkt auf der Timeline), `Workspace.sync` und `_adopt_upper` (Handänderungen in die Cutlist).
 
 **Neu importieren auf einer Timeline, die schon Clips hat:** Alle Abstürze aus Phase 10 kamen beim ersten `ImportMedia`, nachdem ein Overlay auf der aktuellen Timeline lag (Ursache offen). `import_for_timeline` macht währenddessen eine leere Hilfs-Timeline zur aktuellen, also dieselbe Reihenfolge wie beim Neubau.
+
+
+## Erster Start (Phase 13)
+
+Gemessen mit `tools/measure_first_start.py` (Workflow `first-start`, leerer uv-Cache, Windows-Runner von GitHub, Echtzeit-Virenschutz dort aus). Zu Hause kommen eine langsamere Leitung und der Windows Defender dazu, der jede entpackte Datei prüft.
+
+| Windows | vorher (alles mit der Erweiterung) | jetzt (ffmpeg und OpenCV beim ersten Einlesen) |
+|---|---|---|
+| Download mit der Erweiterung | 147 MB, dazu Python | 44 MB, dazu Python (etwa 26 MB) |
+| Entpackt | 393 MB | 125 MB, dazu Python 125 MB |
+| Erste MCP-Antwort, leerer Cache | 15,6 s (Python lag schon auf dem Runner) | 11,5 s (mit Python-Download) |
+| Start danach | 1,7 s | 0,8 s |
+| Beim ersten Einlesen | – | 5,2 s, ffmpeg 62 MB, OpenCV 44 MB |
+
+| Paket (Windows) | Download | installiert |
+|---|---|---|
+| portable-ffmpeg-full | 61,8 MB | 152,6 MB (beim ersten Aufruf entpackt es sich noch einmal) |
+| opencv-python-headless | 41,0 MB | 115,9 MB |
+| numpy | 12,7 MB | 42,1 MB |
+| pillow | 7,3 MB | 14,9 MB |
+| pywin32 | 7,0 MB | 15,2 MB |
+| lxml | 4,1 MB | 9,0 MB |
+| cryptography | 3,8 MB | 10,5 MB |
+
+**Entscheidung:** Nachladen statt Binary. Ein PyInstaller-Ordner startet auch in 1,7 s, ist aber 148 MB groß (gepackt, ohne ffmpeg, mit ffmpeg gut 200 MB), müsste für jedes System getrennt gebaut werden und wäre als unsignierte `.exe` ein Kandidat für SmartScreen und Defender-Warnungen. Ob das eingebettete Python `fusionscript.dll` lädt, wäre außerdem neu zu prüfen.
+
+**OpenCV:** Es wird nur für die Haar-Gesichtserkennung gebraucht (`frames._face_detector`). Eine kleinere Alternative würde die geprüften Kopfboxen verändern, also bleibt es, wird aber erst bei Bedarf geladen.
+
+`uv run` lässt die nachgeladenen Pakete beim nächsten Start in Ruhe (im Workflow geprüft).

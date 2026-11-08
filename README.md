@@ -33,6 +33,8 @@ Schnippo baut per Chat aus deinen Takes einen Rohschnitt in DaVinci Resolve Stud
 
 Pfad eines Ordners kopieren: am Mac Rechtsklick, Wahltaste halten, „als Pfadname kopieren“. Unter Windows im Explorer Umschalt halten, Rechtsklick, „Als Pfad kopieren“. Die Anführungszeichen dürfen mit in den Chat.
 
+**Erster Start:** Beim allerersten Start richtet Claude Desktop Python und die Grundausstattung ein (etwa 70 MB), solange steht der Fortschrittsbalken still. Unter Windows dauert das zu Hause 1 bis 3 Minuten, auf einem Testserver mit schneller Leitung und ohne Virenscanner 12 Sekunden. Beim ersten Einlesen lädt Schnippo einmalig ffmpeg und die Bildanalyse nach (unter Windows etwa 100 MB) und zeigt den Fortschritt. Ein Virenscanner verlängert beides.
+
 Neue Versionen installierst du genauso. Schnippo weist dich darauf hin und aktualisiert sich nie selbst.
 
 ## Erster Schnitt
@@ -53,13 +55,17 @@ Spickzettel für den Chat:
 
 | Du schreibst | Schnippo macht |
 |---|---|
-| „Schneide Mein_Film“ | Rough Cut als neue Timeline, danach Rückfragen zu Grenzfällen |
-| „Weiter“ | Nächster Durchgang: Fine Cut, B-Roll, Polish |
+| „Schneide Mein_Film“ | Kompletter Schnitt in einem Rutsch: eine Timeline `Mein_Film_Schnippo` und ein kurzer Bericht |
+| „Ohne Grafiken“, „Ohne Sound-Effekte“, „Nur Rohschnitt“ | Dieser Auftrag ohne den genannten Teil |
+| „Bei 0:23 den anderen Take“ | Änderung direkt auf der Timeline |
+| „Mach nur noch den Ton“ | Lautheit und Limiter auf das, was in der Timeline liegt, auch auf von Hand Eingefügtes |
+| „Hol die Fassung von vorhin zurück“ | Eine Sicherung wird wieder zur Arbeits-Timeline |
+| „Mach eine Variante als neue Timeline“ | Nur dann entsteht eine zweite Timeline |
 | „Mach aus dem Video 3 Reels“ | Hochformat-Reels aus den stärksten Stellen |
 | „Füge dezente Sound-Effekte hinzu“ | Eigene Spur mit Effekten |
 | „Hilfe“ | Überblick über alles Weitere |
 
-Jeder Durchgang bekommt eine eigene Timeline. Schnippo überschreibt nichts und verändert deine Originaldateien nie. Alle Tools stehen in der [Referenz](docs/REFERENZ.md).
+Schnippo arbeitet auf einer Timeline pro Projekt. Vor jeder Änderung legt es eine Sicherung im Bin `Schnippo/Versionen` an (die letzten 5 bleiben). Was du in Resolve von Hand änderst, bleibt erhalten, auch Clips ohne gesprochene Wörter. Deine Originaldateien verändert Schnippo nie. Wer lieber nach jedem Schritt gefragt werden will, sagt im Chat „Rückfragen nach jedem Schritt“. Alle Tools stehen in der [Referenz](docs/REFERENZ.md).
 
 ## Aufnahme-Tipps
 
@@ -73,6 +79,8 @@ Mehr dazu in der [Referenz](docs/REFERENZ.md#so-nimmst-du-für-schnippo-auf), ei
 
 ## Bekannte Grenzen
 
+- **Speichern-Dialog unter Windows:** Claude Desktop zeigt in „Diese Einstellungen … speichern?“ um Namen und Werte Kästchen mit FSI, PDI oder LRI. Das sind unsichtbare Steuerzeichen, die Claude Desktop selbst setzt und die die Windows-Dialogschrift als Kästchen darstellt. Schnippos Texte enthalten keine; speichern funktioniert trotzdem.
+- **Neubau und Farbkorrektur:** Reihenfolge ändern oder neue Tonkanäle zuordnen baut die Timeline neu. Handänderungen an Clips kommen zurück, eine Farbkorrektur auf den neu gebauten Clips nicht. Sie bleibt in der Sicherung.
 - **Windows ist Beta:** Automatische Tests laufen auf Windows, mit echtem Resolve ist es noch nicht bestätigt. Rückmeldungen bitte als [Issue](https://github.com/Seitzdominik/schnippo/issues/new/choose). Material gehört lokal auf die Platte, Dateien, die nur in OneDrive liegen, überspringt Schnippo mit Hinweis.
 - **Karten in Claude Desktop:** Claude Desktop zeigt die interaktiven Karten lokaler Erweiterungen derzeit nicht an. Schnippo fragt deshalb als Text im Chat.
 - **Gemischte Framerates in der A-Roll:** Die Timeline übernimmt die Rate des Hauptmaterials, Takes mit anderer Rate sind nicht erprobt. B-Roll darf abweichen.

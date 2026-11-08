@@ -16,7 +16,7 @@ Sag zum Beispiel „Schneide den Ordner … als Reel“ oder „Mach aus dem Vid
 
 ## Was das Plugin startet und wohin es Daten schickt
 
-Das Plugin startet den lokalen MCP-Server mit `uvx schnippo@0.12.0` von PyPI. Quellcode: https://github.com/Seitzdominik/schnippo
+Das Plugin startet den lokalen MCP-Server mit `uvx schnippo@0.13.0` von PyPI. Quellcode: https://github.com/Seitzdominik/schnippo
 
 | Ziel | Wann | Was |
 |---|---|---|
@@ -29,7 +29,7 @@ Transkripte und Kontaktabzüge sieht das KI-Modell deines Claude-Kontos. Es gibt
 
 ## Privacy Policy
 
-Vollständig unter https://schnippo.com/privacy.
+Vollständig unter https://schnippo.com/en/privacy/.
 
 - **Datenerhebung:** Schnippo selbst erhebt keine Daten und betreibt keinen Server.
 - **Nutzung und Speicherung:** Transkripte, Analysen und Einstellungen bleiben lokal: am Mac in `~/Library/Caches/schnippo` und `~/.config/schnippo`, unter Windows in `%LOCALAPPDATA%\\schnippo\\Cache` und `%APPDATA%\\schnippo`.

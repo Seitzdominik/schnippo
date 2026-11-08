@@ -3,7 +3,7 @@
     "schnippo": {
       "command": "uvx",
       "args": [
-        "schnippo@0.12.0"
+        "schnippo@0.13.0"
       ],
       "env": {
         "PYTHONUTF8": "1",

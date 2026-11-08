@@ -12,7 +12,7 @@ Schnippo geht als **Plugin** ins Verzeichnis, nicht als `.mcpb`. Der Ordner [`pl
 | `readOnlyHint` bzw. `destructiveHint` je Tool | ✅ | Timelines bauen und Dateien schreiben sind nicht read-only, Löschungen nur mit Bestätigung |
 | Tool-Namen höchstens 64 Zeichen | ✅ | Test |
 | Datenschutz in der README als „Privacy Policy“ | ✅ | README, `plugin/README.md` |
-| Datenschutz als HTTPS-URL | ⏳ | Text in `docs/PRIVACY.md`, muss unter https://schnippo.com/privacy online gehen |
+| Datenschutz als HTTPS-URL | ✅ | https://schnippo.com/en/privacy/ und https://schnippo.com/datenschutz/ |
 | Inhalt: Erhebung, Nutzung und Speicherung, Dritte, Aufbewahrung, Kontakt | ✅ | `docs/PRIVACY.md` |
 | Setup- und Nutzungsdoku | ✅ | README, `docs/REFERENZ.md` |
 | `claude plugin validate ./plugin` ohne Befunde | ✅ | siehe unten |
@@ -27,7 +27,7 @@ Schnippo geht als **Plugin** ins Verzeichnis, nicht als `.mcpb`. Der Ordner [`pl
 | `api.github.com` | Update-Hinweis | `check_setup`, täglich beim ersten Tool-Aufruf, abschaltbar | keine |
 | `freesound.org` | Sound-Suche | `find_sfx`, `fetch_sfx`, eigener Key | Suchbegriff |
 | `api.elevenlabs.io` | Sound-Erzeugung | nur auf Wunsch, eigener Key | Beschreibung |
-| `pypi.org`, `files.pythonhosted.org` | Abhängigkeiten | Installation, `motion_setup` | keine |
+| `pypi.org`, `files.pythonhosted.org` | Abhängigkeiten | Installation, erstes Einlesen (ffmpeg, Bildanalyse), `motion_setup` | keine |
 | `github.com` | Python-Laufzeit über uv, Download-Links | Installation | keine |
 | Playwright-CDN | Chromium für Grafiken | `motion_setup` | keine |
 
@@ -49,9 +49,8 @@ Test: 0.11.0 installieren, Key eintragen, Einstellung ändern. Eine `.mcpb` mit 
 
 ## Was du selbst tun musst
 
-1. `docs/PRIVACY.md` unter https://schnippo.com/privacy veröffentlichen.
-2. Paket auf PyPI bringen (Anleitung: [RELEASE.md](RELEASE.md)).
-3. Repository öffentlich schalten.
-4. GitHub auf claude.ai verbinden.
-5. Im Portal claude.ai/directory/manage: Submit new → „Plugin bundle“, die Schritte Source, Validate, Listing, Data handling, Compliance (vier Bestätigungen, Kontakt-E-Mail) und Review durchgehen.
-6. Bei jeder neuen Version `version` erhöhen. Neue Versionen prüft Anthropic standardmäßig vor der Veröffentlichung.
+1. Repository öffentlich schalten (Settings → General → Danger Zone → Change visibility).
+2. Social-Preview hochladen: Settings → General → Social preview → `assets/brand/social-preview.png`.
+3. GitHub auf claude.ai verbinden.
+4. Im Portal claude.ai/directory/manage: Submit new → „Plugin bundle“, Plugin-Pfad `plugin`, verfolgter Branch `stable` (eigener Branch, der nur freigegebene Stände bekommt). Dann die Schritte Source, Validate, Listing, Data handling, Compliance (vier Bestätigungen, Kontakt-E-Mail) und Review.
+5. Bei jeder neuen Version `version` erhöhen. Neue Versionen prüft Anthropic standardmäßig vor der Veröffentlichung.

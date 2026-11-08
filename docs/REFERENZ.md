@@ -20,15 +20,21 @@ Alle Tools und Einstellungen im Detail. Einstieg: [README](../README.md).
 | `set_word_text(word, text)` / `suggest_corrections(clip)` | Erkennungsfehler korrigieren (IDs bleiben; gilt für Endtext und Export) |
 | `export_transcript(cutlist \| timeline)` | SRT, TXT (und bei YouTube Kapitel) des fertigen Schnitts nach `schnippo-export/` |
 | `merge_cutlists(cutlists)` | Teil-Cutlists (seitenweise Entscheidungen) zusammenführen |
-| `build_timeline(cutlist)` | neue Timeline bauen (Framerate des Hauptmaterials), Punch-ins, B-Roll auf V2, Audio-Lautheit (True Peak ≤ −1 dBTP), Export-Preset, verifizieren |
+| `complete_cut(cutlist, skip, borderline, open_questions)` | Komplett-Schnitt: eine Timeline `<Name>_Schnippo` mit Sicherung, Ton, QC und kurzem Bericht |
+| `build_timeline(cutlist)` | Arbeits-Timeline bauen; existiert sie, wird sie gesichert und ersetzt, Handänderungen kommen zurück. `"new_timeline": true` nur auf ausdrücklichen Wunsch |
+| `master_audio(timeline, audio)` | Ton-Mastering auf der vorhandenen Timeline, auch für von Hand Eingefügtes |
+| `apply_zooms(timeline, punch_in, changes)` | Zooms auf die tatsächlichen Clips |
+| `add_overlays` / `add_graphics` / `add_sfx` | Nachträglich auf die bestehende Timeline, an die tatsächlichen Positionen, auf freie Spuren |
+| `list_versions(timeline)` / `restore_version(name)` | Sicherungen in `Schnippo/Versionen` zeigen, eine zurückholen |
+| `set_checkpoints(mode)` | Rückfragen: keine, nur wenn nötig (Standard), nach jedem Schritt |
 | `locate(timeline, ref)` | „#05“ (Marker), Zeit „0:23“ oder Zitat → Item, Wort-IDs, Position |
-| `revise(base_timeline, instructions)` | Änderungswünsche (entfernen, trimmen, verschieben, einfügen, Take tauschen, Zoom, Overlays) → neue Version `…_r2` mit Unterschieden |
-| `read_timeline_changes(timeline)` | Handänderungen in Resolve erkennen und framegenau als neue Version übernehmen; Unklares wird gemeldet |
+| `revise(base_timeline, instructions)` | Änderungswünsche (entfernen, trimmen, verschieben, einfügen, Take tauschen, Zoom, Overlays) direkt auf der Timeline, vorher Sicherung; `new_timeline=true` legt `…_r2` an |
+| `read_timeline_changes(timeline)` | Handänderungen verlustfrei in die Cutlist übernehmen, auch Clips ohne Wörter (`manual`); passiert vor jeder Änderung von selbst |
 | `set_glossary(terms)` / `glossar.txt` | Namen, Marken, Orte, Adressen in richtiger Schreibweise: Gladia-Vokabular für neue Clips, Korrekturvorschläge, Untertitel, Freigabe für Bauchbinden |
 | `set_clip_role(clips, role)` | Clip von Hand als A-Roll oder B-Roll festlegen |
 | `resume_job(job_id=None)` | abgebrochenen Auftrag fortsetzen (Bauen: neu aus der gespeicherten Cutlist, halbe Timeline `…_unvollstaendig` wird entfernt; Transkription: fehlende Clips, laufende Gladia-Aufträge werden abgeholt) |
 | `clear_cache(older_than_days=30)` | Cache-Größe je Kategorie zeigen und Altes löschen (Transkripte und verwendete Renders nur auf Wunsch) |
-| `sense_check(timeline)` | fertigen Schnitt gegenhören (Gladia, etwa 0,10 USD je 10 min): unsaubere Nähte automatisch, der gehörte Text zur Sinnprüfung; nach `revise` kostet nur Geändertes |
+| `sense_check(timeline \| cutlist)` | Schnitt gegenhören, mit `cutlist` schon vor dem Bau (Gladia, etwa 0,10 USD je 10 min): unsaubere Nähte automatisch, der gehörte Text zur Sinnprüfung; nach `revise` kostet nur Geändertes |
 | `export_final(timeline, preset="auto")` | fertiges Video rendern: Reel 1080×1920 oder YouTube 1080p/4K (H.264/AAC, Lautheit aus Polish), Datei geprüft, SRT/TXT daneben |
 | `run_qc(timeline, audio=False)` | QC: Flash-Frames, Lücken, angeschnittene Wörter, Zoom auf jedem Schnitt, Framerate, Dauer, Sync, Wasserzeichen-Hinweise, optional Lautheit |
 | `check_setup()` | Einrichtungs-Assistent (Karte im Chat): Resolve, Studio, Version, Scripting, Projekt, Gladia-Key, ffmpeg, Speicher |
@@ -49,12 +55,11 @@ Alle Tools und Einstellungen im Detail. Einstieg: [README](../README.md).
 | `create_project(name)` | Projektordner im Standardordner anlegen |
 | `resolve_status()` | Verbindungscheck |
 
-Prompt: `rohschnitt` (Ablauf der vier Durchgänge). Ressourcen: `schnippo://guides/rough|fine|broll|polish|technik`.
+Prompt: `rohschnitt` (Komplett-Schnitt). Ressourcen: `schnippo://guides/rough|fine|broll|polish|technik`.
 
-## Vier Durchgänge
+## Durchgänge (Rückfragen „nach jedem Schritt“)
 
-Jeder Durchgang hat genau einen Job und baut eine eigene Timeline (`<Name>_V1_Rough`, `_V2_Fine`, `_V3_BRoll`,
-`_V4_Polish`). Die Cutlist trägt `"pass"`; spätere Durchgänge geben `"base_cutlist": "<Timeline davor>"` an, der Server
+Standard ist der Komplett-Schnitt. Im Durchgangs-Modus hat jeder Durchgang genau einen Job und arbeitet auf `<Name>_Schnippo`. Die Cutlist trägt `"pass"`; spätere Durchgänge geben `"base_cutlist": "<Name>_Schnippo"` an, der Server
 übernimmt alles daraus und ignoriert mit Warnung, was der Durchgang nicht ändern darf. Leitfäden: [guides/](guides/).
 
 | Durchgang | Job | darf setzen |
