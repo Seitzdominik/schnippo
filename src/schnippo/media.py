@@ -35,6 +35,12 @@ def _bundled(name: str) -> str | None:
     return ffmpeg_dist.path(name)
 
 
+def system_tool(name: str) -> str | None:
+    if os.environ.get("SCHNIPPO_FFMPEG") == "bundled":
+        return None
+    return shutil.which(name) or next((f"{d}/{name}" for d in platforms.tool_dirs() if Path(f"{d}/{name}").exists()), None)
+
+
 @functools.cache
 def find_tool(name: str) -> tuple[str | None, str | None]:
     """(path, source): system ffmpeg first (PATH, Homebrew, /usr/local), else the bundled one.
@@ -42,7 +48,7 @@ def find_tool(name: str) -> tuple[str | None, str | None]:
     if os.environ.get("SCHNIPPO_FFMPEG") == "bundled":
         b = _bundled(name)
         return (b, "mitgeliefert") if b else (None, None)
-    p = shutil.which(name) or next((f"{d}/{name}" for d in platforms.tool_dirs() if Path(f"{d}/{name}").exists()), None)
+    p = system_tool(name)
     if p:
         return p, "System"
     b = _bundled(name)
@@ -51,6 +57,14 @@ def find_tool(name: str) -> tuple[str | None, str | None]:
 
 def _bin(name: str) -> str:
     p, _ = find_tool(name)
+    if not p:  # normally fetched before the first ingest; everything else that needs it lands here
+        from . import deps
+        try:
+            deps.ensure("ffmpeg")
+        except deps.SetupFailed as e:
+            raise MediaError(str(e)) from e
+        find_tool.cache_clear()
+        p, _ = find_tool(name)
     if not p:
         raise MediaError(f"{name} nicht gefunden. {platforms.install_ffmpeg_hint()}")
     return p

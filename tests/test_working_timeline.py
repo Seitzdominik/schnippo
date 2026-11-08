@@ -385,3 +385,34 @@ def test_checkpoints_are_a_preference(tmp_path, monkeypatch):
 def test_sfx_lanes_stay_separate():
     cues = [{"tl_start": 0, "frames": 10}, {"tl_start": 5, "frames": 10}, {"tl_start": 20, "frames": 5}]
     assert len(lanes(cues)) == 2
+
+
+def test_only_the_light_part_is_installed_with_the_extension():
+    import tomllib
+    from pathlib import Path
+    data = tomllib.loads((Path(__file__).parents[1] / "pyproject.toml").read_text(encoding="utf-8"))["project"]
+    joined = " ".join(data["dependencies"])
+    assert "opencv" not in joined and "portable-ffmpeg" not in joined
+    assert any("opencv" in x for x in data["optional-dependencies"]["media"])
+
+
+def test_the_wheel_for_this_computer_is_chosen(monkeypatch):
+    from schnippo import deps
+    monkeypatch.setattr(deps.sys, "platform", "win32")
+    files = [{"filename": "x-1-py3-none-macosx_arm64.whl"}, {"filename": "x-1-py3-none-win_amd64.whl", "size": 1}, {"filename": "x-1.tar.gz"}]
+    assert deps._pick_wheel(files)["filename"].endswith("win_amd64.whl")
+    assert deps._pick_wheel([{"filename": "x-1.tar.gz"}]) is None
+
+
+def test_setup_says_when_it_cannot_fetch(monkeypatch):
+    from schnippo import deps
+    monkeypatch.setattr(deps, "available", lambda k: False)
+    monkeypatch.setattr(deps.platforms, "find_uv", lambda: None)
+    with pytest.raises(deps.SetupFailed, match="uv"):
+        deps.ensure("opencv")
+
+
+def test_nothing_is_fetched_when_it_is_there(monkeypatch):
+    from schnippo import deps
+    monkeypatch.setattr(deps, "available", lambda k: True)
+    assert deps.ensure("ffmpeg") is False

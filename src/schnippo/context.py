@@ -10,7 +10,7 @@ from .segments import Segment
 
 LEGEND = ("Legende: c01:s003 Segment · w0018–w0027 Wortbereich · @Start · Dauer · ⏸3.1 Pause davor (s) · {?} stimmhafte "
           "Lücke (äh/hm?) · ⚠abgebr. endet ohne Satzzeichen vor langer Pause · ⚠gemurmelt? Wörter mit Konfidenz 0 · "
-          "↺s002 0.78 ähnlich zu früherem Segment · ⚠vor Retake-Marker: danach „nochmal“/Klatscher · [L07? 0.82] Skript-Kandidat. Wortgenau: get_transcript(clip, from_word, to_word).")
+          "↺s002 0.78 ähnlich zu früherem Segment · ⚠vor Retake-Marker: danach „nochmal“/Klatscher · [L07? 0.82] Skript-Kandidat. Wortgenau: get_transcript(clip_id, from_word, to_word).")
 FLAG = {"aborted": "⚠abgebr.", "mumbled?": "⚠gemurmelt?"}
 
 

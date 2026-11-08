@@ -55,7 +55,7 @@ def main(bundle: str) -> None:
     folder = root / "bundle"
     with zipfile.ZipFile(bundle) as z:
         z.extractall(folder)
-    env = {**os.environ, "UV_CACHE_DIR": str(root / "uv-cache"), "UV_PYTHON_INSTALL_DIR": str(root / "uv-python"), "SCHNIPPO_UPDATE_CHECK": "0", "SCHNIPPO_NO_MIGRATE": "1", "SCHNIPPO_CONFIG": str(root / "c" / "config.toml"), "SCHNIPPO_CACHE": str(root / "cache"), "PYTHONUTF8": "1"}
+    env = {**os.environ, "UV_CACHE_DIR": str(root / "uv-cache"), "UV_PYTHON_INSTALL_DIR": str(root / "uv-python"), "SCHNIPPO_UPDATE_CHECK": "0", "SCHNIPPO_NO_MIGRATE": "1", "SCHNIPPO_CONFIG": str(root / "c" / "config.toml"), "SCHNIPPO_CACHE": str(root / "cache"), "PYTHONUTF8": "1", "UV_PYTHON_PREFERENCE": "only-managed"}
     env.pop("GLADIA_API_KEY", None)
     cold, tools = asyncio.run(handshake(folder, env))
     warm, _ = asyncio.run(handshake(folder, env))
@@ -74,16 +74,20 @@ def main(bundle: str) -> None:
         rows.append({"package": name, "download_mb": round(known.get(name, ("", 0))[1] / 1e6, 1), "installed_mb": round(total / 1e6, 1)})
     rows.sort(key=lambda r: -r["download_mb"])
     py = dir_size(root / "uv-python") if (root / "uv-python").exists() else 0
-    # first use of ffmpeg: the wheel unpacks an archive
+    py_exe = venv / "Scripts" / "python.exe" if sys.platform == "win32" else venv / "bin" / "python"
+    before = dir_size(venv)
     t = time.perf_counter()
-    r = subprocess.run([str(next(venv.rglob("python*")) if sys.platform != "win32" else venv / "Scripts" / "python.exe"), "-c", "import schnippo.ffmpeg_dist as f; print(f.path('ffmpeg'))"], env=env, capture_output=True, text=True, cwd=folder)
+    r = subprocess.run([str(py_exe), "-c", "import schnippo.deps as d; d.ensure('ffmpeg', print); d.ensure('opencv', print); import schnippo.ffmpeg_dist as f; print(f.path('ffmpeg'))"], env={**env, "PATH": str(Path(shutil.which("uv")).parent) + os.pathsep + os.environ["PATH"]}, capture_output=True, text=True, cwd=folder)
     unpack = time.perf_counter() - t
+    print(r.stdout[-900:], r.stderr[-400:])
+    after_restart, _ = asyncio.run(handshake(folder, env))
+    still = subprocess.run([str(py_exe), "-c", "import cv2, portable_ffmpeg; print('ok')"], env=env, capture_output=True, text=True).stdout.strip()
     defender = ""
     if sys.platform == "win32":
         ps = subprocess.run(["powershell", "-NoProfile", "-Command", "(Get-MpComputerStatus).RealTimeProtectionEnabled"], capture_output=True, text=True)
         defender = ps.stdout.strip()
     res = {"platform": sys.platform, "cold_start_s": round(cold, 1), "warm_start_s": round(warm, 1), "tools": tools, "bundle_mb": round(Path(bundle).stat().st_size / 1e6, 1), "python_install_mb": round(py / 1e6, 1),
-           "venv_mb": round(dir_size(venv) / 1e6, 1), "ffmpeg_first_use_s": round(unpack, 1), "ffmpeg_ok": r.returncode == 0, "defender_realtime": defender, "packages": rows}
+           "venv_mb": round(dir_size(venv) / 1e6, 1), "helpers_fetch_s": round(unpack, 1), "helpers_ok": r.returncode == 0, "helpers_mb": round((dir_size(venv) - before) / 1e6, 1), "restart_after_helpers_s": round(after_restart, 1), "helpers_kept_after_restart": still == "ok", "defender_realtime": defender, "packages": rows}
     Path("first_start.json").write_text(json.dumps(res, indent=2), encoding="utf-8")
     print(json.dumps({k: v for k, v in res.items() if k != "packages"}, indent=2))
     print(f"{'Paket':34} Download  installiert (MB)")

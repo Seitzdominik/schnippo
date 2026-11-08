@@ -202,10 +202,15 @@ def _setup_text(head: str) -> str:
 
 
 @tool
-def ingest_folder(path: str, import_to_resolve: bool = False, recursive: bool = False) -> str:
+def ingest_folder(path: str, import_to_resolve: bool = False, recursive: bool = False, ctx: Context | None = None) -> str:
     """Scan a folder of takes: ffprobe metadata, VFR check, stable clip IDs (c01…). path: a folder, pasted in any form, or just a project name from the projects folder.
     A-Roll/, B-Roll/, Bilder/ and Skript/ (also Interview, Footage, Images, Script …) are read as such. Unsorted folders: show the classification briefly for confirmation.
     Optionally import all clips into a Resolve Media Pool bin named after the folder."""
+    from . import deps
+    try:
+        deps.ensure_for_material(_progress(ctx, "Einrichtung"))
+    except deps.SetupFailed as e:
+        raise ToolError(str(e)) from e
     res = _ws.ingest(_project_path(path), import_to_resolve=import_to_resolve, recursive=recursive, bridge=_bridge)
     lines = [f"{len(res['clips'])} Clips, {len(res['stills'])} Standbilder aus {res['folder']}"]
     lines += [_ws.list_clips_text().split("\n", 1)[1]] if res["clips"] or res["stills"] else []
@@ -795,7 +800,7 @@ def sense_check(timeline: str | None = None, confirm: bool = False, ctx: Context
     finally:
         if work is not None:
             shutil.rmtree(work, ignore_errors=True)
-    timeline = timeline or planned.timeline_name
+    timeline = timeline or _ws.prepare(planned)[0].timeline_name
     st = res["stats"]
     lines = [f"Gegenhören „{timeline}“: {_mmss(res['total_s'])} min, davon {_mmss(res['new_s'])} min neu transkribiert "
              f"≈ {res['cost_usd']:.3f} USD (Rest aus dem Cache, kostenlos).",
@@ -1431,7 +1436,7 @@ def eta_seconds(seconds_cut: float, graphics: int, audio: bool) -> float:
 def _report(name: str, cl, plan, rc: dict, qc_text: str, seconds: float, borderline: list[dict], questions: list[str], skip: set[str], backup: str | None) -> str:
     t = rc["timeline"]
     total = t["seconds"]
-    raw = sum(c.duration_s for cid, c in _ws.clips.items() if cid in {p.clip for p in plan.pieces if not p.manual})
+    raw = sum(_ws.clips[c].duration_s for c in _ws.transcribe_ids())
     m, s = divmod(int(round(seconds)), 60)
     out = [f"Komplett-Schnitt fertig: Timeline „{name}“ in {m}:{s:02d} min gebaut und geprüft.",
            f"Laufzeit: {ts(total)} (aus {ts(raw)} Material, {100 - total / raw * 100:.0f} % entfernt)" if raw else f"Laufzeit: {ts(total)}"]

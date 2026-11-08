@@ -1,14 +1,15 @@
-"""Bundled ffmpeg/ffprobe (PyPI package portable-ffmpeg-full: FFmpeg 9.0.2, GPL-3.0-or-later build by Martin Riedl,
-native arm64/x86_64 wheels with both binaries, no runtime download). Only used when no system ffmpeg exists.
-License notice: see README (section ffmpeg). The binaries run as separate processes; nothing links against them."""
+"""ffmpeg/ffprobe from the PyPI package portable-ffmpeg-full (FFmpeg 9.0.2, GPL-3.0-or-later build by Martin Riedl, native arm64/x86_64 wheels with both binaries). Only used when no system ffmpeg exists.
+Fetched on first use (deps.py). License notice: see README (section ffmpeg). The binaries run as separate processes; nothing links against them."""
 
 from __future__ import annotations
 
-import functools
+_found: tuple[str, str] | None = None
 
 
-@functools.cache
 def _paths() -> tuple[str, str] | None:
+    global _found
+    if _found is not None:
+        return _found
     try:
         from portable_ffmpeg import get_ffmpeg
     except ImportError:
@@ -22,7 +23,8 @@ def _paths() -> tuple[str, str] | None:
             ffmpeg, ffprobe = get_ffmpeg()
     except Exception:
         return None
-    return str(ffmpeg), str(ffprobe)
+    _found = (str(ffmpeg), str(ffprobe))
+    return _found
 
 
 def path(name: str) -> str | None:

@@ -73,7 +73,8 @@ def test_key_ffmpeg_cache(cfg, installed, tmp_path):
     cfg.gladia_api_key = None
     checks = run(cfg, key_ok=(False, "kein Key eingetragen"), tools=False)
     assert checks["gladia"].ok is False and "Erweiterungen" in checks["gladia"].fix
-    assert checks["ffmpeg"].ok is False and checks["ffprobe"].ok is False
+    from schnippo import platforms
+    assert checks["ffmpeg"].ok is (True if platforms.find_uv() else False) and checks["ffprobe"].ok is checks["ffmpeg"].ok  # with uv it is fetched on the first ingest
     assert checks["cache"].ok is True and "disk_cache" in checks
     (tmp_path / "datei").write_text("x")
     cfg.cache_dir = tmp_path / "datei" / "cache"  # below a file: not creatable anywhere

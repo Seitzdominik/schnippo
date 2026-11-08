@@ -25,14 +25,14 @@ jobs:
           node-version: "22"
       - name: Prüfskript (Pflicht)
         if: runner.os == 'macOS'
-        run: uv run --frozen python tools/check_public.py --all
+        run: uv run --frozen --extra media python tools/check_public.py --all
       - name: ffmpeg für die Tests (macOS, Windows nimmt das mitgelieferte)
         if: runner.os == 'macOS'
         run: brew install ffmpeg
       - name: ffmpeg aus dem Paket auf den Pfad (Windows)
         if: runner.os == 'Windows'
         run: |
-          dir=$(uv run --frozen python -c "from pathlib import Path; from schnippo import ffmpeg_dist; print(Path(ffmpeg_dist.path('ffmpeg')).parent)")
+          dir=$(uv run --frozen --extra media python -c "from pathlib import Path; from schnippo import ffmpeg_dist; print(Path(ffmpeg_dist.path('ffmpeg')).parent)")
           echo "$dir" >> "$GITHUB_PATH"
       - name: Chromium für die Grafik-Tests (Windows)
         if: runner.os == 'Windows'
@@ -40,7 +40,7 @@ jobs:
           dir=$(uv run --frozen python -c "from schnippo.config import Config; from pathlib import Path; print(Path(Config().cache_dir) / 'playwright')")
           PLAYWRIGHT_BROWSERS_PATH="$dir" uv run --frozen --extra motion python -m playwright install chromium-headless-shell
       - name: Tests
-        run: uv run --frozen --extra motion pytest -q
+        run: uv run --frozen --extra motion --extra media pytest -q
       - name: Bundle bauen
         run: uv run --frozen python packaging/build_mcpb.py
       - name: Python-Paket bauen und über uvx starten

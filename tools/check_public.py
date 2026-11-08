@@ -2,6 +2,7 @@
 
     uv run python tools/check_public.py            # files git would publish
     uv run python tools/check_public.py --all      # every file in the folder
+    uv run python tools/check_public.py --history  # every version of every file in every commit, and the commit messages
 
 Finds faces in images, media outside the allowed places, names from test projects (kept here only as salted hashes, so the
 list itself gives nothing away), known reference audio, API keys and personal paths. Exit code 1 on any finding."""
@@ -105,8 +106,44 @@ def check_file(path: Path, rel: str, deny: dict) -> list[str]:
     return out
 
 
+def history(deny: dict) -> tuple[int, int, list[str]]:
+    """What a public repository shows forever: every blob of every commit under every path it had, plus the commit messages."""
+    import tempfile
+    git = lambda *a: subprocess.run(["git", *a], cwd=REPO, capture_output=True, check=True).stdout
+    commits = git("rev-list", "--all").decode().split()
+    seen, problems = set(), []
+    for c in commits:
+        msg = git("log", "-1", "--format=%an%n%ae%n%B", c).decode("utf-8", "replace")
+        for label, rx in KEYS.items():
+            if re.search(rx, msg):
+                problems.append(f"Commit {c[:8]}: {label} in der Nachricht")
+        if m := re.search(PATHS, msg):
+            problems.append(f"Commit {c[:8]}: persönlicher Pfad {m.group(0)}")
+        for hit in names_in(msg, deny["salt"], set(deny["names"])):
+            problems.append(f"Commit {c[:8]}: bekannter Name „{hit}“")
+        for row in git("ls-tree", "-r", "-z", c).decode("utf-8", "surrogateescape").split("\0"):
+            if not row:
+                continue
+            meta, path = row.split("\t", 1)
+            _, kind, sha = meta.split()
+            if kind == "blob":
+                seen.add((path, sha))
+    with tempfile.TemporaryDirectory() as tmp:
+        for path, sha in sorted(seen):
+            f = Path(tmp) / ("blob" + Path(path).suffix)
+            f.write_bytes(git("cat-file", "blob", sha))
+            problems += [f"{p} (Blob {sha[:8]})" for p in check_file(f, path, deny)]
+    return len(commits), len(seen), sorted(set(problems))
+
+
 def main(argv: list[str]) -> int:
     deny = json.loads(DENY.read_text(encoding="utf-8"))
+    if "--history" in argv:
+        n, blobs, problems = history(deny)
+        for p in problems:
+            print("✗", p)
+        print(f"Prüfskript Historie: {n} Commits, {blobs} Dateiversionen, {len(problems)} Befund(e)")
+        return 1 if problems else 0
     files = tracked("--all" in argv)
     problems = [p for f in files for p in check_file(f, f.relative_to(REPO).as_posix(), deny)]
     for p in problems:

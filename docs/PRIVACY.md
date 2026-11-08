@@ -28,7 +28,7 @@ Alles bleibt lokal, außer es steht im nächsten Abschnitt.
 | Freesound (`freesound.org`) | Suchbegriffe | nur auf Wunsch, mit deinem Key | dein Auftrag |
 | ElevenLabs (`api.elevenlabs.io`) | Beschreibung eines Effekts | nur auf Wunsch, mit deinem Key | dein Auftrag |
 | GitHub (`api.github.com`) | keine Inhalte, nur die Abfrage der neuesten Version; GitHub sieht dabei deine IP-Adresse | höchstens einmal am Tag, abschaltbar | Update-Hinweis |
-| PyPI, GitHub, Playwright-CDN | keine Inhalte, nur Downloads von Abhängigkeiten | bei Installation und beim ersten Grafik-Render | Installation |
+| PyPI, GitHub, Playwright-CDN | keine Inhalte, nur Downloads von Abhängigkeiten | bei Installation, beim ersten Einlesen und beim ersten Grafik-Render | Installation |
 
 Für diese Dienste gelten deren eigene Datenschutzbestimmungen: [Gladia](https://www.gladia.io/privacy-policy), [Anthropic](https://www.anthropic.com/legal/privacy), [Freesound](https://freesound.org/help/privacy/), [ElevenLabs](https://elevenlabs.io/privacy-policy), [GitHub](https://docs.github.com/site-policy/privacy-policies/github-general-privacy-statement).
 

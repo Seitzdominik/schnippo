@@ -30,7 +30,7 @@ jobs:
           if [ "${GITHUB_REF_TYPE}" = "tag" ] && [ "${GITHUB_REF_NAME}" != "v$V" ]; then
             echo "Tag ${GITHUB_REF_NAME} passt nicht zu pyproject.toml ($V)"; exit 1; fi
       - name: Prüfskript (Pflicht)
-        run: uv run --frozen python tools/check_public.py --all
+        run: uv run --frozen --extra media python tools/check_public.py --all
       - name: Plugin passt zur Version
         run: |
           uv run --frozen python tools/build_plugin.py

@@ -21,6 +21,8 @@ Arbeite die Leitfäden der Reihe nach ab, aber baue keine Zwischenstände in Res
 
 Wünsche pro Auftrag kommen als Satz: „ohne Grafiken“ → `skip=["graphics"]`, „ohne Sound-Effekte“ → `skip=["sfx"]`, „ohne B-Roll“ → `skip=["overlays"]`, „ohne Zooms“ → `skip=["zooms"]`, „ohne Ton-Mastering“ → `skip=["audio"]`, „nur Rohschnitt“ → `skip=["rough"]`.
 
+Kapitel gehören nicht in die Cutlist: Beim Export `export_transcript(timeline=…, chapters=[…])`. Die Abschnitte „Technik“ weiter unten beschreiben auch den Durchgangs-Modus; `build_timeline` und `base_cutlist` brauchst du im Komplett-Schnitt nicht.
+
 ## Rückfragen
 Die Einstellung steht in der ersten Zeile von `get_edit_context`.
 - **nur wenn nötig** (Standard): Du fragst nur bei echten Widersprüchen im Material oder fehlender Szenenreihenfolge. Grenzfälle entscheidest du nach Leitfaden und trägst sie in `borderline` ein, mit Zeitstempel im fertigen Schnitt: `{"at": "1:12", "what": "Zweiter Versuch des Satzes zur Dosierung genommen, der erste stockt"}`.

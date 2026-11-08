@@ -128,8 +128,9 @@ def run(cfg, bridge=None, gladia=None, running=None, which=None, material: Path 
                          "" if bits == 64 else "Resolve braucht ein 64-bit-Python. uv installiert es automatisch, die Erweiterung neu installieren."))
     for tool in ("ffmpeg", "ffprobe"):
         path, source = which(tool)
-        out.append(Check(tool, f"{tool} gefunden", bool(path), f"{source}: {path}" if path else "nicht gefunden",
-                         "" if path else platforms.install_ffmpeg_hint()))
+        lazy = not path and platforms.find_uv() is not None  # fetched once on the first ingest
+        out.append(Check(tool, f"{tool} gefunden", bool(path) or lazy, f"{source}: {path}" if path else "wird beim ersten Einlesen einmalig geladen, das dauert ein bis zwei Minuten" if lazy else "nicht gefunden",
+                         "" if path or lazy else platforms.install_ffmpeg_hint()))
     cache = Path(cfg.cache_dir)
     try:
         cache.mkdir(parents=True, exist_ok=True)

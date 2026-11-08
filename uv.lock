@@ -1141,9 +1141,7 @@ dependencies = [
     { name = "keyring" },
     { name = "mcp", extra = ["cli"] },
     { name = "numpy" },
-    { name = "opencv-python-headless" },
     { name = "pillow" },
-    { name = "portable-ffmpeg-full" },
     { name = "psutil" },
     { name = "pydantic" },
     { name = "python-docx" },
@@ -1151,6 +1149,10 @@ dependencies = [
 ]
 
 [package.optional-dependencies]
+media = [
+    { name = "opencv-python-headless" },
+    { name = "portable-ffmpeg-full" },
+]
 motion = [
     { name = "playwright" },
 ]
@@ -1167,16 +1169,16 @@ requires-dist = [
     { name = "keyring", specifier = ">=25" },
     { name = "mcp", extras = ["cli"], specifier = ">=2.3.0" },
     { name = "numpy", specifier = ">=2.5.4" },
-    { name = "opencv-python-headless", specifier = ">=4.10,<5" },
+    { name = "opencv-python-headless", marker = "extra == 'media'", specifier = ">=4.10,<5" },
     { name = "pillow", specifier = ">=13.0.0" },
     { name = "playwright", marker = "extra == 'motion'", specifier = "==1.64.1" },
-    { name = "portable-ffmpeg-full", specifier = "==0.5.0" },
+    { name = "portable-ffmpeg-full", marker = "extra == 'media'", specifier = "==0.5.0" },
     { name = "psutil", specifier = ">=7" },
     { name = "pydantic", specifier = ">=2.14.2" },
     { name = "python-docx", specifier = ">=1.2.0" },
     { name = "rapidfuzz", specifier = ">=3.14.6" },
 ]
-provides-extras = ["motion"]
+provides-extras = ["media", "motion"]
 
 [package.metadata.requires-dev]
 dev = [

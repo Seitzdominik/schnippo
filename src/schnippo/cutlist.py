@@ -878,7 +878,7 @@ def plan_text(cl: Cutlist, plan: Plan, clips: dict[str, Clip]) -> str:
                 out.append(f"  ⚠ harte Kante {ts(h['t'])} ({'Anfang' if h['side'] == 'start' else 'Ende'} von #{h['item']:02d}, "
                            f"{h['clip']}:f{h['frame']:04d}): {h['over_db']:+.0f} dB über dem Rauschboden")
         for b in plan.beats:
-            orig = "Ende des Videos" if b["orig_s"] is None else f"Original {b['orig_s']:.2f} s"
+            orig = "Ende der Aufnahme" if b["orig_s"] is None else f"Original {b['orig_s']:.2f} s"
             out.append(f"Beat {b['kind']} @{ts(b['t'])} nach {b['word']} „{b['text']}“: Pause {b['actual_s']:.2f} s (Ziel {b['target_s']:.2f} s, {orig})")
         lv = {}
         for p in plan.pieces:

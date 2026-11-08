@@ -23,9 +23,7 @@ dependencies = [
     "keyring>=25",
     "mcp[cli]>=2.3.0",
     "numpy>=2.5.4",
-    "opencv-python-headless>=4.10,<5",
     "pillow>=13.0.0",
-    "portable-ffmpeg-full==0.5.0",
     "psutil>=7",
     "pydantic>=2.14.2",
     "python-docx>=1.2.0",
@@ -38,6 +36,8 @@ Repository = "https://github.com/Seitzdominik/schnippo"
 Issues = "https://github.com/Seitzdominik/schnippo/issues"
 
 [project.optional-dependencies]
+# fetched on the first ingest (deps.py), not with the extension: 2/3 of the first start on Windows
+media = ["opencv-python-headless>=4.10,<5", "portable-ffmpeg-full==0.5.0"]
 # installed on first use of motion graphics (motion_setup), not with the extension
 motion = ["playwright==1.64.1"]
 

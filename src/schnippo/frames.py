@@ -188,6 +188,8 @@ MOTION_VERSION = 2
 
 
 def _face_detector():
+    from . import deps
+    deps.ensure("opencv")
     import cv2
 
     return cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")

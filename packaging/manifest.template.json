@@ -5,20 +5,39 @@
   "version": "__VERSION__",
   "description": "__TAGLINE__: aus deinen Takes ein Rohschnitt per Chat, mit Ton, Zooms, B-Roll, Grafiken und Reels.",
   "long_description": "Lokaler MCP-Server: liest einen Ordner mit Takes ein, transkribiert mit Gladia (eigener API-Key), schlägt Takes und Schnitte vor und baut in DaVinci Resolve Studio (21.1+) nicht-destruktiv Timelines. Originalmaterial wird nie verändert. Voraussetzung: DaVinci Resolve Studio mit „External scripting using = Local“. DaVinci Resolve ist eine Marke von Blackmagic Design.",
-  "author": { "name": "__AUTHOR__", "url": "__AUTHOR_URL__" },
+  "author": {
+    "name": "__AUTHOR__",
+    "url": "__AUTHOR_URL__"
+  },
   "homepage": "__HOMEPAGE__",
   "documentation": "__DOCS_URL__",
   "support": "__SUPPORT_URL__",
-  "repository": { "type": "git", "url": "__REPOSITORY__" },
+  "repository": {
+    "type": "git",
+    "url": "__REPOSITORY__"
+  },
   "license": "MIT",
   "icon": "icon.png",
-  "keywords": ["davinci resolve", "video", "schnitt", "rohschnitt", "transkript"],
+  "keywords": [
+    "davinci resolve",
+    "video",
+    "schnitt",
+    "rohschnitt",
+    "transkript"
+  ],
   "server": {
     "type": "uv",
     "entry_point": "bundle_main.py",
     "mcp_config": {
       "command": "uv",
-      "args": ["run", "--directory", "${__dirname}", "--frozen", "--no-dev", "bundle_main.py"],
+      "args": [
+        "run",
+        "--directory",
+        "${__dirname}",
+        "--frozen",
+        "--no-dev",
+        "bundle_main.py"
+      ],
       "env": {
         "PYTHONUTF8": "1",
         "GLADIA_API_KEY": "${user_config.gladia_api_key}",
@@ -38,77 +57,86 @@
     "gladia_api_key": {
       "type": "string",
       "title": "Gladia-API-Key",
-      "description": "Für die Transkription (app.gladia.io → API Keys). Wird sicher im System gespeichert.",
+      "description": "Für die Transkription (app.gladia.io → API Keys).",
       "sensitive": true,
       "required": true
     },
     "language": {
       "type": "string",
       "title": "Sprache",
-      "description": "Sprache der Aufnahmen (ISO-Code, z. B. de, en).",
+      "description": "Sprache der Aufnahmen, zum Beispiel de oder en.",
       "default": "de",
       "required": false
     },
     "format": {
       "type": "string",
       "title": "Format",
-      "description": "auto (aus dem Material erkannt, bei Unklarheit fragt Claude), reel (9:16, 30–90 s), youtube (16:9, 8–15 min, auch Interviews), course (Kursvideo, ruhiger, Kapitel) oder commercial (Werbespot, 15–60 s).",
+      "description": "auto, reel, youtube, course oder commercial. Bei auto erkennt Schnippo das Format.",
       "default": "auto",
       "required": false
     },
     "export_folder": {
       "type": "directory",
       "title": "Export-Ordner (optional)",
-      "description": "Für SRT/TXT und den Video-Export. Leer = Unterordner schnippo-export neben dem Material.",
+      "description": "Für Export und Untertitel. Leer: neben dem Material.",
       "required": false
     },
     "projects_folder": {
       "type": "directory",
       "title": "Standardordner für Projekte (optional)",
-      "description": "Hier liegen deine Projekte. Dann reicht im Chat der Name: „Schneide Urlaubsfilm“.",
+      "description": "Dann reicht im Chat der Projektname.",
       "required": false
     },
     "sfx": {
       "type": "string",
       "title": "Sound-Effekte",
-      "description": "off (keine), subtil (leise, Standard) oder normal (etwas präsenter).",
+      "description": "off, subtil oder normal.",
       "default": "subtil",
-      "required": false
-    },
-    "sfx_folder": {
-      "type": "directory",
-      "title": "Eigene Sound-Effekte (optional)",
-      "description": "Ordner mit eigenen Sounds. Kategorie aus Ordner- und Dateiname, die Lizenz liegt bei dir.",
-      "required": false
-    },
-    "freesound_api_key": {
-      "type": "string",
-      "title": "Freesound-API-Key (optional)",
-      "description": "Sucht Sounds mit Lizenzfilter (Standard CC0) und lädt sie in deinen Sound-Ordner. freesound.org/apiv2/apply",
-      "sensitive": true,
       "required": false
     },
     "update_check": {
       "type": "boolean",
       "title": "Nach neuen Versionen suchen",
-      "description": "Einmal am Tag eine Anfrage an GitHub, es werden keine Daten übertragen.",
+      "description": "Einmal am Tag eine Anfrage an GitHub, ohne deine Daten.",
       "default": true,
+      "required": false
+    },
+    "sfx_folder": {
+      "type": "directory",
+      "title": "Eigene Sound-Effekte (optional)",
+      "description": "Ordner mit eigenen Sounds. Die Lizenz liegt bei dir.",
+      "required": false
+    },
+    "freesound_api_key": {
+      "type": "string",
+      "title": "Freesound-API-Key (optional)",
+      "description": "Sucht Sounds mit Lizenzfilter (freesound.org/apiv2/apply).",
+      "sensitive": true,
       "required": false
     },
     "elevenlabs_api_key": {
       "type": "string",
       "title": "ElevenLabs-API-Key (optional)",
-      "description": "Erzeugt Sound-Effekte aus Text. Kostet Credits; kommerzielle Nutzung ab dem Starter-Plan.",
+      "description": "Erzeugt Sound-Effekte aus Text, kostet Credits.",
       "sensitive": true,
       "required": false
     }
   },
   "tools_generated": true,
   "prompts_generated": true,
-  "privacy_policies": ["__PRIVACY_URL__", "__PRIVACY_URL_DE__", "https://www.gladia.io/privacy-policy"],
+  "privacy_policies": [
+    "__PRIVACY_URL__",
+    "__PRIVACY_URL_DE__",
+    "https://www.gladia.io/privacy-policy"
+  ],
   "compatibility": {
     "claude_desktop": ">=1.0.0",
-    "platforms": ["darwin", "win32"],
-    "runtimes": { "python": ">=3.14,<3.16" }
+    "platforms": [
+      "darwin",
+      "win32"
+    ],
+    "runtimes": {
+      "python": ">=3.14,<3.16"
+    }
   }
 }
