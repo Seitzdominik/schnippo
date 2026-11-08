@@ -1388,7 +1388,7 @@ def _add(timeline: str, label: str, field: str, new: list) -> str:
     setattr(work, field, list(getattr(work, field)) + new)
     plan = _ws.plan(work)[0]
     tag = {"overlays": "Overlay", "graphics": "Grafik", "sfx": "Effekt"}[field]
-    errs = [e for e in plan.errors if not any(e.startswith(f"{tag} {k} ") for k in range(1, n0 + 1))]
+    errs = [e for e in plan.errors if not any(e.startswith(f"{tag} {k} ") for k in range(1, n0 + 1)) and "überlappt eine andere Grafik" not in e]  # a free track is chosen below
     if errs:
         raise ValueError("Nichts gesetzt:\n" + "\n".join(errs))
     ov = [o for o in plan.overlays if field == "overlays" and o.index > n0]

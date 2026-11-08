@@ -468,7 +468,7 @@ def timeline_changes(built: Cutlist, plan: Plan, timeline: dict, analyzed: dict,
             by_hand(k, it, "von Hand eingefügt, ohne vollständiges Wort")
             continue
         items.append(CutItem(clip=it["clip"], from_word=full[0].id, to_word=full[-1].id, start_frame=f"{it['clip']}:f{a:04d}",
-                             end_frame=f"{it['clip']}:f{b - 1:04d}", zoom=round(it.get("zoom") or 1.0, 3), pan=it.get("pan"), tilt=it.get("tilt"),
+                             end_frame=f"{it['clip']}:f{b - 1:04d}", zoom=round(it.get("zoom") or 1.0, 3), pan=it.get("pan"), tilt=it.get("tilt"), exact=True,
                              note=f"aus Resolve übernommen ({st})"))
     for at_rec, n in gaps:
         prev = [it for it in v1 if it["rec"] < at_rec]

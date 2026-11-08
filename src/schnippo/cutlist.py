@@ -61,6 +61,7 @@ class CutItem(BaseModel):
     end_frame: str | None = None  # optional explicit last shown frame (inclusive), e.g. "c01:f0190"
     pause_after_ms: int | None = None  # deliberate pause kept after the last word (key statement / before a punchline)
     beat: str | None = None  # key | section: the last word of this item ends a key statement / a section (see Beat)
+    exact: bool = False  # frames read back from a timeline: they are what is there, whatever the transcript says about word edges
     pan: float | None = None  # as set by hand in Resolve (with zoom); None = from the face position
     tilt: float | None = None
 
@@ -463,7 +464,7 @@ def _choose(default: int, lo: int, hi: int, score, quiet: float, trigger: float,
 def plan_item(idx: int, clip: Clip, at: AnalyzedTranscript, n0: int, n1: int, opt: CutOptions, fps: float,
               max_frame: int | None, motion=None, start_frame: int | None = None, end_frame: int | None = None,
               notes: list | None = None, pause_after_ms: int | None = None, beats: dict | None = None,
-              ac=None) -> list[Piece]:
+              ac=None, exact: bool = False) -> list[Piece]:
     from . import edges as ed
     natural = opt.plan_version >= 2 and ac is not None
     decay_max = opt.decay_max_ms / 1000
@@ -606,7 +607,7 @@ def plan_item(idx: int, clip: Clip, at: AnalyzedTranscript, n0: int, n1: int, op
         explicit_e = last_span and end_frame is not None
         if explicit_s:
             word0 = math.floor(sp["w"][0].start_s * fps + 1e-9)
-            if start_frame > word0:
+            if start_frame > word0 and not exact:
                 raise ValueError(f"start_frame f{start_frame:04d} schneidet das erste Wort an (beginnt bei f{word0:04d})")
             lo = math.ceil(sp["sw"][0] * fps - 1e-9)
             if notes is not None and start_frame < lo:
@@ -614,7 +615,7 @@ def plan_item(idx: int, clip: Clip, at: AnalyzedTranscript, n0: int, n1: int, op
             sf = start_frame
         if explicit_e:
             wordn = math.ceil(sp["w"][-1].end_s * fps - 1e-9)
-            if end_frame + 1 < wordn:
+            if end_frame + 1 < wordn and not exact:
                 raise ValueError(f"end_frame f{end_frame:04d} schneidet das letzte Wort an (endet bei f{wordn:04d})")
             hi = math.floor(sp["ew"][1] * fps + 1e-9)
             if notes is not None and end_frame + 1 > hi:
@@ -718,7 +719,7 @@ def build_plan(cl: Cutlist, clips: dict[str, Clip], analyzed: dict[str, Analyzed
             efx = _frame_of(it.end_frame, cid) if it.end_frame else None
             notes: list[str] = []
             new = plan_item(i, clip, at, n0, n1, cl.options, fps, max_frame, (motions or {}).get(cid), sfx, efx, notes,
-                            it.pause_after_ms, beat_map.get(cid), (acoustics or {}).get(cid))
+                            it.pause_after_ms, beat_map.get(cid), (acoustics or {}).get(cid), exact=it.exact)
             if plan.pieces and new and cl.options.plan_version >= 2:
                 prev = plan.pieces[-1]  # items next to each other in the source: the run-out ends where the next piece starts
                 if prev.clip == new[0].clip and prev.start_frame < new[0].start_frame < prev.end_frame:

@@ -426,3 +426,12 @@ def test_an_invalid_cutlist_is_not_heard_with_pieces_missing(monkeypatch):
     monkeypatch.setattr(ws, "plan", lambda c: (Plan(errors=["#10: start_frame schneidet das erste Wort an"]), {}, {}), raising=False)
     with pytest.raises(ValueError, match="nichts gehört"):
         ws._sense_target(None, Cutlist())
+
+
+def test_frames_read_back_from_a_timeline_are_not_second_guessed():
+    from schnippo.cutlist import plan_item
+    words = transcript()
+    with pytest.raises(ValueError):
+        plan_item(1, CLIP, words, 1, 2, Cutlist().options.model_copy(update={"motion_aware_cuts": False, "plan_version": 1}), 25.0, None, start_frame=26, end_frame=40)
+    got = plan_item(1, CLIP, words, 1, 2, Cutlist().options.model_copy(update={"motion_aware_cuts": False, "plan_version": 1, "tighten_gaps_over_ms": 10 ** 6, "cut_fillers": False}), 25.0, None, start_frame=26, end_frame=40, exact=True)
+    assert (got[0].start_frame, got[-1].end_frame) == (26, 41)
