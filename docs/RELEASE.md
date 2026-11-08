@@ -21,6 +21,10 @@ Der Name `schnippo` war am 7. November 2026 auf PyPI und TestPyPI frei. Die Acti
 
 Eine Version lässt sich auf PyPI nicht ersetzen. Bei Fehlern kommt die nächste Patch-Version.
 
+## Plattformen
+
+Die `.mcpb` ist plattformübergreifend (Typ `uv`, eine Datei für macOS und Windows, etwa 14 MB). Python und die Abhängigkeiten holt uv beim ersten Start für das jeweilige System, ffmpeg bringt dabei das Wheel mit: etwa 24 MB auf Apple Silicon, 62 MB auf Windows. Die Action `ci` baut und startet alles auf beiden Systemen.
+
 ## Signatur der `.mcpb`
 
 `mcpb sign --self-signed` läuft ohne Zertifikat durch, aber `mcpb verify` und `mcpb info` melden die Datei danach weiter als nicht signiert (geprüft mit mcpb 2.1.2). Selbstsignieren bringt also nichts, die Releases bleiben unsigniert. Eine echte Signatur braucht ein Zertifikat einer anerkannten Stelle, das kostet Geld. Ob Claude Desktop bei unsignierten Dateien einen Hinweis zeigt, steht nicht in der Dokumentation, die Installation funktioniert aber.

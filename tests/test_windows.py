@@ -27,6 +27,7 @@ def win(monkeypatch):
     (r"\\server\share\Film", r"\\server\share\Film"),
     ("file:///C:/Daten/Max/Mein%20Film/", r"C:\Daten\Max\Mein Film"),
     ("file://server/share/Film", r"\\server\share\Film"),
+    ("file://C:/Daten/Mein%20Film", r"C:\Daten\Mein Film"),
     ("C:/Projekte/Film/", "C:/Projekte/Film"),
 ])
 def test_pasted_windows_paths(text, want):

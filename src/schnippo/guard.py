@@ -71,8 +71,8 @@ def clean_text(text: str | Path, windows: bool | None = None) -> str:
         path = unquote(u.path)
         if not windows:
             t = path
-        elif re.fullmatch(r"[A-Za-z]:", u.netloc):  # file://C:/... is wrong, but people write it
-            t = (u.netloc + path).replace("/", "\\")
+        elif re.match(r"[A-Za-z]:", u.netloc):  # file://C:/... is wrong, but people write it
+            t = (unquote(u.netloc) + path).replace("/", "\\")
         elif u.netloc and u.netloc.lower() != "localhost":
             t = f"\\\\{u.netloc}{path}".replace("/", "\\")
         else:
