@@ -22,12 +22,27 @@ class Detection:
     conflict: str = ""
     orient: str | None = None
     scores: dict = field(default_factory=dict)
+    content_type: str | None = None  # what is being cut, independent of the delivery format; None before the transcripts are known
 
     def text(self) -> str:
         head = f"{self.format} ({self.confidence:.2f}): " + ", ".join(self.reasons)
         if self.ask:
             head += f" → bitte beim Nutzer nachfragen{': ' + self.conflict if self.conflict else ''}"
         return head
+
+
+CONTENT_TYPES = ("interview", "course", "commercial", "talking_head")
+CONTENT_LABELS = {"interview": "Interview", "course": "Kurs", "commercial": "Werbung", "talking_head": "Talking Head"}
+CONTENT_WORDS = {"interview": "interview", "interviews": "interview", "gespräch": "interview", "kurs": "course", "kurse": "course", "course": "course", "kursvideo": "course",
+                 "werbung": "commercial", "werbefilm": "commercial", "werbespot": "commercial", "commercial": "commercial",
+                 "talking head": "talking_head", "talking_head": "talking_head", "talkinghead": "talking_head", "monolog": "talking_head", "ansprache": "talking_head"}
+
+
+def content_of(fmt: str, speakers: int) -> str:
+    """Two people talking is an interview in every format, a reel of one included. Otherwise the format says what it is."""
+    if speakers >= 2:
+        return "interview"
+    return fmt if fmt in ("course", "commercial") else "talking_head"
 
 
 def _mmss(s: float) -> str:
@@ -133,6 +148,7 @@ def refine(base: Detection, *, speakers: int, aroll_clips: int, broll_clips: int
         if sc["commercial"] >= 3.0 and hint != "reel":
             fmt = "commercial"
         else:
+            base.content_type = content_of(base.format, speakers)
             return base
     else:
         fmt = max(sc, key=sc.get)
@@ -143,7 +159,7 @@ def refine(base: Detection, *, speakers: int, aroll_clips: int, broll_clips: int
         conf = min(conf, base.confidence)
     reasons = list(base.reasons) + (why[fmt] or ["keine besonderen Merkmale"])
     det = Detection(fmt, conf, reasons, ask=conf < ASK_BELOW, orient=base.orient,
-                    scores={k: round(v, 1) for k, v in sc.items()})
+                    scores={k: round(v, 1) for k, v in sc.items()}, content_type=content_of(fmt, speakers))
     if hint in sc or hint == "reel":
         det.ask = False
     return det

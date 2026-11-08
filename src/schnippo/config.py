@@ -44,6 +44,7 @@ class Config:
     acoustic_delta_db: float = 25.0  # activity threshold above the measured noise floor
     guides_dir: Path = field(default_factory=lambda: Path(__file__).resolve().parent / "data" / "guides")
     export_folder: Path | None = None  # None → <material folder>/schnippo-export
+    content_type: str = "auto"  # auto | interview | course | commercial | talking_head: what is cut, independent of the format
     format: str = "auto"  # auto (detected from the material, ask when unclear) | reel | youtube | course | commercial
     style: str = "ruhig-dicht"  # ruhig | ruhig-dicht | dicht
     profile_overrides: dict = field(default_factory=dict)

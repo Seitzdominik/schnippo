@@ -17,6 +17,7 @@ BRIEF = """# Brief
 Alles ist optional, Stichworte reichen.
 
 Format (Reel, YouTube, Kurs, Interview, Werbung):
+Art des Inhalts (Interview, Kurs, Werbung, Talking Head):
 Ziel und Zielgruppe:
 Gewünschte Länge:
 Kernbotschaft:
@@ -92,6 +93,17 @@ def brief_format(root: Path) -> str | None:
         return None
     fmt = FORMATS.get(m.group(1).strip().rstrip(".").lower())
     return None if fmt in (None, "auto") else fmt
+
+
+def brief_content_type(root: Path) -> str | None:
+    """What the brief says the material is: the line for it, or "Interview" and the like in the format line."""
+    from .formats import CONTENT_WORDS
+    text = brief_text(root) or ""
+    for rx in (r"^Art[^:\n]*:\s*(.+)$", r"^Format[^:\n]*:\s*(.+)$"):
+        m = re.search(rx, text, re.M | re.I)
+        if m and (ct := CONTENT_WORDS.get(m.group(1).strip().rstrip(".").lower())):
+            return ct
+    return None
 
 
 def _stem(name: str) -> str:

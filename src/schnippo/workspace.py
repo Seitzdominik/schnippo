@@ -52,6 +52,7 @@ class Workspace:
         self.stills: dict[str, Still] = {}
         self.corrections: dict[str, str] = {}
         self.builds: dict[str, dict] = {}  # timeline name → cutlist (as built), for base_cutlist and exports
+        self.content_choice: str | None = None  # interview | course | commercial | talking_head, set by the user for this folder
         self.format_choice: str | None = None  # reel | youtube | course | commercial, set by the user (set_format) for this folder
         self.reviews: dict[str, dict] = {}  # review id → {timeline, decisions, answers}
         self.roles: dict[str, str] = {}  # clip id → aroll | broll, set by the user (overrides the classification)
@@ -81,6 +82,7 @@ class Workspace:
         self.corrections = dict(reg.get("corrections", {}))
         self.builds = dict(reg.get("builds", {}))
         self.format_choice = reg.get("format")
+        self.content_choice = reg.get("content_type")
         self.reviews = dict(reg.get("reviews", {}))
         self.roles = dict(reg.get("roles", {}))
         self.glossary_terms = list(reg.get("glossary", []))
@@ -95,7 +97,7 @@ class Workspace:
                          {"folder": str(self.folder), "clips": {k: v.model_dump(exclude={"fps"}) for k, v in self.clips.items()},
                           "stills": {k: v.model_dump() for k, v in self.stills.items()}, "script": self.script_path,
                           "corrections": self.corrections, "builds": self.builds,
-                          "format": self.format_choice, "reviews": self.reviews, "roles": self.roles,
+                          "format": self.format_choice, "content_type": self.content_choice, "reviews": self.reviews, "roles": self.roles,
                           "glossary": self.glossary_terms, "variants": self.variants})
         Cache.write_json(self._active_file(), {"folder": str(self.folder)})
 
@@ -1016,6 +1018,32 @@ class Workspace:
             return "reel", "Standard"
         d = self.detect_format()
         return d.format, f"erkannt ({d.confidence:.2f}{', unsicher' if d.ask else ''})"
+
+    def effective_content_type(self) -> tuple[str, str]:
+        """(content type, source), in the order of the format: user choice → brief → preference → detection. Independent of the format: a reel can be an interview."""
+        from .formats import CONTENT_TYPES
+        from .projects import brief_content_type
+        if self.content_choice in CONTENT_TYPES:
+            return self.content_choice, "gewählt"
+        ct = brief_content_type(self.folder) if self.folder else None
+        if ct:
+            return ct, "aus dem Brief"
+        if self.cfg.content_type in CONTENT_TYPES:
+            return self.cfg.content_type, "Vorliebe"
+        if not self.clips:
+            return "talking_head", "Standard"
+        d = self.detect_format()
+        return d.content_type or "talking_head", "erkannt"
+
+    def set_content_type(self, ct: str) -> str:
+        from .formats import CONTENT_TYPES, CONTENT_WORDS
+        value = CONTENT_WORDS.get(ct, ct)
+        if value not in CONTENT_TYPES + ("auto",):
+            raise ValueError("content_type: " + " | ".join(CONTENT_TYPES) + " | auto")
+        self.content_choice = None if value == "auto" else value
+        if self.folder:
+            self._save()
+        return self.effective_content_type()[0]
 
     def set_format(self, fmt: str) -> str:
         from .profiles import FORMATS

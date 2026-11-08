@@ -400,11 +400,16 @@ def detect_format(hint: str | None = None) -> CallToolResult:
 
 
 @tool
-def set_format(format: str) -> str:
-    """Fix the format for this folder: reel | youtube | course | commercial | auto (back to detection). Stored with the
-    workspace."""
-    fmt = _ws.set_format(format.strip().lower())
-    return f"Format für diesen Ordner: {fmt} ({_ws.effective_format()[1]})"
+def set_format(format: str | None = None, content_type: str | None = None) -> str:
+    """Fix for this folder what the user said in the chat; that beats the brief, the preferences and the detection. format: reel | youtube | course | commercial | auto (back to detection).
+    content_type, independent of the format (a reel can be an interview): interview | course | commercial | talking_head | auto. Stored with the workspace."""
+    if format is None and content_type is None:
+        raise ValueError("format oder content_type angeben")
+    if format is not None:
+        _ws.set_format(format.strip().lower())
+    if content_type is not None:
+        _ws.set_content_type(content_type.strip().lower())
+    return f"Format für diesen Ordner: {_ws.effective_format()[0]} ({_ws.effective_format()[1]}) · Inhalt: {_ws.effective_content_type()[0]} ({_ws.effective_content_type()[1]})"
 
 
 @tool
@@ -584,7 +589,10 @@ def get_edit_context(clip_ids: list[str] | str = "all", include_guide: bool = Tr
 
 def _format_line() -> str:
     fmt, src = _ws.effective_format()
-    line = f"Format: {fmt} ({src})"
+    ct, ct_src = _ws.effective_content_type()
+    line = f"Format: {fmt} ({src}) · Inhalt: {ct} ({ct_src})"
+    if ct == "interview":
+        line += " · Interview-Regeln gelten auch im Reel: Fragen je nach Fassung raus oder kurz behalten, Vorgespräch raus, beim Sprecherwechsel an der Satzgrenze schneiden"
     if not _cfg.graphics:
         line += " · Grafiken sind aus: Durchgang 5 nur auf Wunsch"
     if src.startswith("erkannt"):

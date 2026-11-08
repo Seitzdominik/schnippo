@@ -14,9 +14,9 @@ jobs:
   bundle:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v6
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10
+      - uses: actions/setup-node@v7
         with:
           node-version: "22"
       - name: Version check
@@ -42,7 +42,7 @@ jobs:
       - name: Paket startet über uvx
         run: |
           uv run --frozen python tools/smoke_uvx.py "dist/schnippo-${VERSION}-py3-none-any.whl"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: python-package
           path: |
@@ -73,7 +73,7 @@ jobs:
     permissions:
       id-token: write
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: python-package
           path: dist

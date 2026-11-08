@@ -24,7 +24,7 @@ def test_fresh_state(conf):
 def test_answers_become_defaults(conf):
     d = prefs.load()
     got, bad = prefs.read_answers({"format": "Interviews", "style": "ausgewogen", "language": "Deutsch", "sfx": "aus", "graphics": "an", "projects_folder": f'"{conf}/"'})
-    assert not bad and got == {"format": "youtube", "style": "ruhig-dicht", "language": "de", "sfx": "off", "graphics": True, "projects_folder": str(conf)}
+    assert not bad and got == {"format": "youtube", "content_type": "interview", "style": "ruhig-dicht", "language": "de", "sfx": "off", "graphics": True, "projects_folder": str(conf)}
     d["preferences"].update(got)
     prefs.save(d)
     cfg = load_config()

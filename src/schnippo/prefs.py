@@ -48,6 +48,8 @@ def apply(cfg, data: dict | None = None) -> None:
         given = (os.environ.get(name) or "").strip().lower()
         if key in prefs and (not given or given.startswith("${") or given == DEFAULTS[key]):
             setattr(cfg, attr, prefs[key])
+    if prefs.get("content_type"):
+        cfg.content_type = prefs["content_type"]
     if "graphics" in prefs:
         cfg.graphics = bool(prefs["graphics"])
     if prefs.get("projects_folder") and cfg.projects_folder is None:
@@ -85,6 +87,8 @@ def read_answers(answers: dict) -> tuple[dict, list[str]]:
             out[key] = v
         else:
             bad.append(f"{key}: „{answers[key]}“")
+    if str(answers.get("format") or "").strip().lower() in ("interview", "interviews"):
+        out["content_type"] = "interview"
     g = answers.get("graphics")
     if g is not None and g != "":
         v = str(g).strip().lower()
