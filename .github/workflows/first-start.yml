@@ -1,0 +1,50 @@
+# Measures the first start of the extension (Phase 13). Run by hand: gh workflow run first-start.yml
+name: first-start
+
+on:
+  workflow_dispatch:
+
+jobs:
+  measure:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.3.3
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+      - name: Bundle bauen
+        run: uv run --frozen python packaging/build_mcpb.py
+      - name: Erststart messen
+        run: uv run --frozen python tools/measure_first_start.py dist/schnippo-*.mcpb
+      - name: Binary zum Vergleich (PyInstaller, Windows)
+        if: runner.os == 'Windows'
+        run: |
+          start=$(date +%s)
+          uv run --frozen --no-dev --with pyinstaller pyinstaller --noconfirm --onedir --name schnippo-bin --distpath binout --workpath binwork --collect-all mcp --collect-all pydantic --collect-submodules schnippo --add-data "src/schnippo/data;schnippo/data" packaging/bundle_main.py > binlog.txt 2>&1 || tail -20 binlog.txt
+          echo "Build: $(( $(date +%s) - start )) s"
+          du -sm binout/schnippo-bin
+          (cd binout && 7z a -tzip -mx=5 ../schnippo-bin.zip schnippo-bin > /dev/null)
+          ls -l schnippo-bin.zip
+          uv run --frozen python - <<'PY'
+          import asyncio, os, time
+          from mcp import ClientSession
+          from mcp.client.stdio import StdioServerParameters, stdio_client
+          async def go():
+              env = {**os.environ, "SCHNIPPO_UPDATE_CHECK": "0", "SCHNIPPO_NO_MIGRATE": "1", "PYTHONUTF8": "1"}
+              for label in ("kalt", "warm"):
+                  t = time.perf_counter()
+                  async with stdio_client(StdioServerParameters(command="binout/schnippo-bin/schnippo-bin.exe", args=[], env=env)) as (r, w):
+                      async with ClientSession(r, w) as s:
+                          await s.initialize()
+                          n = len((await s.list_tools()).tools)
+                  print(f"Binary {label}: {time.perf_counter() - t:.1f} s, {n} Tools")
+          asyncio.run(go())
+          PY
