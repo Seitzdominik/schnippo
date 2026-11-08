@@ -1,3 +1,10 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/brand/logo-dark.svg">
+    <img src="assets/brand/logo.svg" alt="Schnippo" width="180">
+  </picture>
+</p>
+
 # Schnippo
 
 **KI-Rohschnitt für DaVinci Resolve.** Beta für Mac, Windows als frische Beta: Rückmeldungen willkommen.
@@ -138,7 +145,7 @@ Nutze Schnippo nur mit Material, das du diesen Diensten geben darfst.
 
 ### Privacy Policy
 
-Vollständige Fassung: [docs/PRIVACY.md](docs/PRIVACY.md), online unter https://schnippo.com/privacy.
+Maßgeblich ist die Website: [Datenschutzerklärung (Deutsch)](https://schnippo.com/datenschutz/) · [Privacy Policy (English)](https://schnippo.com/en/privacy/). Zusammenfassung im Repository: [docs/PRIVACY.md](docs/PRIVACY.md).
 
 - **Datenerhebung:** Schnippo erhebt keine Daten und betreibt keinen eigenen Server.
 - **Nutzung und Speicherung:** Transkripte, Analysen und Einstellungen liegen lokal, am Mac in `~/Library/Caches/schnippo` und `~/.config/schnippo`, unter Windows in `%LOCALAPPDATA%\\schnippo\\Cache` und `%APPDATA%\\schnippo`.
@@ -149,6 +156,10 @@ Vollständige Fassung: [docs/PRIVACY.md](docs/PRIVACY.md), online unter https://
 ## Lizenzen
 
 Schnippo steht unter der [MIT-Lizenz](LICENSE), © Seitz Dominik Visuals. Fremde Bestandteile: [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+
+### Marke
+
+Die MIT-Lizenz gilt für den Code. Name, Logo und Icon von Schnippo sind Eigentum von Seitz Dominik Visuals und von der Lizenz ausgenommen: Forks und abgeleitete Projekte dürfen den Code nutzen, aber nicht Namen oder Logo. Details: [assets/brand/README.md](assets/brand/README.md).
 
 DaVinci Resolve ist eine Marke von Blackmagic Design. Schnippo ist ein unabhängiges Projekt und nicht mit Blackmagic Design verbunden.
 
@@ -174,6 +185,6 @@ Der Hook startet `tools/check_public.py`. Technische Erkenntnisse stehen in [doc
 
 **Install:** download the `.mcpb` from [Releases](https://github.com/Seitzdominik/schnippo/releases), double-click it, enter your key, then fully quit and reopen Claude from the menu bar (Windows: system tray). Say „Richte mich ein“ in a new chat. Other MCP clients can run `uvx schnippo` with `GLADIA_API_KEY` set.
 
-**Privacy:** no telemetry and no Schnippo server. Audio goes to Gladia, transcripts and frames go to your AI model, and the update check asks GitHub once a day (optional). See [docs/PRIVACY.md](docs/PRIVACY.md).
+**Privacy:** no telemetry and no Schnippo server. Audio goes to Gladia, transcripts and frames go to your AI model, and the update check asks GitHub once a day (optional). See the [Privacy Policy](https://schnippo.com/en/privacy/).
 
 **Licence:** MIT, © Seitz Dominik Visuals. DaVinci Resolve is a trademark of Blackmagic Design. This project is independent of Blackmagic Design.

@@ -335,7 +335,7 @@ Bestandsaufnahme vor der Windows-Arbeit. Plattformabhängiges liegt jetzt in `sr
 
 ## Arbeits-Timeline und Sicherungen (Phase 13)
 
-Gemessen auf Resolve 21.1.2 (Timeline mit Marker, Überblendungen, eigener Framerate):
+Gemessen auf Resolve Studio 21.2.0.5 (Timeline mit Marker, Überblendungen, eigener Framerate):
 
 | Aufruf | Ergebnis |
 |---|---|

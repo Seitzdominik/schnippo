@@ -105,7 +105,7 @@
   },
   "tools_generated": true,
   "prompts_generated": true,
-  "privacy_policies": ["__PRIVACY_URL__", "https://www.gladia.io/privacy-policy"],
+  "privacy_policies": ["__PRIVACY_URL__", "__PRIVACY_URL_DE__", "https://www.gladia.io/privacy-policy"],
   "compatibility": {
     "claude_desktop": ">=1.0.0",
     "platforms": ["darwin", "win32"],

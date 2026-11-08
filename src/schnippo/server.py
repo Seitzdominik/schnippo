@@ -439,7 +439,8 @@ def card_view() -> str:
     _log.info("UI-Karte abgerufen (MCP App wird vom Host angezeigt)")
     from .design import inject_design  # design view + fonts are added to the shared card
     html = (Path(__file__).parent / "ui" / "card.html").read_text(encoding="utf-8")
-    return inject_design(html.replace("{{APP_NAME}}", DISPLAY_NAME))
+    icon = (Path(__file__).parent / "ui" / "icon.b64").read_text(encoding="ascii").strip()
+    return inject_design(html.replace("{{APP_NAME}}", DISPLAY_NAME).replace("{{APP_ICON}}", icon))
 
 
 @tool(meta=CARD_META)

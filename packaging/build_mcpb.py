@@ -33,7 +33,7 @@ def main() -> None:
     shutil.copy2(PKG / "mcpbignore", BUILD / ".mcpbignore")
     text = (PKG / "manifest.template.json").read_text(encoding="utf-8")
     for key, value in {"__VERSION__": version, "__DISPLAY_NAME__": b.DISPLAY_NAME, "__TAGLINE__": b.TAGLINE, "__AUTHOR__": b.AUTHOR, "__AUTHOR_URL__": b.AUTHOR_URL, "__HOMEPAGE__": b.HOMEPAGE,
-                       "__REPOSITORY__": b.REPOSITORY, "__DOCS_URL__": b.DOCS_URL, "__SUPPORT_URL__": b.SUPPORT_URL, "__PRIVACY_URL__": b.PRIVACY_URL}.items():
+                       "__REPOSITORY__": b.REPOSITORY, "__DOCS_URL__": b.DOCS_URL, "__SUPPORT_URL__": b.SUPPORT_URL, "__PRIVACY_URL__": b.PRIVACY_URL, "__PRIVACY_URL_DE__": b.PRIVACY_URL_DE}.items():
         text = text.replace(key, value)
     manifest = json.loads(text)
     (BUILD / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

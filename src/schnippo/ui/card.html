@@ -61,7 +61,9 @@
   button { font: inherit; font-size: var(--font-text-sm-size); padding: 7px 14px; border-radius: var(--border-radius-md);
            border: 1px solid var(--color-border-primary); background: var(--color-background-secondary);
            color: var(--color-text-primary); cursor: pointer; }
-  button.primary { background: var(--color-text-primary); color: var(--color-background-primary); border-color: transparent; }
+  button.primary { background: #7C3AED; color: #fff; border-color: transparent; }
+  .brand { display: flex; align-items: center; gap: 8px; }
+  .brand img { width: 28px; height: 28px; }
   button:disabled { opacity: .55; cursor: default; }
   button.link { border: none; background: none; padding: 4px 0; color: var(--color-text-secondary); text-decoration: underline; }
   .seg { display: inline-flex; border: 1px solid var(--color-border-primary); border-radius: var(--border-radius-md); overflow: hidden; }
@@ -167,7 +169,7 @@
         c.detail ? h("span", { class: "detail" }, c.detail) : null)));
     const toggle = h("button", { class: "link", onclick: () => { showAll = !showAll; renderSetup(state); } },
       showAll ? "Liste ausblenden" : `Alle ${checks.length} Punkte (${nOk} erledigt)`);
-    show(h("header", {}, h("h1", {}, "{{APP_NAME}} – Einrichtung"),
+    show(h("header", {}, h("div", { class: "brand" }, h("img", { src: "data:image/png;base64,{{APP_ICON}}", alt: "" }), h("h1", {}, "{{APP_NAME}} – Einrichtung")),
            h("span", { class: "pill " + (d.ready ? "ok" : "bad") }, d.ready ? "Alles bereit" : `${d.failed} offen`)),
          bar, ...body, h("div", { style: "margin-top:10px" }, toggle), all,
          h("footer", {}, h("span", { class: "muted", id: "time" }, "Geprüft " + clock()), again));

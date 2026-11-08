@@ -1,5 +1,7 @@
 # Datenschutzerklärung / Privacy Policy
 
+Maßgeblich ist die Fassung auf der Website: https://schnippo.com/datenschutz/ (Deutsch) und https://schnippo.com/en/privacy/ (English). Dieses Dokument fasst sie für das Repository zusammen.
+
 Stand: 7. November 2026. Gilt für Schnippo ab Version 0.11.0.
 
 Schnippo ist eine lokale Software. Herausgeber ist Seitz Dominik Visuals, https://sdv.design. Der Herausgeber betreibt keinen Server für Schnippo und erhält keine Daten von dir.

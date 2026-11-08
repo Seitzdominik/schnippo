@@ -14,7 +14,8 @@ REPO_SLUG = "Seitzdominik/schnippo"
 SUPPORT_URL = REPOSITORY + "/issues"  # later schnippo.com: change here only
 DOCS_URL = REPOSITORY + "#readme"
 RELEASES_URL = REPOSITORY + "/releases/latest"
-PRIVACY_URL = HOMEPAGE + "/privacy"
+PRIVACY_URL = HOMEPAGE + "/en/privacy/"
+PRIVACY_URL_DE = HOMEPAGE + "/datenschutz/"
 
 LEGACY_SLUG = "resolve-cut"  # the working title: old folders stay readable
 LEGACY_EXPORT = "resolve-cut-export"
