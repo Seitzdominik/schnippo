@@ -15,7 +15,7 @@ Status: ✅ erfüllt, ⚠️ offen, 👤 muss der Nutzer tun. Die Tests stehen i
 | Repository unter 50 MiB als Archiv, unter 10.000 Dateien | ✅ | 16,6 MB, 258 Dateien |
 | Dateien im Plugin unter 256 KiB, nur Text und Bilder | ✅ | Test, Ordner 132 KB |
 | Repository öffentlich | ✅ | https://github.com/Seitzdominik/schnippo |
-| Verfolgter Branch `stable` | ✅ | `.github/workflows/release.yml`, `docs/RELEASE.md` |
+| Verfolgter Branch `stable` | ✅ | steht auf `v0.13.1` (`f84cb80`), `.github/workflows/release.yml`, `docs/RELEASE.md` |
 
 ### Manifest und Eintrag
 
@@ -46,7 +46,7 @@ Status: ✅ erfüllt, ⚠️ offen, 👤 muss der Nutzer tun. Die Tests stehen i
 | Abhängigkeiten aktuell (Policy 5.G) | ✅ | `uv tree --outdated`: OpenCV 4.14 statt 5.0 bewusst, sonst aktuell bis auf ein Patch-Release von pydantic |
 | Hinweis zum ersten Start ganz oben im README | ✅ | Test `test_first_start_note_is_at_the_top` |
 | Installation aus dem GitHub-Repo in frischer Umgebung | ✅ | Abschnitt „Installationstest“ |
-| Start aus PyPI mit genau dieser Version | ⚠️ | erst nach dem Tag möglich, siehe Abschnitt 2 |
+| Start aus PyPI mit genau dieser Version | ✅ | `uvx schnippo==0.13.1` in frischer Umgebung, 56 Tools, `check_setup` läuft |
 
 ### Datenschutz
 
@@ -76,10 +76,10 @@ Status: ✅ erfüllt, ⚠️ offen, 👤 muss der Nutzer tun. Die Tests stehen i
 
 ### Installationstest
 
-Getestet am 8. November 2026 auf macOS mit eigenem `HOME`, eigener Claude-Konfiguration und leerem uv-Cache. Weil 0.13.1 erst mit dem Tag auf PyPI liegt, kam nur das Paket Schnippo aus einem lokalen Wheel (`UV_FIND_LINKS`), alle Abhängigkeiten aus PyPI.
+Getestet am 8. November 2026 auf macOS mit eigenem `HOME`, eigener Claude-Konfiguration und leerem uv-Cache, zuerst mit lokalem Wheel, nach dem Tag mit dem Paket von PyPI.
 
 - `claude plugin marketplace add Seitzdominik/schnippo` und `claude plugin install schnippo@schnippo`: ok, vier Skills und ein Server.
-- Kaltstart bis zur ersten Antwort: zuletzt 19,2 s mit 43 Paketen, vorher mit dem CLI-Extra von `mcp` 23,8 und 32,6 s, danach 0,4 s. Reine Installation auf Vergleichsläufen mit leerem Cache: Median 18,4 s vorher, 15,9 s nachher. Die Leitung streut stark, einzelne Läufe brauchten bis 66 s. Claude Code bricht bei 30 s ab und zeigt „Failed to connect“, beim zweiten Versuch verbindet es. Ein Limit lässt sich im Plugin nicht setzen, nur mit `MCP_TIMEOUT`. Das README beschreibt „Reconnect“.
+- Kaltstart mit dem echten Paket von PyPI, leerer Cache: 27,3 bis 39,0 s in fünf Läufen, drei davon über 30 s. Danach 0,3 bis 0,4 s. Der Installationstest oben lief noch mit lokalem Wheel und war darum schneller (19,2 s), weil das Paket selbst 14,7 MB groß ist. Claude Code bricht bei 30 s ab und zeigt „Failed to connect“. Nach einem Abbruch lief der zweite Versuch in 25,1 s durch, bei langsamer Leitung kann es mehr als einen brauchen.
 - `check_setup`: läuft, 56 Tools, nennt den fehlenden Key. Das Plugin bietet sechs Einstellungen.
 - Einstellungen: leere Felder kommen leer an, `format` und `projects_folder` kommen im Server an. `sfx_folder` läuft über denselben Weg, belegt durch Tests von Manifest und Konfiguration.
 
@@ -103,7 +103,7 @@ Nicht getestet: ein echter sensibler Wert, weil Claude Code ihn in den echten Sc
 ## 2. Was du noch tun musst, in dieser Reihenfolge
 
 1. ✅ Repository öffentlich schalten: erledigt.
-2. 👤 OK für den Tag `v0.13.1`. Die Action veröffentlicht auf PyPI und setzt `stable`. Bis dahin steht `stable` auf 0.11.0, also erst danach einreichen.
+2. ✅ Tag `v0.13.1`: gesetzt, auf PyPI veröffentlicht, `stable` ist nachgerückt.
 3. 👤 Key im Plugin einmal prüfen, siehe oben.
 4. 👤 Website-Abweichungen an den Website-Chat geben, zuerst Punkt 1 und 2.
 5. 👤 Auf claude.ai GitHub verbinden, in derselben Organisation, mit Schreibrechten auf das Repository.
