@@ -27,7 +27,7 @@ Add Schnippo from the plugin directory, or in Claude Code:
 /plugin install schnippo@schnippo
 ```
 
-Claude Code asks for your Gladia key when you enable the plugin. If you skip it, say "Set me up": the `store_api_key` tool opens a system window and saves the key in the macOS Keychain or the Windows Credential Manager, so it never passes through the chat. The first start downloads about 44 MB and can take a few minutes on Windows.
+Claude Code asks for your Gladia key when you enable the plugin. If you skip it, say "Set me up": the `store_api_key` tool opens a system window and saves the key in the macOS Keychain or the Windows Credential Manager, so it never passes through the chat. The first start downloads the dependencies: about 30 seconds on a fast connection, 1–3 minutes on Windows.
 
 ### First cut
 
@@ -40,6 +40,7 @@ Try these prompts:
 
 ### Troubleshooting
 
+- **The first start times out:** the download continues on the next try. Open `/mcp` and choose Reconnect, or start Claude Code once with `MCP_TIMEOUT=300000`.
 - **The server does not start:** check that `uv --version` works, then look at `/mcp`.
 - **Resolve is not reachable:** start DaVinci Resolve Studio, open a project and set External scripting to Local. The free version has no scripting.
 - **A cut went wrong:** say "Restore the previous version". Backups are in the bin `Schnippo/Versionen`.
