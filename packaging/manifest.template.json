@@ -56,68 +56,68 @@
   "user_config": {
     "gladia_api_key": {
       "type": "string",
-      "title": "Gladia-API-Key",
-      "description": "Für die Transkription (app.gladia.io → API Keys).",
+      "title": "Gladia API key",
+      "description": "Used for transcription (app.gladia.io → API Keys).",
       "sensitive": true,
       "required": true
     },
     "language": {
       "type": "string",
-      "title": "Sprache",
-      "description": "Sprache der Aufnahmen, zum Beispiel de oder en.",
+      "title": "Language",
+      "description": "Language of your recordings, for example de or en.",
       "default": "de",
       "required": false
     },
     "format": {
       "type": "string",
       "title": "Format",
-      "description": "auto, reel, youtube, course oder commercial. Bei auto erkennt Schnippo das Format.",
+      "description": "auto, reel, youtube, course or commercial. With auto, Schnippo detects the format.",
       "default": "auto",
       "required": false
     },
     "export_folder": {
       "type": "directory",
-      "title": "Export-Ordner (optional)",
-      "description": "Für Export und Untertitel. Leer: neben dem Material.",
+      "title": "Export folder (optional)",
+      "description": "For exports and subtitles. Empty: next to your footage.",
       "required": false
     },
     "projects_folder": {
       "type": "directory",
-      "title": "Standardordner für Projekte (optional)",
-      "description": "Dann reicht im Chat der Projektname.",
+      "title": "Default projects folder (optional)",
+      "description": "Lets you use just the project name in chat.",
       "required": false
     },
     "sfx": {
       "type": "string",
-      "title": "Sound-Effekte",
-      "description": "off, subtil oder normal.",
+      "title": "Sound effects",
+      "description": "off, subtil or normal.",
       "default": "subtil",
       "required": false
     },
     "update_check": {
       "type": "boolean",
-      "title": "Nach neuen Versionen suchen",
-      "description": "Einmal am Tag eine Anfrage an GitHub, ohne deine Daten.",
+      "title": "Check for new versions",
+      "description": "One request a day to GitHub, without your data.",
       "default": true,
       "required": false
     },
     "sfx_folder": {
       "type": "directory",
-      "title": "Eigene Sound-Effekte (optional)",
-      "description": "Ordner mit eigenen Sounds. Die Lizenz liegt bei dir.",
+      "title": "Your own sound effects (optional)",
+      "description": "Folder with your own sounds. Licensing is up to you.",
       "required": false
     },
     "freesound_api_key": {
       "type": "string",
-      "title": "Freesound-API-Key (optional)",
-      "description": "Sucht Sounds mit Lizenzfilter (freesound.org/apiv2/apply).",
+      "title": "Freesound API key (optional)",
+      "description": "Searches sounds with a license filter (freesound.org/apiv2/apply).",
       "sensitive": true,
       "required": false
     },
     "elevenlabs_api_key": {
       "type": "string",
-      "title": "ElevenLabs-API-Key (optional)",
-      "description": "Erzeugt Sound-Effekte aus Text, kostet Credits.",
+      "title": "ElevenLabs API key (optional)",
+      "description": "Generates sound effects from text, uses credits.",
       "sensitive": true,
       "required": false
     }

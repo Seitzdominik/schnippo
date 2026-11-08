@@ -1,5 +1,5 @@
 ---
-name: rohschnitt
+name: rough-cut
 description: "Ablauf eines Rohschnitts mit Schnippo in DaVinci Resolve: Einlesen, Komplett-Schnitt, Korrekturen, Export. Nutzen, wenn ein Ordner mit Takes geschnitten werden soll."
 ---
 

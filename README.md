@@ -7,6 +7,9 @@
 
 # Schnippo
 
+*AI rough cuts for DaVinci Resolve: cut by chat, with audio, zooms, B-roll, graphics and reels.*
+*German is the main language of this project. Read the [English summary](#english-summary).*
+
 **KI-Rohschnitt für DaVinci Resolve.** Beta für Mac, Windows als frische Beta: Rückmeldungen willkommen.
 
 <!-- Bild oder GIF mit freigegebenem Material folgt: docs/bilder/schnippo.gif -->
@@ -187,12 +190,18 @@ Der Hook startet `tools/check_public.py`. Technische Erkenntnisse stehen in [doc
 
 ## English summary
 
-**Schnippo** is an AI rough-cut assistant for DaVinci Resolve Studio. Tell Claude which folder to cut and get a non-destructive timeline built from your original clips, with optional B-roll, punch-ins, graphics, sound effects and reels. The interface and guides are in German; English footage works too.
+**Schnippo** is an AI rough-cut assistant for DaVinci Resolve Studio. Tell Claude which folder to cut and get a non-destructive timeline built from your original clips, with audio mastering, zooms, B-roll, graphics, sound effects and reels. Before every change it saves a backup timeline, and manual edits in Resolve are kept. The messages and guides are in German; English footage works too.
 
-**Requirements:** Apple Silicon Mac or 64-bit Windows 10/11 (Windows is a fresh beta), DaVinci Resolve Studio 21.1+ with external scripting set to Local, Claude Desktop, your own Gladia key (roughly USD 0.61 per hour of audio).
+**Requirements:** Apple Silicon Mac or 64-bit Windows 10/11 (beta), DaVinci Resolve Studio 21.1+ with Preferences → System → General → External scripting using = Local, and your own [Gladia key](https://app.gladia.io) (roughly USD 0.61 per hour of audio).
 
-**Install:** download the `.mcpb` from [Releases](https://github.com/Seitzdominik/schnippo/releases), double-click it, enter your key, then fully quit and reopen Claude from the menu bar (Windows: system tray). Say „Richte mich ein“ in a new chat. Other MCP clients can run `uvx schnippo` with `GLADIA_API_KEY` set.
+**Install:**
 
-**Privacy:** no telemetry and no Schnippo server. Audio goes to Gladia, transcripts and frames go to your AI model, and the update check asks GitHub once a day (optional). See the [Privacy Policy](https://schnippo.com/en/privacy/).
+- *Chat in Claude Desktop:* download the `.mcpb` from [Releases](https://github.com/Seitzdominik/schnippo/releases), double-click it, enter your key, then fully quit and reopen Claude from the menu bar (Windows: system tray). The first start takes 1–3 minutes on Windows.
+- *Claude Code, the Code tab of Claude Desktop, Cowork on your computer:* install the plugin with `/plugin marketplace add Seitzdominik/schnippo` and `/plugin install schnippo@schnippo`. You need [uv](https://docs.astral.sh/uv/).
+- *Other MCP clients:* run `uvx schnippo` with `GLADIA_API_KEY` set.
 
-**Licence:** MIT, © Seitz Dominik Visuals. DaVinci Resolve is a trademark of Blackmagic Design. This project is independent of Blackmagic Design.
+**First cut:** say "Set me up", then "Cut the folder /path/to/takes as a YouTube video". You get one timeline named `<name>_Schnippo` and a short report. Corrections work in plain words, for example "Remove #05" or "Make 3 reels from the finished video".
+
+**Privacy:** no telemetry and no Schnippo server. Audio goes to Gladia, transcripts and frames go to your AI model, and the update check asks GitHub once a day (optional). Read the [Privacy Policy](https://schnippo.com/en/privacy/).
+
+**Licence and trademark:** MIT, © Seitz Dominik Visuals. DaVinci Resolve is a trademark of Blackmagic Design. Schnippo is an independent project and is not affiliated with Blackmagic Design.

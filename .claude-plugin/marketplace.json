@@ -1,6 +1,6 @@
 {
   "name": "schnippo",
-  "description": "KI-Rohschnitt für DaVinci Resolve",
+  "description": "AI rough cuts for DaVinci Resolve",
   "owner": {
     "name": "Seitz Dominik Visuals",
     "url": "https://sdv.design"
@@ -9,7 +9,7 @@
     {
       "name": "schnippo",
       "source": "./plugin",
-      "description": "KI-Rohschnitt für DaVinci Resolve"
+      "description": "AI rough cuts for DaVinci Resolve"
     }
   ]
 }

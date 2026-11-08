@@ -2,7 +2,7 @@
   "name": "schnippo",
   "displayName": "Schnippo",
   "version": "0.13.0",
-  "description": "KI-Rohschnitt für DaVinci Resolve: Rohschnitt per Chat, mit Ton, Zooms, B-Roll, Grafiken und Reels.",
+  "description": "AI rough cuts for DaVinci Resolve: cut by chat, with audio, zooms, B-roll, graphics and reels.",
   "author": {
     "name": "Seitz Dominik Visuals",
     "url": "https://sdv.design"
@@ -10,12 +10,14 @@
   "homepage": "https://schnippo.com",
   "repository": "https://github.com/Seitzdominik/schnippo",
   "license": "MIT",
+  "icon": "icon.png",
   "keywords": [
-    "video",
-    "schnitt",
+    "video-editing",
     "davinci-resolve",
-    "transkript",
-    "reels"
+    "rough-cut",
+    "transcript",
+    "reels",
+    "mcp"
   ],
   "documentationUrl": "https://github.com/Seitzdominik/schnippo#readme",
   "supportUrl": "https://github.com/Seitzdominik/schnippo/issues",
@@ -23,28 +25,28 @@
   "userConfig": {
     "gladia_api_key": {
       "type": "string",
-      "title": "Gladia-API-Key",
-      "description": "Für die Transkription, von app.gladia.io.",
+      "title": "Gladia API key",
+      "description": "Used for transcription. Get one at app.gladia.io.",
       "sensitive": true,
       "required": false
     },
     "projects_folder": {
       "type": "directory",
-      "title": "Standardordner für Projekte",
-      "description": "Dann reicht im Chat der Projektname.",
+      "title": "Default projects folder",
+      "description": "Lets you use just the project name in chat.",
       "required": false
     },
     "format": {
       "type": "string",
       "title": "Format",
-      "description": "auto, reel, youtube, course oder commercial.",
+      "description": "auto, reel, youtube, course or commercial.",
       "default": "auto",
       "required": false
     },
     "sfx": {
       "type": "string",
-      "title": "Sound-Effekte",
-      "description": "off, subtil oder normal.",
+      "title": "Sound effects",
+      "description": "off, subtil or normal.",
       "default": "subtil",
       "required": false
     }
